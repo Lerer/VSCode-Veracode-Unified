@@ -1,0 +1,114 @@
+{
+    "name": "veracode",
+    "displayName": "Veracode",
+    "description": "Scan with Veracode",
+    "version": "0.0.1",
+    "publisher": "buzzcode",
+    "engines": {
+        "vscode": "^1.19.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.sayHello",
+        "onView:veracodeExplorer"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "views": {
+            "explorer" : [
+                {
+                    "id": "veracodeExplorer",
+                    "name": "Veracode"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "extension.sayHello",
+                "title": "Hello World"
+            },
+            {
+                "command": "veracodeExplorer.sayHello",
+                "title": "Hello Veracode"
+            },
+            {
+                "command": "veracodeExplorer.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "veracodeExplorer.cmd1",
+                "title": "Veracode Cmd1",
+                "icon": {
+                    "light": "resources/light/document.svg",
+                    "dark": "resources/dark/document.svg"
+                }
+            },
+            {
+                "command": "veracodeExplorer.cmd2",
+                "title": "Veracode Cmd2",
+                "icon": {
+                    "light": "resources/light/boolean.svg",
+                    "dark": "resources/dark/boolean.svg"
+                }
+            },
+            {
+                "command": "veracodeExplorer.cmd3",
+                "title": "Veracode Cmd3"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "veracodeExplorer.cmd1",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.cmd2",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.refresh",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.sayHello",
+                    "when": "view == veracodeExplorer"    
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "veracodeExplorer.cmd3",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.sayHello",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                } 
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6",
+        "@types/node": "^7.0.43",
+        "@types/mocha": "^2.2.42"
+    }
+}

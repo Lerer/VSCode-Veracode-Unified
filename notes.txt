@@ -1,0 +1,30 @@
+VSCode has built-in proxy settings
+    but not exposed to extensions: https://github.com/Microsoft/vscode/issues/12588
+    https://github.com/michalyao/evermonkey/issues/87
+    
+    maybe this: https://github.com/tomas/needle
+
+Only handle API creds, ignore uname/pw
+	encryption: see the SQL extension - https://github.com/Microsoft/vscode-mssql/wiki/manage-connection-profiles#password-management
+	
+Use our JavaAPIWrapper
+	- has proxy support (but need to enter again just for our extension)
+	- calling java from typescript:
+		https://stackoverflow.com/questions/27492384/import-java-object-in-typescript
+	- allow for later changes to the Findings API
+
+Get results download and integrations working first
+	- then work on upload??		
+		
+UI
+	single line in the VSCode Explorer
+		- 3-dot menu
+			- creds	
+		- list apps (folders)
+			- and sandboxes (subfolders)
+				- build list (files)
+		- select app/sandbox to work with
+		- as Maven extension?
+			- app (rt-click for upload, download)
+			- how to handle multi-file uploads?
+
