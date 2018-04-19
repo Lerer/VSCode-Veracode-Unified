@@ -31,11 +31,13 @@
             },
             {
                 "command": "veracodeExplorer.sayHello",
-                "title": "Hello Veracode"
+                "title": "Hello",
+                "category": "Veracode"
             },
             {
                 "command": "veracodeExplorer.refresh",
                 "title": "Refresh",
+                "category": "Veracode",
                 "icon": {
                     "light": "resources/light/refresh.svg",
                     "dark": "resources/dark/refresh.svg"
@@ -43,7 +45,8 @@
             },
             {
                 "command": "veracodeExplorer.cmd1",
-                "title": "Veracode Cmd1",
+                "title": "Cmd1",
+                "category": "Veracode",
                 "icon": {
                     "light": "resources/light/document.svg",
                     "dark": "resources/dark/document.svg"
@@ -51,7 +54,8 @@
             },
             {
                 "command": "veracodeExplorer.cmd2",
-                "title": "Veracode Cmd2",
+                "title": "Cmd2",
+                "category": "Veracode",
                 "icon": {
                     "light": "resources/light/boolean.svg",
                     "dark": "resources/dark/boolean.svg"
@@ -59,7 +63,13 @@
             },
             {
                 "command": "veracodeExplorer.cmd3",
-                "title": "Veracode Cmd3"
+                "title": "Cmd3",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeExplorer.setCredsFile",
+                "title": "Set Credentials File",
+                "category": "Veracode"
             }
         ],
         "menus": {
@@ -80,7 +90,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "veracodeExplorer.sayHello",
+                    "command": "veracodeExplorer.setCredsFile",
                     "when": "view == veracodeExplorer"    
                 }
             ],
