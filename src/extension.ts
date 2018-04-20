@@ -5,6 +5,8 @@
 import * as vscode from 'vscode';
 
 import { MainController } from "./controllers/mainController";
+let controller:any;
+
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -17,21 +19,17 @@ export function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
+    /*let disposable = vscode.commands.registerCommand('extension.sayHello', () => {
         // The code you place here will be executed every time your command is executed
 
         // Display a message box to the user
         vscode.window.showInformationMessage('Hello World!');
     });
     context.subscriptions.push(disposable);
+    */
 
-    disposable = vscode.commands.registerCommand('veracodeExplorer.sayHello', () => {
+    let disposable = vscode.commands.registerCommand('veracodeExplorer.sayHello', () => {
         vscode.window.showInformationMessage('Hello Veracode!');
-    });
-    context.subscriptions.push(disposable);
-
-    disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => {
-        vscode.window.showInformationMessage('Veracode refresh');
     });
     context.subscriptions.push(disposable);
     
@@ -50,8 +48,8 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(disposable);
 
-
-    let controller = new MainController(context);
+    controller = new MainController(context);
+    
     controller.activate();
 
 
@@ -60,4 +58,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    controller.deactivate();
 }

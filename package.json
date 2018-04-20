@@ -17,7 +17,7 @@
     "main": "./out/extension",
     "contributes": {
         "views": {
-            "explorer" : [
+            "explorer": [
                 {
                     "id": "veracodeExplorer",
                     "name": "Veracode"
@@ -25,10 +25,6 @@
             ]
         },
         "commands": [
-            {
-                "command": "extension.sayHello",
-                "title": "Hello World"
-            },
             {
                 "command": "veracodeExplorer.sayHello",
                 "title": "Hello",
@@ -46,20 +42,12 @@
             {
                 "command": "veracodeExplorer.cmd1",
                 "title": "Cmd1",
-                "category": "Veracode",
-                "icon": {
-                    "light": "resources/light/document.svg",
-                    "dark": "resources/dark/document.svg"
-                }
+                "category": "Veracode"
             },
             {
                 "command": "veracodeExplorer.cmd2",
                 "title": "Cmd2",
-                "category": "Veracode",
-                "icon": {
-                    "light": "resources/light/boolean.svg",
-                    "dark": "resources/dark/boolean.svg"
-                }
+                "category": "Veracode"
             },
             {
                 "command": "veracodeExplorer.cmd3",
@@ -75,23 +63,13 @@
         "menus": {
             "view/title": [
                 {
-                    "command": "veracodeExplorer.cmd1",
-                    "when": "view == veracodeExplorer",
-                    "group": "navigation"
-                },
-                {
-                    "command": "veracodeExplorer.cmd2",
-                    "when": "view == veracodeExplorer",
-                    "group": "navigation"
-                },
-                {
                     "command": "veracodeExplorer.refresh",
                     "when": "view == veracodeExplorer",
                     "group": "navigation"
                 },
                 {
                     "command": "veracodeExplorer.setCredsFile",
-                    "when": "view == veracodeExplorer"    
+                    "when": "view == veracodeExplorer"
                 }
             ],
             "view/item/context": [
@@ -104,7 +82,7 @@
                     "command": "veracodeExplorer.sayHello",
                     "when": "view == veracodeExplorer",
                     "group": "navigation"
-                } 
+                }
             ]
         }
     },
@@ -120,5 +98,8 @@
         "vscode": "^1.1.6",
         "@types/node": "^7.0.43",
         "@types/mocha": "^2.2.42"
+    },
+    "dependencies": {
+        "filereader": "^0.10.3"
     }
 }
