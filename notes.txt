@@ -30,3 +30,6 @@ UI
 			- app (rt-click for upload, download)
 			- how to handle multi-file uploads?
 
+Cleanup:
+	- uninstall npm filereader
+

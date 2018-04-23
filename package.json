@@ -16,6 +16,17 @@
     ],
     "main": "./out/extension",
     "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Veracode configuration settings",
+            "properties": {
+                "veracode.credsFile": {
+                    "type": ["string", "null"],
+                    "defuault": "null",
+                    "description": "Specifies the absolute filepath for the API Credentials"
+                }
+            }
+        },
         "views": {
             "explorer": [
                 {

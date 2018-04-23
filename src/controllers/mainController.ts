@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
 import { CredsHandler } from "../util/credsHandler";
+import { ConfigSettings } from "../util/configSettings";
 
 //const vscode = require("vscode");
 
@@ -10,6 +11,7 @@ export class MainController {
 
     // class properties
     m_context: any;
+    m_configSettings: ConfigSettings;
     m_credsFile: string;
     m_credsHandler: CredsHandler;
 
@@ -38,6 +40,10 @@ export class MainController {
 
         disposable = vscode.commands.registerCommand("veracodeExplorer.refresh", this.refreshAppList, this);
         this.m_context.subscriptions.push(disposable);
+
+        //load config settings
+        this.m_configSettings = new ConfigSettings(this.m_context);
+        //this.m_configSettings.loadSettings();
         
     }
 
@@ -57,11 +63,16 @@ export class MainController {
             console.log("creds file: " + value);
             this.m_credsFile = value;
         });
+
+        // save the creds file in the config settings
+
+
     }
 
     refreshAppList() {
         console.log("refreshing app list");
 
+        /*
         // check that we have a file path for the creds file
         if(isNullOrUndefined(this.m_credsFile)) {
             this.setCredsFile();
@@ -72,8 +83,10 @@ export class MainController {
             vscode.window.showErrorMessage("The credentials filepath must be set");
             return;
         }
+        */
 
-        // read the creds from the file (util method/class?)
+        // get the creds
+        this.m_credsFile = this.m_configSettings.getCredsFile();
         this.m_credsHandler = new CredsHandler(this.m_credsFile);
         this.m_credsHandler.loadCreds();
 
@@ -88,4 +101,6 @@ export class MainController {
 
 
     }
+
+
 }

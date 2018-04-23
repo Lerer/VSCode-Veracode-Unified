@@ -24,8 +24,6 @@ export class CredsHandler {
         if(!this.m_credsFile)
             return "Credentials file not set";
 
-        // return error if file not found
-
         console.log("reading file: " + this.m_credsFile);
 
         try {
