@@ -18,12 +18,17 @@
     "contributes": {
         "configuration": {
             "type": "object",
-            "title": "Veracode configuration settings",
+            "title": "Veracode configuration",
             "properties": {
                 "veracode.credsFile": {
                     "type": ["string", "null"],
-                    "defuault": "null",
+                    "default": "null",
                     "description": "Specifies the absolute filepath for the API Credentials"
+                },
+                "veracode.refreshCount": {
+                    "type": "number",
+                    "default": "10",
+                    "description": "Number of apps to refresh in the list"
                 }
             }
         },

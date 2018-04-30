@@ -86,9 +86,19 @@ export class MainController {
         */
 
         // get the creds
-        this.m_credsFile = this.m_configSettings.getCredsFile();
-        this.m_credsHandler = new CredsHandler(this.m_credsFile);
-        this.m_credsHandler.loadCreds();
+        try {
+            this.m_credsFile = this.m_configSettings.getCredsFile();
+
+            this.m_credsHandler = new CredsHandler();
+            
+            this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
+        } catch(e) {
+            console.log(e);
+            vscode.window.showErrorMessage(e);
+        }
+
+
+
 
 
 

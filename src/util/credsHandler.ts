@@ -13,33 +13,44 @@ export class CredsHandler {
     m_apiKey: string = null;
 
     // @constructor
-    constructor(credsFile: string) {
+    constructor() {
         //this.m_context = context;
-        this.m_credsFile = credsFile;
+        //this.m_credsFile = credsFile;
     }
 
     // return null on success, else an error string
     private readCredsFromFile(): string {
 
         if(!this.m_credsFile)
-            return "Credentials file not set";
+            throw "Credentials file not set";
 
         console.log("reading file: " + this.m_credsFile);
 
+        let data: string = null;
         try {
-            var data = fs.readFileSync(this.m_credsFile);
+            data = fs.readFileSync(this.m_credsFile, 'utf8');
             console.log("File data: " + data);
         }
         catch (error) {
-            console.log("Error: " + error);
+            // file does not exist, is not readable, etc.
+            console.log(error.message);
+            throw "Creds file, " + this.m_credsFile + ", not found, or is not readable";
         }
+
+        // parse the data from the file
+
+        // string split on CR and/or LF
+
+
+
 
 
         return null;
     }
 
-    loadCreds(): string {
+    loadCredsFromFile(credsFile: string): string {
         // today, only 1 choice
+        this.m_credsFile = credsFile;
         return this.readCredsFromFile();
     }
 
