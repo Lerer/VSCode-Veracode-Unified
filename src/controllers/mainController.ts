@@ -93,8 +93,8 @@ export class MainController {
             
             this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
         } catch(e) {
-            console.log(e);
-            vscode.window.showErrorMessage(e);
+            console.log(e.message);
+            vscode.window.showErrorMessage(e.message);
         }
 
 

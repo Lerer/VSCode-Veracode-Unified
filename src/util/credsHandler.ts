@@ -22,7 +22,7 @@ export class CredsHandler {
     private readCredsFromFile(): string {
 
         if(!this.m_credsFile)
-            throw "Credentials file not set";
+            throw new Error("Credentials file not set");
 
         console.log("reading file: " + this.m_credsFile);
 
@@ -34,16 +34,20 @@ export class CredsHandler {
         catch (error) {
             // file does not exist, is not readable, etc.
             console.log(error.message);
-            throw "Creds file, " + this.m_credsFile + ", not found, or is not readable";
+            throw new Error("Creds file, " + this.m_credsFile + ", not found, or is not readable");
         }
 
         // parse the data from the file
-
         // string split on CR and/or LF
-
-
-
-
+        let lines = data.split(/\r?\n/);
+        //let map = {};
+        let credsMap = new Map();
+        for(var i = 0; i < lines.length; i++) {
+            let pieces = lines[i].split("=");
+            if(pieces.length == 2) {
+                credsMap.set(pieces[0].trim(), pieces[1].trim() );
+            }
+        }
 
         return null;
     }
