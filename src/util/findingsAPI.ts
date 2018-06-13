@@ -8,7 +8,7 @@ export class FindingsAPI {
 
     private getAuthHeader()
     {
-        // call the java library to get the Auth header
+        // call the library to get the Auth header
 
 
     }

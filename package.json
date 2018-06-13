@@ -21,7 +21,10 @@
             "title": "Veracode configuration",
             "properties": {
                 "veracode.credsFile": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "default": "null",
                     "description": "Specifies the absolute filepath for the API Credentials"
                 },
@@ -116,6 +119,8 @@
         "@types/mocha": "^2.2.42"
     },
     "dependencies": {
-        "filereader": "^0.10.3"
+        "@types/sjcl": "^1.0.28",
+        "filereader": "^0.10.3",
+        "sjcl": "^1.0.7"
     }
 }
