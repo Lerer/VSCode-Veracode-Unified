@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
 import { CredsHandler } from "../util/credsHandler";
 import { ConfigSettings } from "../util/configSettings";
+import { RawAPI } from "../util/rawAPI";
 
 //const vscode = require("vscode");
 
@@ -14,6 +15,7 @@ export class MainController {
     m_configSettings: ConfigSettings;
     m_credsFile: string;
     m_credsHandler: CredsHandler;
+    m_apiHandler: RawAPI;
 
     // @constructor
     constructor(context) {
@@ -97,13 +99,12 @@ export class MainController {
             vscode.window.showErrorMessage(e.message);
         }
 
-
-
-
-
-
-
         // call the Findings API and get the list of apps
+
+        // using raw API today (Findings API in not yet released)
+        this.m_apiHandler = new RawAPI(this.m_credsHandler);
+
+        this.m_apiHandler.getAppList();
 
 
 
@@ -114,6 +115,7 @@ export class MainController {
             // and sandboxes
 
         // show first 10 in list (user config param to expand, 0=unlimited)
+        // command to 'show all' in dot-menu
 
 
 

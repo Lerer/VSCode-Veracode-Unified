@@ -121,6 +121,7 @@
     "dependencies": {
         "@types/sjcl": "^1.0.28",
         "filereader": "^0.10.3",
+        "java": "^0.10.0",
         "sjcl": "^1.0.7"
     }
 }

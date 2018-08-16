@@ -8,11 +8,10 @@ Only handle API creds, ignore uname/pw
 	encryption: see the SQL extension - https://github.com/Microsoft/vscode-mssql/wiki/manage-connection-profiles#password-management
 	first pass - read from creds file, as Findings API
 
-Use our JavaAPIWrapper
-	- has proxy support (but need to enter again just for our extension)
-	- calling java from typescript:
-		https://stackoverflow.com/questions/27492384/import-java-object-in-typescript
-	- allow for later changes to the Findings API
+HTTP parsing - 'requests' library?
+
+Start with the low-level curl commands
+	swap to Findings API later
 
 Get results download and integrations working first
 	- and Greenlight
@@ -31,5 +30,5 @@ UI
 			- how to handle multi-file uploads?
 
 Cleanup:
-	- uninstall npm filereader
+	- uninstall npm filereader, java, ts-java
 
