@@ -1,10 +1,11 @@
 'use strict';
 
 import * as vscode from "vscode";
+import log = require('loglevel');
 import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
-import { CredsHandler } from "../util/credsHandler";
-import { ConfigSettings } from "../util/configSettings";
-import { RawAPI } from "../util/rawAPI";
+import { CredsHandler } from "./util/credsHandler";
+import { ConfigSettings } from "./util/configSettings";
+import { RawAPI } from "./util/rawAPI";
 
 //const vscode = require("vscode");
 
@@ -62,7 +63,7 @@ export class MainController {
         vscode.window.showInputBox(options).then(value => {
             if(!value) return;
 
-            console.log("creds file: " + value);
+            log.info("creds file: " + value);
             this.m_credsFile = value;
         });
 
@@ -72,7 +73,7 @@ export class MainController {
     }
 
     refreshAppList() {
-        console.log("refreshing app list");
+        log.debug("refreshing app list");
 
         /*
         // check that we have a file path for the creds file
@@ -95,7 +96,7 @@ export class MainController {
             
             this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
         } catch(e) {
-            console.log(e.message);
+            log.error(e.message);
             vscode.window.showErrorMessage(e.message);
         }
 
