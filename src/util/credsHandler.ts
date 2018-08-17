@@ -1,6 +1,7 @@
 'use strict';
 
 import * as fs from "fs";
+import log = require('loglevel');
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
 
@@ -26,12 +27,12 @@ export class CredsHandler {
         if(!this.m_credsFile)
             throw new Error("Credentials file not set");
 
-        console.log("reading file: " + this.m_credsFile);
+        log.info("reading creds from file: " + this.m_credsFile);
 
         let data: string = null;
         try {
             data = fs.readFileSync(this.m_credsFile, 'utf8');
-            console.log("File data: " + data);
+            log.debug("File data: " + data);
         }
         catch (error) {
             // file does not exist, is not readable, etc.

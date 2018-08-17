@@ -1,9 +1,11 @@
 'use strict';
 
 import * as vscode from 'vscode';
-
+import log = require('loglevel');
 import request = require('request');
 import veracodehmac = require('./veracode-hmac');
+import convert = require('xml-js');
+
 
 import { CredsHandler } from "../util/credsHandler";
 
@@ -45,19 +47,34 @@ export class RawAPI {
             }
             
 			if (httpResponse.statusCode === 200) {
-                console.log("got it");
-                //console.log(body);
-                // return the raw XML data
+                //console.log("got it");
+                
+                // return the raw XML data, based on the type of XML returned??
                 this.handleAppList(body);
+
+
 			} else {
-                console.log("GetAppList failed, code: " + httpResponse.statusCode);
+                log.error("GetAppList failed, code: " + httpResponse.statusCode);
 			}
 			
         }).bind(this) );
     }
 
     handleAppList(rawXML: string) {
-        console.log("handling app List: " + rawXML);
+        log.debug("handling app List: " + rawXML);
+
+        let result = convert.xml2js(rawXML, {compact:false});
+        let numApps = result.elements[0].elements.length;
+
+        let appMap = new Map();
+
+        //console.log("converted: " + result);
+
+        result.elements[0].elements.forEach(function(entry) {
+            log.debug("name: " + entry.attributes.app_name + " id: " + entry.attributes.app_id);
+            appMap.set(entry.attributes.app_name, entry.attributes.app_id);
+        });
+        
     }
 
     getAppList() {

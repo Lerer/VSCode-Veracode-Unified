@@ -3,9 +3,12 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import log = require('loglevel');
 
-import { MainController } from "./controllers/mainController";
+import { MainController } from "./mainController";
 let controller:any;
+
+import { ConfigSettings } from "./util/configSettings";
 
 
 // this method is called when your extension is activated
@@ -15,6 +18,12 @@ export function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "veracode" is now active!');
+
+    // adjust the logging level for the rest of the plugin
+    let configSettings = new ConfigSettings(context);
+    let logLevel = configSettings.getLogLevel();
+    log.setLevel(logLevel);
+    console.log("Log level set to: " + logLevel);
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
@@ -51,9 +60,6 @@ export function activate(context: vscode.ExtensionContext) {
     controller = new MainController(context);
     
     controller.activate();
-
-
-
 }
 
 // this method is called when your extension is deactivated
