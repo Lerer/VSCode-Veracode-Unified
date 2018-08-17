@@ -1,6 +1,8 @@
 'use strict';
 
 import * as vscode from "vscode";
+import * as os from "os";
+import * as path from "path";
 import * as fs from "fs";
 import { isNullOrUndefined } from "util";
 
@@ -38,7 +40,11 @@ export class ConfigSettings {
             // get() will return the default value from package.json - 'null' if nothing is actually set
             filename = this.m_veracodeConfigSettings.get("credsFile");
             if( !filename || filename == "null")
-                throw new Error("No credentials file specified in User's config file");
+            {
+                //throw new Error("No credentials file specified in User's config file");
+                // default to $HOME/.veracode/credentials
+                filename = os.homedir + path.sep + ".veracode" + path.sep + "credentials";
+            }
 
             return filename;
         }
