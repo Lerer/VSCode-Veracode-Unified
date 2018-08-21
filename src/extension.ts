@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import log = require('loglevel');
 
 import { MainController } from "./mainController";
-let controller:any;
+let controller:MainController;
 
 import { ConfigSettings } from "./util/configSettings";
 
@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
     let configSettings = new ConfigSettings(context);
     let logLevel = configSettings.getLogLevel();
     log.setLevel(logLevel);
-    console.log("Log level set to: " + logLevel);
+    //console.log("Log level set to: " + logLevel);
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
@@ -37,6 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
     */
 
+    /*
     let disposable = vscode.commands.registerCommand('veracodeExplorer.sayHello', () => {
         vscode.window.showInformationMessage('Hello Veracode!');
     });
@@ -56,9 +57,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Veracode cmd3');
     });
     context.subscriptions.push(disposable);
-
+    */
+   
     controller = new MainController(context);
-    
     controller.activate();
 }
 

@@ -3,14 +3,11 @@
 import * as vscode from "vscode";
 import * as os from "os";
 import * as path from "path";
+import log = require('loglevel');
+
 import * as fs from "fs";
 import { isNullOrUndefined } from "util";
 
-/* save to config
-    - creds filepath
-    - # of apps to refresh list (default to 10 if nothing in config file)
-
-*/
 
 export class ConfigSettings {
 
@@ -55,7 +52,7 @@ export class ConfigSettings {
         return 10;
     }
 
-    getLogLevel(): string {
+    getLogLevel(): log.LogLevelDesc {
         try {
             // this needs to be here to pick up when the user changes the settings
             this.loadSettings();
@@ -64,11 +61,47 @@ export class ConfigSettings {
             // get() will return the default value from package.json - 'null' if nothing is actually set
             level = this.m_veracodeConfigSettings.get("logLevel");
 
-            // default to 'info' if nothing is specified
+            // default to 'info'
             if( !level || level == "null")
-                level = "info";
+            level = "info";
 
-            return level;
+            // map string in config file to log level type
+            let realLevel: log.LogLevelDesc;
+
+            switch(level) {
+                case 'trace': {
+                    realLevel = log.levels.TRACE;
+                    break;
+                }
+                case 'debug': {
+                    realLevel = log.levels.DEBUG;
+                    break;
+                }
+                case 'info': {
+                    realLevel = log.levels.INFO;
+                    break;
+                }
+                case 'warn': {
+                    realLevel = log.levels.WARN;
+                    break;
+                }
+                case 'error': {
+                    realLevel = log.levels.ERROR;
+                    break;
+                }
+                case 'silent': {
+                    realLevel = log.levels.SILENT;
+                    break;
+                }
+                default: {
+                    // default to 'info' if nothing is specified
+                    level = 'info';
+                    realLevel = log.levels.INFO;
+                }
+            }
+
+            console.log("Log level set to: " + level);
+            return realLevel;
         }
         finally {}  // either catch or finally is required
     }
