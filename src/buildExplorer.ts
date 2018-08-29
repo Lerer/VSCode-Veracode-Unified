@@ -24,10 +24,11 @@ export class BuildModel {
         // get the creds
         try {
             this.m_credsFile = this.m_configSettings.getCredsFile();
-
             this.m_credsHandler = new CredsHandler();
-            
-            this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
+			this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
+
+			this.m_apiHandler = new RawAPI(this.m_credsHandler);
+
         } catch(e) {
             log.error(e.message);
             vscode.window.showErrorMessage(e.message);
@@ -36,18 +37,7 @@ export class BuildModel {
 
     // roots are going to be the Apps
 	public get roots(): Thenable<BuildNode[]> {
-        
-        // verify the creds handler is not null
-
-        // call the API to get the list of apps  (using raw API today as theFindings API in not yet released)
-        this.m_apiHandler = new RawAPI(this.m_credsHandler);
-
-		//return new Promise( (resolve, reject) => {
-				return this.m_apiHandler.getAppList();
-		//	});
-	
-
-		//let appArray = await this.m_apiHandler.getAppList();	
+		return this.m_apiHandler.getAppList();	
 	}
 
 	public getChildren(node: BuildNode): BuildNode[]{
@@ -158,12 +148,8 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 export class BuildExplorer {
 
 	private m_buildViewer: vscode.TreeView<BuildNode>;
-    //m_context: vscode.ExtensionContext;
-    //m_configSettings: ConfigSettings;
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
-        //this.m_context = context;
-        //this.m_configSettings = configSettigs;
 
 		const buildModel = new BuildModel(this.m_configSettings);
         const treeDataProvider = new BuildTreeDataProvider(buildModel);

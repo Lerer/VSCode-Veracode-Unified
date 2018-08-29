@@ -29,6 +29,7 @@ export class RawAPI {
         this.m_credsHandler = credsHandler;
     }
 
+    /*
     // TODO: better return type??
     private setHeader(endpoint: string): any {
         // set up options for the request call
@@ -50,8 +51,9 @@ export class RawAPI {
 
         return options;
     }
-
-    private getRequest(endpoint: string) {
+    */
+   
+    private getRequest(endpoint: string): Thenable<string> {
 
         // set up options for the request call
         var options = {
@@ -80,8 +82,8 @@ export class RawAPI {
 
                 // return the body of the response
                 resolve(body);
-            })
-        })
+            });
+        });
 
         /* request.get(options, (function (err, httpResponse, body) {
 			if (err) {
@@ -103,12 +105,10 @@ export class RawAPI {
     }
     
     // a callback from the request GET call
-    handleAppList(rawXML: string) {
+    handleAppList(rawXML: string): BuildNode[] {
         log.debug("handling app List: " + rawXML);
 
         let result = convert.xml2js(rawXML, {compact:false});
-        let numApps = result.elements[0].elements.length;
-
         let appArray = [];
 
         //console.log("converted: " + result);
@@ -117,17 +117,20 @@ export class RawAPI {
             log.debug("name: " + entry.attributes.app_name + " id: " + entry.attributes.app_id);
             let b = new BuildNode(NodeType.Application, entry.attributes.app_name, entry.attributes.app_id);
             appArray.push( b );
-            //appMap.set(entry.attributes.app_name, entry.attributes.app_id);
         });
 
         return appArray;
-        
     }
 
     getAppList(): Thenable<BuildNode[]> {
 
-        //this.getRequest("/api/5.0/getapplist.do").then(this.handleAppList(body));
+        return new Promise( (resolve, reject) => {
+            this.getRequest("/api/5.0/getapplist.do").then( (rawXML) => {
+                resolve(this.handleAppList(rawXML));
+            });
+        });
 
+        /*
         var options = this.setHeader("/api/5.0/getapplist.do");
       
         return new Promise( (resolve, reject) => {
@@ -140,7 +143,8 @@ export class RawAPI {
                 resolve(appList);
             });
         });
-  
+        */
+
     }
 
 }
