@@ -2,25 +2,26 @@
 
 import * as vscode from "vscode";
 import log = require('loglevel');
+
 import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
 import { CredsHandler } from "./util/credsHandler";
 import { ConfigSettings } from "./util/configSettings";
-import { RawAPI } from "./util/rawAPI";
-
-//const vscode = require("vscode");
+//import { RawAPI } from "./util/rawAPI";
+import { BuildExplorer } from "./buildExplorer";
 
 export class MainController {
 
     // class properties
-    m_context: any;
+    //m_context: vscode.ExtensionContext;
     m_configSettings: ConfigSettings;
     m_credsFile: string;
     m_credsHandler: CredsHandler;
-    m_apiHandler: RawAPI;
+    //m_apiHandler: RawAPI;
+    m_buildExplorer: BuildExplorer;
 
     // @constructor
-    constructor(context) {
-        this.m_context = context;
+    constructor(private m_context: vscode.ExtensionContext) {
+        //this.m_context = context;
     }
 
     /*
@@ -31,25 +32,22 @@ export class MainController {
     }
     */
 
-    deactivate() {
-        // placeholder
-    }
-
     activate() {
-
         // register the VScode commands
         let disposable = vscode.commands.registerCommand("veracodeExplorer.setCredsFile", this.setCredsFile, this);
         this.m_context.subscriptions.push(disposable);
 
-        disposable = vscode.commands.registerCommand("veracodeExplorer.refresh", this.refreshAppList, this);
-        this.m_context.subscriptions.push(disposable);
-
         //load config settings
         this.m_configSettings = new ConfigSettings(this.m_context);
-        //this.m_configSettings.loadSettings();
-        
+
+        // create the Build Explorer that will handle browsing the Veracode apps and scans
+        this.m_buildExplorer = new BuildExplorer(this.m_context, this.m_configSettings);
     }
 
+    deactivate() {
+        // placeholder
+    }
+    
     setCredsFile() {
         console.log("setting creds file");
 
@@ -71,56 +69,5 @@ export class MainController {
 
 
     }
-
-    refreshAppList() {
-        log.debug("refreshing app list");
-
-        /*
-        // check that we have a file path for the creds file
-        if(isNullOrUndefined(this.m_credsFile)) {
-            this.setCredsFile();
-        }
-
-        // for some silly reason, the user still didn't set the creds file...
-        if(isNullOrUndefined(this.m_credsFile)) {
-            vscode.window.showErrorMessage("The credentials filepath must be set");
-            return;
-        }
-        */
-
-        // get the creds
-        try {
-            this.m_credsFile = this.m_configSettings.getCredsFile();
-
-            this.m_credsHandler = new CredsHandler();
-            
-            this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
-        } catch(e) {
-            log.error(e.message);
-            vscode.window.showErrorMessage(e.message);
-        }
-
-        // call the Findings API and get the list of apps
-
-        // using raw API today (Findings API in not yet released)
-        this.m_apiHandler = new RawAPI(this.m_credsHandler);
-
-        this.m_apiHandler.getAppList();
-
-
-
-
-
-
-        
-            // and sandboxes
-
-        // show first 10 in list (user config param to expand, 0=unlimited)
-        // command to 'show all' in dot-menu
-
-
-
-    }
-
 
 }

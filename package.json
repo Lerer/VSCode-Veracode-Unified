@@ -119,11 +119,15 @@
         "@types/mocha": "^2.2.42"
     },
     "dependencies": {
+        "@types/bluebird": "^3.5.5",
         "@types/loglevel": "^1.5.3",
         "@types/request": "^2.47.1",
+        "@types/request-promise": "^4.1.42",
         "@types/sjcl": "^1.0.28",
         "filereader": "^0.10.3",
         "loglevel": "^1.6.1",
+        "request-promise": "^4.2.2",
+        "request-promise-native": "^1.0.5",
         "sjcl": "^1.0.7",
         "xml-js": "^1.6.7"
     }
