@@ -1,77 +1,62 @@
 'use strict';
 
-import * as vscode from 'vscode';
+//import * as vscode from 'vscode';
 
 import { NodeType } from "./dataTypes";
 import { BuildNode } from "./dataTypes";
+import { CredsHandler } from "../util/credsHandler";
 
 import log = require('loglevel');
 import request = require('request');
-//import rp = require('request-promise');
 
 import veracodehmac = require('./veracode-hmac');
 import convert = require('xml-js');
 
 
-import { CredsHandler } from "../util/credsHandler";
-
 // deliberately don't interact with the 'context' here - save that for the calling classes
 
 export class RawAPI {
 
-    m_credsHandler: CredsHandler = null;
     m_refresh: any;
     m_userAgent: string = 'veracode-vscode-plugin';
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
 
-    constructor(credsHandler: CredsHandler) {
-        this.m_credsHandler = credsHandler;
-    }
+    constructor(private m_credsHandler: CredsHandler) { }
 
-    /*
-    // TODO: better return type??
-    private setHeader(endpoint: string): any {
+    // generic API caller
+    private getRequest(endpoint: string, params: object): Thenable<string> {
+
+        // funky for the Veracode HMAC generation
+        let queryString = '';
+        if(params !== null) {
+            var keys = Object.keys(params);
+            queryString = '?';
+            for(var key in keys)
+            queryString += keys[key] + '=' + params[keys[key]];
+        }
+
         // set up options for the request call
         var options = {
             url: this.m_protocol + this.m_host + endpoint,
+            qs: params,
             headers: {
                 'User-Agent': this.m_userAgent,
                 'Authorization': veracodehmac.calculateAuthorizationHeader(
                                     this.m_credsHandler.getApiId(), 
                                     this.m_credsHandler.getApiKey(), 
                                     this.m_host, endpoint,
-                                    '',
-                                    'GET')
-            },
-            json: false
-            // simple = true                    // for promises, all codes except 2xx are errors
-            // resolveWithFullResponse = false  // for promises, return only the body when resolved
-        };
-
-        return options;
-    }
-    */
-   
-    private getRequest(endpoint: string): Thenable<string> {
-
-        // set up options for the request call
-        var options = {
-            url: this.m_protocol + this.m_host + endpoint,
-            headers: {
-                'User-Agent': this.m_userAgent,
-                'Authorization': veracodehmac.calculateAuthorizationHeader(
-                                    this.m_credsHandler.getApiId(), 
-                                    this.m_credsHandler.getApiKey(), 
-                                    this.m_host, endpoint,
-                                    '',
+                                    queryString,
                                     'GET')
             },
             json: false
         };
        
-        return new Promise(function(resolve, reject) {
-            request(options, function(err, res, body) {
+        log.debug("Calling Veracode with: " + options.url + queryString);
+
+        // request = network access, so return the Promise of data later
+        return new Promise( (resolve, reject) => {
+            request(options, (err, res, body) => {
                 if(err)
                     reject(err);
                 else if (res.statusCode !== 200) {
@@ -104,47 +89,55 @@ export class RawAPI {
         }).bind(this) ); */
     }
     
-    // a callback from the request GET call
-    handleAppList(rawXML: string): BuildNode[] {
+
+    // get the app list via API call
+    getAppList(): Thenable<BuildNode[]> {
+        return new Promise( (resolve, reject) => {
+          this.getRequest("/api/5.0/getapplist.do", null).then( (rawXML) => {
+                resolve(this.handleAppList(rawXML));
+            });
+        }); 
+    }
+
+    // parse the app list from raw XML into an array of BuildNodes
+    private handleAppList(rawXML: string): BuildNode[] {
         log.debug("handling app List: " + rawXML);
 
         let result = convert.xml2js(rawXML, {compact:false});
         let appArray = [];
 
-        //console.log("converted: " + result);
-
-        result.elements[0].elements.forEach(function(entry) {
+        result.elements[0].elements.forEach( (entry) => {
             log.debug("name: " + entry.attributes.app_name + " id: " + entry.attributes.app_id);
-            let b = new BuildNode(NodeType.Application, entry.attributes.app_name, entry.attributes.app_id);
-            appArray.push( b );
+            let a = new BuildNode(NodeType.Application, entry.attributes.app_name, entry.attributes.app_id);
+            appArray.push( a );
         });
 
         return appArray;
     }
 
-    getAppList(): Thenable<BuildNode[]> {
-
+     // get the build list for an app via API call
+     getBuildList(appID: string): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {
-            this.getRequest("/api/5.0/getapplist.do").then( (rawXML) => {
-                resolve(this.handleAppList(rawXML));
+          this.getRequest("/api/5.0/getbuildlist.do", {"app_id": appID}).then( (rawXML) => {
+                resolve(this.handleBuildList(rawXML));
             });
+        }); 
+    }
+
+    // parse the build list from raw XML into an array of BuildNodes
+    private handleBuildList(rawXML: string): BuildNode[] {
+        log.debug("handling build List: " + rawXML);
+
+        let result = convert.xml2js(rawXML, {compact:false});
+        let buildArray = [];
+
+        result.elements[0].elements.forEach( (entry) => {
+            log.debug("name: " + entry.attributes.version + " id: " + entry.attributes.build_id);
+            let b = new BuildNode(NodeType.Scan, entry.attributes.version, entry.attributes.build_id);
+            buildArray.push( b );
         });
 
-        /*
-        var options = this.setHeader("/api/5.0/getapplist.do");
-      
-        return new Promise( (resolve, reject) => {
-            request(options, (error, response, body) => {
-                if(error) reject(error);
-                if(response.statusCode != 200) {
-                    reject('Invalid status code: ' + response.statusCode);
-                }
-                var appList = this.handleAppList(body);
-                resolve(appList);
-            });
-        });
-        */
-
+        return buildArray;
     }
 
 }

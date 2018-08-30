@@ -40,11 +40,11 @@ export class BuildModel {
 		return this.m_apiHandler.getAppList();	
 	}
 
-	public getChildren(node: BuildNode): BuildNode[]{
+	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
         // will be the scans (or sandboxes later)
-		return null;
+		return this.m_apiHandler.getBuildList(node.m_id);
 	}
-
+ 
     /*
     // maybe sort by Sandboxes before builds??
 	private sort(nodes: FtpNode[]): FtpNode[] {
@@ -119,12 +119,11 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
      * called again for each app to get the builds
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
+		return element ? this.m_model.getChildren(element) : this.m_model.roots;
 
-		//return element ? this.m_model.getChildren(element) : this.m_model.roots();
-
-		let arr = this.m_model.roots;
-		log.debug("app array: " + arr);
-		return arr;
+		//let arr = this.m_model.roots;
+		//log.debug("app array: " + arr);
+		//return arr;
 	}
 
 	public getParent(element: BuildNode): BuildNode {
