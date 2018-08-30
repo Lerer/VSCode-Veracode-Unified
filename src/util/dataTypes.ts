@@ -15,19 +15,10 @@ export enum NodeType {
  * can represent an App, a Sandbox, or a Scan(Build)
  */
 export class BuildNode {
-    
-    m_type: NodeType;
-    m_name: string;
-    m_id: string;
 
-    constructor(type: NodeType, name: string, id: string)
-    {
-        this.m_type = type;
-        this.m_name = name;
-        this.m_id = id;
-    }
+    constructor(private m_type: NodeType, private m_name: string, private m_id: string) { }
 
     public get type(): NodeType { return this.m_type; }
     public get name(): string { return this.m_name;}      // the Map key??
-    public get id(): string { return this.m_name; }
+    public get id(): string { return this.m_id; }
 }

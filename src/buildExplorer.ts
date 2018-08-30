@@ -12,7 +12,6 @@ import { BuildNode } from "./util/dataTypes";
 
 export class BuildModel {
 
-    //m_configSettings: ConfigSettings;
     m_credsFile: string;
     m_credsHandler: CredsHandler = null;
     m_apiHandler: RawAPI;
@@ -40,11 +39,15 @@ export class BuildModel {
 		return this.m_apiHandler.getAppList();	
 	}
 
+	// will be the scans (or sandboxes later)
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
-        // will be the scans (or sandboxes later)
-		return this.m_apiHandler.getBuildList(node.m_id);
+		return this.m_apiHandler.getBuildList(node.id);
 	}
  
+	public getBuildInfo(buildID: string): Thenable<string> {
+		return this.m_apiHandler.getBuildInfo(buildID);
+	}
+
     /*
     // maybe sort by Sandboxes before builds??
 	private sort(nodes: FtpNode[]): FtpNode[] {
@@ -95,9 +98,9 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-    constructor(private readonly m_model: BuildModel) { ; }
+    constructor(private readonly m_model: BuildModel) { }
 
-     // a bit sloppy in that it always refreshes from the root...??
+    // a bit sloppy in that it always refreshes from the root...??
 	public refresh(): any {
         this._onDidChangeTreeData.fire();
 	}
@@ -108,9 +111,13 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 			collapsibleState: element.type === NodeType.Application ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
 			command: element.type === NodeType.Application ? {
 				command: 'veracodeExplorer.getAppBuilds',
-				arguments: [element.m_id],
+				arguments: [element.id],
 				title: 'Get App Builds'
-			} : void 0
+			} : {
+				command: 'veracodeExplorer.getBuildResults',
+				arguments: [element.id],
+				title: 'Get Build Results'
+			}
 		};
 	}
 
@@ -147,11 +154,13 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 export class BuildExplorer {
 
 	private m_buildViewer: vscode.TreeView<BuildNode>;
+	private m_buildModel: BuildModel;
+	//private m_treeDataProvider: any;
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
-		const buildModel = new BuildModel(this.m_configSettings);
-        const treeDataProvider = new BuildTreeDataProvider(buildModel);
+		this.m_buildModel = new BuildModel(this.m_configSettings);
+        const treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
 		//context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('veracode', treeDataProvider));
 
         // first param must match the view name from package.json
@@ -160,14 +169,24 @@ export class BuildExplorer {
         let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => treeDataProvider.refresh());
         m_context.subscriptions.push(disposable);
 
-        disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildsForApp', appID => this.getBuildsForApp(appID));
+        disposable = vscode.commands.registerCommand('veracodeExplorer.getAppBuilds', (appID) => this.getBuildsForApp(appID));
+		m_context.subscriptions.push(disposable);
+		
+		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
         m_context.subscriptions.push(disposable);
-
-		//vscode.commands.registerCommand('ftpExplorer.revealResource', () => this.reveal());
     }
 
     private getBuildsForApp(appID: string) {
         log.debug("getBuildsForApp: " + appID);
+	}
+	
+	private getBuildResults(buildID: string) {
+		log.debug("getBuildresults: " + buildID);
+
+		this.m_buildModel.getBuildInfo(buildID)
+			.then( (rawXML) => {
+				log.debug("Build Info, rawXML: " + rawXML);
+			});
     }
 
     /*

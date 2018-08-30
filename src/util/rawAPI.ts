@@ -2,22 +2,20 @@
 
 //import * as vscode from 'vscode';
 
+import log = require('loglevel');
+import request = require('request');
+import convert = require('xml-js');
+
 import { NodeType } from "./dataTypes";
 import { BuildNode } from "./dataTypes";
 import { CredsHandler } from "../util/credsHandler";
-
-import log = require('loglevel');
-import request = require('request');
-
 import veracodehmac = require('./veracode-hmac');
-import convert = require('xml-js');
-
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
 
 export class RawAPI {
 
-    m_refresh: any;
+    //m_refresh: any;
     m_userAgent: string = 'veracode-vscode-plugin';
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
@@ -33,7 +31,7 @@ export class RawAPI {
             var keys = Object.keys(params);
             queryString = '?';
             for(var key in keys)
-            queryString += keys[key] + '=' + params[keys[key]];
+                queryString += keys[key] + '=' + params[keys[key]];
         }
 
         // set up options for the request call
@@ -52,7 +50,7 @@ export class RawAPI {
             json: false
         };
        
-        log.debug("Calling Veracode with: " + options.url + queryString);
+        log.info("Calling Veracode with: " + options.url + queryString);
 
         // request = network access, so return the Promise of data later
         return new Promise( (resolve, reject) => {
@@ -138,6 +136,32 @@ export class RawAPI {
         });
 
         return buildArray;
+    }
+
+     // get the build data for a build via API call
+     getBuildInfo(buildID: string): Thenable<string> {
+        return new Promise( (resolve, reject) => {
+          this.getRequest("/api/5.0/detailedreport.do", {"build_id": buildID}).then( (rawXML) => {
+                resolve(this.handleBuildInfo(rawXML));
+            });
+        }); 
+    }
+
+    // parse(?) the build info
+    private handleBuildInfo(rawXML: string): string {
+        log.debug("handling build Info: " + rawXML);
+
+        /*
+        let result = convert.xml2js(rawXML, {compact:false});
+        let buildArray = [];
+
+        result.elements[0].elements.forEach( (entry) => {
+            log.debug("name: " + entry.attributes.version + " id: " + entry.attributes.build_id);
+            let b = new BuildNode(NodeType.Scan, entry.attributes.version, entry.attributes.build_id);
+            buildArray.push( b );
+        });
+        */
+        return rawXML;
     }
 
 }
