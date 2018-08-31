@@ -21,4 +21,23 @@ export class BuildNode {
     public get type(): NodeType { return this.m_type; }
     public get name(): string { return this.m_name;}      // the Map key??
     public get id(): string { return this.m_id; }
+
+    public toString(): string {
+        return("Name: " + this.m_name + "ID: " + this.m_id);
+    }
+}
+
+export class FlawInfo {
+
+    constructor(private m_id: string,
+                private m_file: string,
+                private m_line: string) {}
+
+    public get id(): string { return this.m_id; }
+    public get file(): string { return this.m_file; }
+    public get line(): string { return this.m_line; }
+
+    public toString(): string {
+        return("ID: " + this.m_id);
+    }
 }

@@ -6,7 +6,7 @@ import log = require('loglevel');
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { RawAPI } from "./util/rawAPI";
-import { NodeType } from "./util/dataTypes";
+import { NodeType, FlawInfo } from "./util/dataTypes";
 import { BuildNode } from "./util/dataTypes";
 
 
@@ -44,7 +44,7 @@ export class BuildModel {
 		return this.m_apiHandler.getBuildList(node.id);
 	}
  
-	public getBuildInfo(buildID: string): Thenable<string> {
+	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
 		return this.m_apiHandler.getBuildInfo(buildID);
 	}
 
@@ -184,8 +184,8 @@ export class BuildExplorer {
 		log.debug("getBuildresults: " + buildID);
 
 		this.m_buildModel.getBuildInfo(buildID)
-			.then( (rawXML) => {
-				log.debug("Build Info, rawXML: " + rawXML);
+			.then( (flaws) => {
+				log.debug("Build Info, flaws: " + flaws);
 			});
     }
 
