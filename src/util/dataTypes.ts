@@ -31,11 +31,15 @@ export class FlawInfo {
 
     constructor(private m_id: string,
                 private m_file: string,
-                private m_line: string) {}
+                private m_line: string,
+                private m_severity: string,
+                private m_cweDesc: string) {}
 
     public get id(): string { return this.m_id; }
     public get file(): string { return this.m_file; }
     public get line(): string { return this.m_line; }
+    public get severity(): string { return this.m_severity; }
+    public get cweDesc(): string { return this.m_cweDesc; }
 
     public toString(): string {
         return("ID: " + this.m_id);

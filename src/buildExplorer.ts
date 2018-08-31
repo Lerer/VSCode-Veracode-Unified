@@ -156,6 +156,8 @@ export class BuildExplorer {
 	private m_buildViewer: vscode.TreeView<BuildNode>;
 	private m_buildModel: BuildModel;
 	//private m_treeDataProvider: any;
+	private m_diagCollection: vscode.DiagnosticCollection;
+	//private m_diagArray: vscode.Diagnostic[];
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
@@ -173,7 +175,10 @@ export class BuildExplorer {
 		m_context.subscriptions.push(disposable);
 		
 		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
-        m_context.subscriptions.push(disposable);
+		m_context.subscriptions.push(disposable);
+		
+		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
+		this.m_context.subscriptions.push(this.m_diagCollection);
     }
 
     private getBuildsForApp(appID: string) {
@@ -181,13 +186,37 @@ export class BuildExplorer {
 	}
 	
 	private getBuildResults(buildID: string) {
-		log.debug("getBuildresults: " + buildID);
-
 		this.m_buildModel.getBuildInfo(buildID)
 			.then( (flaws) => {
-				log.debug("Build Info, flaws: " + flaws);
+				var diagArray = [];
+				// Diag collection?  handle re-loading of flaws??
+
+				flaws.forEach( (flaw) => {
+					// why -1 for range??  Needed, but why?
+					var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
+					var diag = new vscode.Diagnostic(range, 
+								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
+								this.mapSeverityToVSCodeSeverity(flaw.severity))
+
+					diagArray.push(diag);
+				});
+
+				var uri = vscode.Uri.file(vscode.workspace.rootPath);
+
+				this.m_diagCollection.set(uri, diagArray);
 			});
     }
+
+	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
+	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
+		switch(sev) {
+			case '5':
+			case '4': return vscode.DiagnosticSeverity.Error;
+			case '3': return vscode.DiagnosticSeverity.Warning;
+			default: return vscode.DiagnosticSeverity.Information;
+			// ignore VSCode's 'Hints'
+		}
+	}
 
     /*
     private reveal(): Thenable<void> {

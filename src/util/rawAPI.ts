@@ -169,13 +169,16 @@ export class RawAPI {
                 if(sev.hasOwnProperty("category")) {
                     sev.category.forEach( (cat) => {
                         cat.cwe.forEach( (cwe) => {
+
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
                                     //log.debug("Processing flaw: id = " + flaw.$.issueid);
 
                                     let f = new FlawInfo(flaw.$.issueid, 
                                         flaw.$.sourcefilepath + "/" + flaw.$.sourcefile,
-                                        flaw.$.line);
+                                        flaw.$.line,
+                                        flaw.$.severity,
+                                        cwe.$.cwename);
 
                                     log.debug("Flaw: [" + f.toString() + "]");
                                     flawArray.push( f );
