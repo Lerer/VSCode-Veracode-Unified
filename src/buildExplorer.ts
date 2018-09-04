@@ -15,8 +15,7 @@ export class BuildModel {
     m_credsFile: string;
     m_credsHandler: CredsHandler = null;
     m_apiHandler: RawAPI;
-    m_refresh: any;     // method to call when data is ready
-	private nodes: Map<string, BuildNode> = new Map<string, BuildNode>();
+	//private nodes: Map<string, BuildNode> = new Map<string, BuildNode>();
 
 	constructor(private m_configSettings: ConfigSettings) {
 
@@ -64,31 +63,6 @@ export class BuildModel {
 		});
 	} */
 
-    /*
-	public getContent(resource: vscode.Uri): Thenable<string> {
-		return this.connect().then(client => {
-			return new Promise((c, e) => {
-				client.get(resource.path.substr(2), (err, stream) => {
-					if (err) {
-						return e(err);
-					}
-
-					let string = ''
-					stream.on('data', function (buffer) {
-						if (buffer) {
-							var part = buffer.toString();
-							string += part;
-						}
-					});
-
-					stream.on('end', function () {
-						client.end();
-						c(string);
-					});
-				});
-			});
-		});
-	} */
 }
 
 
@@ -127,10 +101,6 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
 		return element ? this.m_model.getChildren(element) : this.m_model.roots;
-
-		//let arr = this.m_model.roots;
-		//log.debug("app array: " + arr);
-		//return arr;
 	}
 
 	public getParent(element: BuildNode): BuildNode {

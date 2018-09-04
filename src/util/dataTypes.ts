@@ -23,10 +23,13 @@ export class BuildNode {
     public get id(): string { return this.m_id; }
 
     public toString(): string {
-        return("Name: " + this.m_name + "ID: " + this.m_id);
+        return("Name: " + this.m_name + ", ID: " + this.m_id);
     }
 }
 
+/* 
+ * Flaw into displayed in the VSCode Problems window
+ */
 export class FlawInfo {
 
     constructor(private m_id: string,

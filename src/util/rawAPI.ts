@@ -1,6 +1,7 @@
 'use strict';
 
 //import * as vscode from 'vscode';
+import * as path from "path";
 
 import log = require('loglevel');
 import request = require('request');
@@ -11,13 +12,11 @@ import { BuildNode } from "./dataTypes";
 import { FlawInfo } from "./dataTypes";
 import { CredsHandler } from "../util/credsHandler";
 import veracodehmac = require('./veracode-hmac');
-import { setScheduler } from 'bluebird';
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
 
 export class RawAPI {
 
-    //m_refresh: any;
     m_userAgent: string = 'veracode-vscode-plugin';
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
@@ -89,7 +88,6 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.applist.app.forEach( (entry) => {
-
                 let a = new BuildNode(NodeType.Application, entry.$.app_name, entry.$.app_id);
 
                 log.debug("App: [" + a.toString() + "]");
@@ -117,8 +115,6 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
-                //log.debug("name: " + entry.$.version + " id: " + entry.$.build_id);
-
                 let b = new BuildNode(NodeType.Scan, entry.$.version, entry.$.build_id);
 
                 log.debug("Build: [" + b.toString() + "]");
@@ -169,13 +165,11 @@ export class RawAPI {
                 if(sev.hasOwnProperty("category")) {
                     sev.category.forEach( (cat) => {
                         cat.cwe.forEach( (cwe) => {
-
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
-                                    //log.debug("Processing flaw: id = " + flaw.$.issueid);
 
                                     let f = new FlawInfo(flaw.$.issueid, 
-                                        flaw.$.sourcefilepath + "/" + flaw.$.sourcefile,
+                                        flaw.$.sourcefilepath + path.sep + flaw.$.sourcefile,
                                         flaw.$.line,
                                         flaw.$.severity,
                                         cwe.$.cwename);

@@ -1,28 +1,28 @@
 'use strict';
 
 import * as vscode from "vscode";
-import log = require('loglevel');
+//import log = require('loglevel');
 
-import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
-import { CredsHandler } from "./util/credsHandler";
+//import { isNullOrUndefined } from "util";       // TODO: marked as depreacated, find alternative
+//import { CredsHandler } from "./util/credsHandler";
 import { ConfigSettings } from "./util/configSettings";
-//import { RawAPI } from "./util/rawAPI";
 import { BuildExplorer } from "./buildExplorer";
+
+
+// TODO: is this mainController really necessary??
+
 
 export class MainController {
 
     // class properties
-    //m_context: vscode.ExtensionContext;
-    m_configSettings: ConfigSettings;
-    m_credsFile: string;
-    m_credsHandler: CredsHandler;
-    //m_apiHandler: RawAPI;
+    //m_configSettings: ConfigSettings;
+    //m_credsFile: string;
+    //m_credsHandler: CredsHandler;
     m_buildExplorer: BuildExplorer;
 
     // @constructor
-    constructor(private m_context: vscode.ExtensionContext) {
-        //this.m_context = context;
-    }
+    constructor(private m_context: vscode.ExtensionContext,
+                private m_configSettings: ConfigSettings) { }
 
     /*
     registerCommand(command) {
@@ -34,11 +34,11 @@ export class MainController {
 
     activate() {
         // register the VScode commands
-        let disposable = vscode.commands.registerCommand("veracodeExplorer.setCredsFile", this.setCredsFile, this);
-        this.m_context.subscriptions.push(disposable);
+        //let disposable = vscode.commands.registerCommand("veracodeExplorer.setCredsFile", this.setCredsFile, this);
+        //this.m_context.subscriptions.push(disposable);
 
         //load config settings
-        this.m_configSettings = new ConfigSettings(this.m_context);
+        //this.m_configSettings = new ConfigSettings(this.m_context);
 
         // create the Build Explorer that will handle browsing the Veracode apps and scans
         this.m_buildExplorer = new BuildExplorer(this.m_context, this.m_configSettings);
@@ -48,6 +48,7 @@ export class MainController {
         // placeholder
     }
     
+    /*
     setCredsFile() {
         console.log("setting creds file");
 
@@ -67,7 +68,7 @@ export class MainController {
 
         // save the creds file in the config settings
 
-
     }
+    */
 
 }

@@ -5,18 +5,15 @@ import * as os from "os";
 import * as path from "path";
 import log = require('loglevel');
 
-import * as fs from "fs";
-import { isNullOrUndefined } from "util";
+//import * as fs from "fs";
+//import { isNullOrUndefined } from "util";
 
 
 export class ConfigSettings {
 
-    m_context: any = null;
     m_veracodeConfigSettings: any;
 
-    constructor(context) {
-        this.m_context = context;
-    }
+    constructor(private m_context: vscode.ExtensionContext) { }
 
     loadSettings() {
         // this will always work, since the contribution point is set in package.json
@@ -24,9 +21,7 @@ export class ConfigSettings {
             throw new Error("No veracode section found in User's config file");
     }
     
-    saveSettings() {
-
-    }
+    saveSettings() { }
 
     getCredsFile(): string {
         try {
@@ -34,6 +29,7 @@ export class ConfigSettings {
             this.loadSettings();
 
             let filename: string;
+
             // get() will return the default value from package.json - 'null' if nothing is actually set
             filename = this.m_veracodeConfigSettings.get("credsFile");
             if( !filename || filename == "null")
@@ -61,6 +57,9 @@ export class ConfigSettings {
             // get() will return the default value from package.json - 'null' if nothing is actually set
             level = this.m_veracodeConfigSettings.get("logLevel");
 
+            // TODO: pick up default value from settings in package.json??
+
+            
             // default to 'info'
             if( !level || level == "null")
             level = "info";
