@@ -8,8 +8,6 @@ Only handle API creds, ignore uname/pw
 	encryption: see the SQL extension - https://github.com/Microsoft/vscode-mssql/wiki/manage-connection-profiles#password-management
 	first pass - read from creds file, as Findings API
 
-HTTP parsing - 'requests' library?
-
 Start with the low-level curl commands
 	swap to Findings API later
 

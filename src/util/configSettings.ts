@@ -56,11 +56,8 @@ export class ConfigSettings {
             let level: string;
             // get() will return the default value from package.json - 'null' if nothing is actually set
             level = this.m_veracodeConfigSettings.get("logLevel");
-
-            // TODO: pick up default value from settings in package.json??
-
             
-            // default to 'info'
+            // default to 'info' (redundant due to default setting in package.json)
             if( !level || level == "null")
             level = "info";
 
@@ -80,7 +77,7 @@ export class ConfigSettings {
                     realLevel = log.levels.INFO;
                     break;
                 }
-                case 'warn': {
+                case 'warning': {
                     realLevel = log.levels.WARN;
                     break;
                 }

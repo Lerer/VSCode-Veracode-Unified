@@ -18,7 +18,7 @@
     "contributes": {
         "configuration": {
             "type": "object",
-            "title": "Veracode configuration",
+            "title": "Veracode",
             "properties": {
                 "veracode.credsFile": {
                     "type": [
@@ -32,6 +32,14 @@
                     "type": "number",
                     "default": "10",
                     "description": "Number of apps to refresh in the list"
+                },
+                "veracode.logLevel": {
+                    "type": ["string", "null"],
+                    "default": "info",
+                    "description": "Logging level (effective on next restart)",
+                    "enum": [
+                        "trace", "debug", "info", "warning", "error", "silent"
+                    ]
                 }
             }
         },
