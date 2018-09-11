@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as path from "path";
 import log = require('loglevel');
 
 import { ConfigSettings } from "./util/configSettings";
@@ -8,6 +9,7 @@ import { CredsHandler } from "./util/credsHandler";
 import { RawAPI } from "./util/rawAPI";
 import { NodeType, FlawInfo } from "./util/dataTypes";
 import { BuildNode } from "./util/dataTypes";
+import { isUndefined } from 'util';
 
 
 export class BuildModel {
@@ -166,14 +168,37 @@ export class BuildExplorer {
 					var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
 					var diag = new vscode.Diagnostic(range, 
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
-								this.mapSeverityToVSCodeSeverity(flaw.severity))
+								this.mapSeverityToVSCodeSeverity(flaw.severity));
+					
+								// really fussy on path - can't handle dual path-seps as a single one
+								vscode.workspace.findFiles('**' + path.sep + flaw.file, '', 1)
+									.then( (uri) => {
+										diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+											new vscode.Location(uri[0], range), flaw.desc)];
 
-					diagArray.push(diag);
+										// can't add to diag arrays for a URI, need to set instead?!?
+										diagArray = this.m_diagCollection.get(uri[0]);
+										if( isUndefined(diagArray) )
+										{
+											diagArray = [];
+											diagArray.push(diag);
+										
+											this.m_diagCollection.set(uri[0], diagArray);
+										}
+										else {
+											this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
+										}
+									});
+					//diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+					//			new vscode.Location(vscode.Uri.file(flaw.file), range), flaw.cweDesc)];
+
+					
 				});
 
-				var uri = vscode.Uri.file(vscode.workspace.rootPath);
+				// TODO: better answer here - project root path??
+				//var uri = vscode.workspace.workspaceFolders[0].uri;
 
-				this.m_diagCollection.set(uri, diagArray);
+				//this.m_diagCollection.set(uri, diagArray);
 			});
     }
 

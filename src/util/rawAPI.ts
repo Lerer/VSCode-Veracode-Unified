@@ -168,11 +168,16 @@ export class RawAPI {
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
 
+                                    // do some normalization - strip leading path seps (needed for file finding later)
+                                    let t_path = path.join(flaw.$.sourcefilepath.startsWith(path.sep) ? flaw.$.sourcefilepath.substring(1) : flaw.$.sourcefilepath,
+                                                            flaw.$.sourcefile);
+
                                     let f = new FlawInfo(flaw.$.issueid, 
-                                        flaw.$.sourcefilepath + path.sep + flaw.$.sourcefile,
+                                        t_path, //flaw.$.sourcefilepath  flaw.$.sourcefile,
                                         flaw.$.line,
                                         flaw.$.severity,
-                                        cwe.$.cwename);
+                                        cwe.$.cwename,
+                                        flaw.$.description);
 
                                     log.debug("Flaw: [" + f.toString() + "]");
                                     flawArray.push( f );
