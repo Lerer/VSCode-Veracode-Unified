@@ -42,7 +42,8 @@ export class BuildModel {
 
 	// will be the scans (or sandboxes later)
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
-		return this.m_apiHandler.getBuildList(node.id);
+		let count = this.m_configSettings.getRefreshCount();
+		return this.m_apiHandler.getBuildList(node.id, count);
 	}
  
 	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {

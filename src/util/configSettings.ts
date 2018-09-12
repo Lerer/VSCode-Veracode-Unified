@@ -45,7 +45,12 @@ export class ConfigSettings {
     }
 
     getRefreshCount(): number {
-        return 10;
+        // this needs to be here to pick up when the user changes the settings
+        this.loadSettings();
+
+        let count = this.m_veracodeConfigSettings.get("refreshCount");
+
+        return count;
     }
 
     getLogLevel(): log.LogLevelDesc {

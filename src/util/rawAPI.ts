@@ -99,16 +99,16 @@ export class RawAPI {
     }
 
      // get the build list for an app via API call
-     getBuildList(appID: string): Thenable<BuildNode[]> {
+     getBuildList(appID: string, count: number): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {
           this.getRequest("/api/5.0/getbuildlist.do", {"app_id": appID}).then( (rawXML) => {
-                resolve(this.handleBuildList(rawXML));
+                resolve(this.handleBuildList(rawXML, count));
             });
         }); 
     }
 
     // parse the build list from raw XML into an array of BuildNodes
-    private handleBuildList(rawXML: string): BuildNode[] {
+    private handleBuildList(rawXML: string, count: number): BuildNode[] {
         log.debug("handling build List: " + rawXML);
 
         let buildArray = [];
@@ -122,7 +122,7 @@ export class RawAPI {
             });
         });
 
-        return this.sort(buildArray).slice(0,10);
+        return this.sort(buildArray).slice(0,count);
     }
 
     // sort the builds from newest to oldest

@@ -30,13 +30,13 @@
                 },
                 "veracode.refreshCount": {
                     "type": "number",
-                    "default": "10",
-                    "description": "Number of apps to refresh in the list"
+                    "default": 10,
+                    "description": "Number of scans to show for each application"
                 },
                 "veracode.logLevel": {
                     "type": ["string", "null"],
                     "default": "info",
-                    "description": "Logging level (effective on next restart)",
+                    "description": "Logging level (changes need a restart to take effect)",
                     "enum": [
                         "trace", "debug", "info", "warning", "error", "silent"
                     ]
@@ -53,11 +53,6 @@
         },
         "commands": [
             {
-                "command": "veracodeExplorer.sayHello",
-                "title": "Hello",
-                "category": "Veracode"
-            },
-            {
                 "command": "veracodeExplorer.refresh",
                 "title": "Refresh",
                 "category": "Veracode",
@@ -65,48 +60,12 @@
                     "light": "resources/light/refresh.svg",
                     "dark": "resources/dark/refresh.svg"
                 }
-            },
-            {
-                "command": "veracodeExplorer.cmd1",
-                "title": "Cmd1",
-                "category": "Veracode"
-            },
-            {
-                "command": "veracodeExplorer.cmd2",
-                "title": "Cmd2",
-                "category": "Veracode"
-            },
-            {
-                "command": "veracodeExplorer.cmd3",
-                "title": "Cmd3",
-                "category": "Veracode"
-            },
-            {
-                "command": "veracodeExplorer.setCredsFile",
-                "title": "Set Credentials File",
-                "category": "Veracode"
             }
         ],
         "menus": {
             "view/title": [
                 {
                     "command": "veracodeExplorer.refresh",
-                    "when": "view == veracodeExplorer",
-                    "group": "navigation"
-                },
-                {
-                    "command": "veracodeExplorer.setCredsFile",
-                    "when": "view == veracodeExplorer"
-                }
-            ],
-            "view/item/context": [
-                {
-                    "command": "veracodeExplorer.cmd3",
-                    "when": "view == veracodeExplorer",
-                    "group": "navigation"
-                },
-                {
-                    "command": "veracodeExplorer.sayHello",
                     "when": "view == veracodeExplorer",
                     "group": "navigation"
                 }
