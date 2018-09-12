@@ -25,10 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     log.setLevel(logLevel);
     //console.log("Log level set to: " + logLevel);
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-   
+    // fire up the Main Controller, which does all the work
     controller = new MainController(context, configSettings);
     controller.activate();
 }

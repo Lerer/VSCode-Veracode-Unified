@@ -49,22 +49,17 @@ export class BuildModel {
 		return this.m_apiHandler.getBuildInfo(buildID);
 	}
 
-    /*
-    // maybe sort by Sandboxes before builds??
-	private sort(nodes: FtpNode[]): FtpNode[] {
+	// maybe sort by Sandboxes before builds??
+	/*
+	private sort(nodes: BuildNode[]): BuildNode[] {
 		return nodes.sort((n1, n2) => {
-			if (n1.isDirectory && !n2.isDirectory) {
+			if (n1.id < n2.id) 
 				return -1;
-			}
-
-			if (!n1.isDirectory && n2.isDirectory) {
-				return 1;
-			}
-
-			return basename(n1.resource.fsPath).localeCompare(basename(n2.resource.fsPath));
+			else
+				return 0;
 		});
-	} */
-
+	}
+	*/
 }
 
 
@@ -170,25 +165,25 @@ export class BuildExplorer {
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
 								this.mapSeverityToVSCodeSeverity(flaw.severity));
 					
-								// really fussy on path - can't handle dual path-seps as a single one
-								vscode.workspace.findFiles('**' + path.sep + flaw.file, '', 1)
-									.then( (uri) => {
-										diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-											new vscode.Location(uri[0], range), flaw.desc)];
+					// really fussy on path - can't handle dual path-seps as a single one
+					vscode.workspace.findFiles('**' + path.sep + flaw.file, '', 1)
+						.then( (uri) => {
+							diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+								new vscode.Location(uri[0], range), flaw.desc)];
 
-										// can't add to diag arrays for a URI, need to set instead?!?
-										diagArray = this.m_diagCollection.get(uri[0]);
-										if( isUndefined(diagArray) )
-										{
-											diagArray = [];
-											diagArray.push(diag);
-										
-											this.m_diagCollection.set(uri[0], diagArray);
-										}
-										else {
-											this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
-										}
-									});
+							// can't add to diag arrays for a URI, need to set instead?!?
+							diagArray = this.m_diagCollection.get(uri[0]);
+							if( isUndefined(diagArray) )
+							{
+								diagArray = [];
+								diagArray.push(diag);
+							
+								this.m_diagCollection.set(uri[0], diagArray);
+							}
+							else {
+								this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
+							}
+						});
 					//diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
 					//			new vscode.Location(vscode.Uri.file(flaw.file), range), flaw.cweDesc)];
 

@@ -122,8 +122,20 @@ export class RawAPI {
             });
         });
 
-        return buildArray;
+        return this.sort(buildArray).slice(0,10);
     }
+
+    // sort the builds from newest to oldest
+    private sort(nodes: BuildNode[]): BuildNode[] {
+		return nodes.sort((n1, n2) => {
+			if (n1.id < n2.id) 
+                return 1;
+            else if (n1.id > n2.id)
+                return -1;
+			else
+				return 0;
+		});
+	}
 
      // get the build data for a build via API call
      getBuildInfo(buildID: string): Thenable<FlawInfo[]> {

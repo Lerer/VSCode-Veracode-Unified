@@ -17,14 +17,14 @@ export class ConfigSettings {
 
     loadSettings() {
         // this will always work, since the contribution point is set in package.json
-        if(!(this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode")) )
-            throw new Error("No veracode section found in User's config file");
+        /*if(!(*/this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode"); // ) )
+            //throw new Error("No veracode section found in User's config file");
     }
     
     saveSettings() { }
 
     getCredsFile(): string {
-        try {
+        //try {
             // this needs to be here to pick up when the user changes the settings
             this.loadSettings();
 
@@ -40,8 +40,8 @@ export class ConfigSettings {
             }
 
             return filename;
-        }
-        finally {}  // either catch or finally is required
+        //}
+        //finally {}  // either catch or finally is required
     }
 
     getRefreshCount(): number {
@@ -49,12 +49,12 @@ export class ConfigSettings {
     }
 
     getLogLevel(): log.LogLevelDesc {
-        try {
+        //try {
             // this needs to be here to pick up when the user changes the settings
             this.loadSettings();
 
             let level: string;
-            // get() will return the default value from package.json - 'null' if nothing is actually set
+            // get() will return the default value from package.json - 'info' if nothing is actually set
             level = this.m_veracodeConfigSettings.get("logLevel");
             
             // default to 'info' (redundant due to default setting in package.json)
@@ -98,7 +98,7 @@ export class ConfigSettings {
 
             console.log("Log level set to: " + level);
             return realLevel;
-        }
-        finally {}  // either catch or finally is required
+        //}
+        //finally {}  // either catch or finally is required
     }
 }
