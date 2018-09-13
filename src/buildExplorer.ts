@@ -126,6 +126,7 @@ export class BuildExplorer {
 	//private m_treeDataProvider: any;
 	private m_diagCollection: vscode.DiagnosticCollection;
 	//private m_diagArray: vscode.Diagnostic[];
+	private m_workspaceFiles:string[];	//vscode.TextDocument[];
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
@@ -166,25 +167,43 @@ export class BuildExplorer {
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
 								this.mapSeverityToVSCodeSeverity(flaw.severity));
 					
-					// really fussy on path - can't handle dual path-seps as a single one
-					vscode.workspace.findFiles('**' + path.sep + flaw.file, '', 1)
-						.then( (uri) => {
-							diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-								new vscode.Location(uri[0], range), flaw.desc)];
+					/* VSCode's workspace.findFiles() is case-sensative(even on Windows)
+					 * so I need to write my own file matcher
+					 */
+					this.findFile(flaw);
 
-							// can't add to diag arrays for a URI, need to set instead?!?
-							diagArray = this.m_diagCollection.get(uri[0]);
-							if( isUndefined(diagArray) )
-							{
-								diagArray = [];
-								diagArray.push(diag);
-							
-								this.m_diagCollection.set(uri[0], diagArray);
+
+
+					if(false) {
+					// really fussy on path - can't handle dual path-seps as a single one
+					let fp = '**/' /*+ path.sep*/ + flaw.file;
+					vscode.workspace.findFiles(fp /*'**' + path.sep + flaw.file*/, '', 1)
+						.then( (uri) => {
+							if(uri.length == 0) {
+								log.info("Unable to match file " + flaw.file);
 							}
 							else {
-								this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
-							}
+								diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+									new vscode.Location(uri[0], range), flaw.desc)];
+
+								// can't add to diag arrays for a URI, need to set instead?!?
+								diagArray = this.m_diagCollection.get(uri[0]);
+								if( isUndefined(diagArray) )
+								{
+									diagArray = [];
+									diagArray.push(diag);
+								
+									this.m_diagCollection.set(uri[0], diagArray);
+								}
+								else {
+									this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
+								}
+						    }
+						}, (uri) => {
+							log.info("Unable to find file " + flaw.file);
 						});
+					}	// if(false)
+
 					//diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
 					//			new vscode.Location(vscode.Uri.file(flaw.file), range), flaw.cweDesc)];
 
@@ -206,6 +225,22 @@ export class BuildExplorer {
 			case '3': return vscode.DiagnosticSeverity.Warning;
 			default: return vscode.DiagnosticSeverity.Information;
 			// ignore VSCode's 'Hints'
+		}
+	}
+
+	private findFile(flaw:FlawInfo) {
+		if(this.m_workspaceFiles === undefined) {
+
+			this.m_workspaceFiles = new Array();
+
+			let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+			// put them all in lower case, for later matching
+			vscode.workspace.textDocuments.forEach( (doc) => {
+				//let d:vscode.TextDocument;
+				let fn = doc.fileName.toLowerCase();
+				this.m_workspaceFiles.push(fn )
+			})
 		}
 	}
 

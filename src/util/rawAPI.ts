@@ -128,9 +128,14 @@ export class RawAPI {
     // sort the builds from newest to oldest
     private sort(nodes: BuildNode[]): BuildNode[] {
 		return nodes.sort((n1, n2) => {
-			if (n1.id < n2.id) 
+
+            // TODO: better answer than parseInt() every time
+            let num1 = parseInt(n1.id, 10);
+            let num2 = parseInt(n2.id, 10);
+            
+			if (num1 < num2) 
                 return 1;
-            else if (n1.id > n2.id)
+            else if (num1 > num2)
                 return -1;
 			else
 				return 0;
@@ -181,11 +186,11 @@ export class RawAPI {
                                 staticflaw.flaw.forEach( (flaw) => {
 
                                     // do some normalization - strip leading path seps (needed for file finding later)
-                                    let t_path = path.join(flaw.$.sourcefilepath.startsWith(path.sep) ? flaw.$.sourcefilepath.substring(1) : flaw.$.sourcefilepath,
-                                                            flaw.$.sourcefile);
+                                    //let t_path = path.join(flaw.$.sourcefilepath.startsWith(path.sep) ? flaw.$.sourcefilepath.substring(1) : flaw.$.sourcefilepath,
+                                    //                        flaw.$.sourcefile);
 
                                     let f = new FlawInfo(flaw.$.issueid, 
-                                        t_path, //flaw.$.sourcefilepath  flaw.$.sourcefile,
+                                        /*t_path, //flaw.$.sourcefilepath */ flaw.$.sourcefile,
                                         flaw.$.line,
                                         flaw.$.severity,
                                         cwe.$.cwename,
