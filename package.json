@@ -34,11 +34,19 @@
                     "description": "Number of scans to show for each application"
                 },
                 "veracode.logLevel": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "default": "info",
                     "description": "Logging level (changes need a restart to take effect)",
                     "enum": [
-                        "trace", "debug", "info", "warning", "error", "silent"
+                        "trace",
+                        "debug",
+                        "info",
+                        "warning",
+                        "error",
+                        "silent"
                     ]
                 }
             }
@@ -87,12 +95,14 @@
     },
     "dependencies": {
         "@types/bluebird": "^3.5.5",
+        "@types/glob": "^5.0.35",
         "@types/loglevel": "^1.5.3",
         "@types/request": "^2.47.1",
         "@types/request-promise": "^4.1.42",
         "@types/sjcl": "^1.0.28",
         "@types/xml2js": "^0.4.3",
         "filereader": "^0.10.3",
+        "glob": "^7.1.3",
         "loglevel": "^1.6.1",
         "request-promise": "^4.2.2",
         "request-promise-native": "^1.0.5",

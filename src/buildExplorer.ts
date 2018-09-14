@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as path from "path";
 import log = require('loglevel');
+import glob = require('glob');
 
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
@@ -110,10 +111,6 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 
         return null;
 	}
-
-    //public provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): vscode.ProviderResult<string> {
-    //    return null; //this.model.getContent(uri).then(content => content);
-	//}
 }
 
 /*
@@ -160,6 +157,10 @@ export class BuildExplorer {
 				var diagArray = [];
 				// Diag collection?  handle re-loading of flaws??
 
+				// file matching constants
+				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+				let options = {cwd: root, nocase: true, ignore: 'target/**', absolute: true};
+
 				flaws.forEach( (flaw) => {
 					// why -1 for range??  Needed, but why?
 					var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
@@ -167,54 +168,47 @@ export class BuildExplorer {
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
 								this.mapSeverityToVSCodeSeverity(flaw.severity));
 					
-					/* VSCode's workspace.findFiles() is case-sensative(even on Windows)
-					 * so I need to write my own file matcher
+					/* VSCode's workspace.findFiles() is case-sensative (even on Windows)
+					 * so I need to do my own file matching
 					 */
-					this.findFile(flaw);
+					
+					 // note on the glob library - need to convert Windows '\' to '/'
+					 // (the backslash will look like an esacpe char)
+					glob('**/' + flaw.file, options, (err, matches) => {
+						if(err)
+							log.debug('Glob file match error ' + err.message);
+						else {
+							log.debug('Glob file match ' + matches);
 
+							// take the first, log info if thre are multiple matches
+							if(matches.length > 1) {
+								log.info("Multiple matches found for source file " + flaw.file +
+									": " + matches);
+							}
 
+							let uri = vscode.Uri.file(matches[0]);
 
-					if(false) {
-					// really fussy on path - can't handle dual path-seps as a single one
-					let fp = '**/' /*+ path.sep*/ + flaw.file;
-					vscode.workspace.findFiles(fp /*'**' + path.sep + flaw.file*/, '', 1)
-						.then( (uri) => {
-							if(uri.length == 0) {
-								log.info("Unable to match file " + flaw.file);
+							diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+								new vscode.Location(uri, range), flaw.desc)];
+
+							// can't add to diag arrays for a URI, need to (re-)set instead?!?
+							diagArray = this.m_diagCollection.get(uri);
+							if( isUndefined(diagArray) )
+							{
+								diagArray = [];
+								diagArray.push(diag);
+							
+								this.m_diagCollection.set(uri, diagArray);
 							}
 							else {
-								diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-									new vscode.Location(uri[0], range), flaw.desc)];
+								this.m_diagCollection.set(uri, [].concat(diagArray, diag));
+							}
+						}
 
-								// can't add to diag arrays for a URI, need to set instead?!?
-								diagArray = this.m_diagCollection.get(uri[0]);
-								if( isUndefined(diagArray) )
-								{
-									diagArray = [];
-									diagArray.push(diag);
-								
-									this.m_diagCollection.set(uri[0], diagArray);
-								}
-								else {
-									this.m_diagCollection.set(uri[0], [].concat(diagArray, diag));
-								}
-						    }
-						}, (uri) => {
-							log.info("Unable to find file " + flaw.file);
-						});
-					}	// if(false)
-
-					//diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-					//			new vscode.Location(vscode.Uri.file(flaw.file), range), flaw.cweDesc)];
-
-					
+					});
 				});
-
-				// TODO: better answer here - project root path??
-				//var uri = vscode.workspace.workspaceFolders[0].uri;
-
-				//this.m_diagCollection.set(uri, diagArray);
-			});
+			}
+		);
     }
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
@@ -228,37 +222,4 @@ export class BuildExplorer {
 		}
 	}
 
-	private findFile(flaw:FlawInfo) {
-		if(this.m_workspaceFiles === undefined) {
-
-			this.m_workspaceFiles = new Array();
-
-			let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-
-			// put them all in lower case, for later matching
-			vscode.workspace.textDocuments.forEach( (doc) => {
-				//let d:vscode.TextDocument;
-				let fn = doc.fileName.toLowerCase();
-				this.m_workspaceFiles.push(fn )
-			})
-		}
-	}
-
-    /*
-    private reveal(): Thenable<void> {
-		const node = this.getNode();
-		if (node) {
-			return this.ftpViewer.reveal(node);
-		}
-		return null;
-	}
-
-	private getNode(): FtpNode {
-		if (vscode.window.activeTextEditor) {
-			if (vscode.window.activeTextEditor.document.uri.scheme === 'ftp') {
-				return { resource: vscode.window.activeTextEditor.document.uri, isDirectory: false };
-			}
-		}
-		return null;
-    } */
 }
