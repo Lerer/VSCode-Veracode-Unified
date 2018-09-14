@@ -132,7 +132,7 @@ export class RawAPI {
             // TODO: better answer than parseInt() every time
             let num1 = parseInt(n1.id, 10);
             let num2 = parseInt(n2.id, 10);
-            
+
 			if (num1 < num2) 
                 return 1;
             else if (num1 > num2)
@@ -185,12 +185,15 @@ export class RawAPI {
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
 
-                                    // do some normalization - strip leading path seps (needed for file finding later)
-                                    //let t_path = path.join(flaw.$.sourcefilepath.startsWith(path.sep) ? flaw.$.sourcefilepath.substring(1) : flaw.$.sourcefilepath,
-                                    //                        flaw.$.sourcefile);
+                                    // don't import fixed flaws
+                                    if(flaw.$.remediation_status != 'Fixed')
+                                    {
+                                        let parts = flaw.$.sourcefilepath.split('/');
+                                        let parent = parts[parts.length - 2];
+                                        //let tpath = path.join(t2, flaw.$.sourcefile);
 
                                     let f = new FlawInfo(flaw.$.issueid, 
-                                        /*t_path, //flaw.$.sourcefilepath */ flaw.$.sourcefile,
+                                        parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                         flaw.$.line,
                                         flaw.$.severity,
                                         cwe.$.cwename,
@@ -198,6 +201,7 @@ export class RawAPI {
 
                                     log.debug("Flaw: [" + f.toString() + "]");
                                     flawArray.push( f );
+                                    }
                                 });
                             });
                         });

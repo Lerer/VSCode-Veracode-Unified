@@ -159,7 +159,7 @@ export class BuildExplorer {
 
 				// file matching constants
 				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-				let options = {cwd: root, nocase: true, ignore: 'target/**', absolute: true};
+				let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
 
 				flaws.forEach( (flaw) => {
 					// why -1 for range??  Needed, but why?
