@@ -33,6 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
     //controller.activate();
 
     m_buildExplorer = new BuildExplorer(context, configSettings);
+    
 }
 
 // this method is called when your extension is deactivated

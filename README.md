@@ -1,65 +1,43 @@
-# veracode README
+# What is this?
 
-This is the README for your extension "veracode". After writing up a brief description, we recommend including the following sections.
+This is a plugin for Visual Studio Code that enables integration with the Veracode platform.
 
-## Features
+Currently, this only supports flaw download, but will be enhanced to support upload as well in the future.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+# Upgrading
 
-For example if there is an image subfolder under your extension project workspace:
+Nothing yet.
 
-\!\[feature X\]\(images/feature-x.png\)
+# Installing
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+This is not (yet) in the VSCode marketplace so you need to do a manual install.  Grab the latest file from the releases directory and do a manual install.  See here: https://stackoverflow.com/questions/42017617/how-to-install-vs-code-extension-manually
 
-## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+# Configuration
 
-## Extension Settings
+This extension contributes the following settings (default values are shown in parenthesis):
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+* `veracode.credsFile`: (<your_home_directory>/.veracode/credentials)
+  * a text file of the format 
+  ```
+  [default]
+  veracode_api_key_id = <your_veracode_api_id>
+  veracode_api_key_secret = <your_veracodoe_api_key>
+  ```
+* `veracode.refreshCount`: (10) how many scans to show for each app.  Scans will be shown from newest to oldest.
+* `veracode.logLevel`: (info) Logging level that shows in the Debug Console.  Will require a restart for changes to take effect.
 
-For example:
+# Building
 
-This extension contributes the following settings:
+Clone
 
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+run npm install
 
-## Known Issues
+# Help with problems
+Please log an issue.  You can get extra info by changing the veracode.logLevel to debug and viewing the debug log in the Developer Tools Console.  Help --> Developer Tools (Console tab)
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+# A note about the author
+While it's true that I work for Veracode, this is NOT an official Veracode-supported product.  I've written this in my own time in an effort to help support our customers.
 
-## Release Notes
 
-Users appreciate release notes as you update your extension.
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on OSX or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on OSX or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (OSX) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
