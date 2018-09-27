@@ -5,8 +5,11 @@ import * as os from "os";
 import * as path from "path";
 import log = require('loglevel');
 
+import { ProxySettings } from './proxyHandler';
+
 //import * as fs from "fs";
 //import { isNullOrUndefined } from "util";
+
 
 
 export class ConfigSettings {
@@ -17,15 +20,13 @@ export class ConfigSettings {
 
     loadSettings() {
         // this will always work, since the contribution point is set in package.json
-        /*if(!(*/this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode"); // ) )
-            //throw new Error("No veracode section found in User's config file");
+        this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode");
     }
     
     saveSettings() { }
 
     getCredsFile(): string {
-        //try {
-            // this needs to be here to pick up when the user changes the settings
+
             this.loadSettings();
 
             let filename: string;
@@ -34,14 +35,11 @@ export class ConfigSettings {
             filename = this.m_veracodeConfigSettings.get("credsFile");
             if( !filename || filename == "null")
             {
-                //throw new Error("No credentials file specified in User's config file");
                 // default to $HOME/.veracode/credentials
                 filename = os.homedir + path.sep + ".veracode" + path.sep + "credentials";
             }
 
             return filename;
-        //}
-        //finally {}  // either catch or finally is required
     }
 
     getRefreshCount(): number {
@@ -54,8 +52,6 @@ export class ConfigSettings {
     }
 
     getLogLevel(): log.LogLevelDesc {
-        //try {
-            // this needs to be here to pick up when the user changes the settings
             this.loadSettings();
 
             let level: string;
@@ -103,7 +99,25 @@ export class ConfigSettings {
 
             console.log("Log level set to: " + level);
             return realLevel;
-        //}
-        //finally {}  // either catch or finally is required
+    }
+
+    getProxySettings(): ProxySettings {
+
+        this.loadSettings();
+
+        let addr = this.m_veracodeConfigSettings.get('proxyAddr');
+
+        // if the addr is null, assume no proxy settings
+        if(addr === '')
+            return null;
+
+        // else, get the rest of the settings
+        let port = this.m_veracodeConfigSettings.get('proxyPort');
+        let name = this.m_veracodeConfigSettings.get('proxyName');
+        let pw = this.m_veracodeConfigSettings.get('proxyPassword');
+
+        var proxySettings = new ProxySettings(addr, port, name, pw);
+        log.debug('Proxy Settings: ' + proxySettings.toString());
+        return proxySettings;
     }
 }

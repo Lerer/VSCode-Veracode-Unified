@@ -7,6 +7,7 @@ import glob = require('glob');
 
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
+import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { NodeType, FlawInfo } from "./util/dataTypes";
 import { BuildNode } from "./util/dataTypes";
@@ -15,8 +16,8 @@ import { isUndefined } from 'util';
 
 export class BuildModel {
 
-    m_credsFile: string;
-    m_credsHandler: CredsHandler = null;
+    //m_credsFile: string;
+    //m_credsHandler: CredsHandler = null;
     m_apiHandler: RawAPI;
 	//private nodes: Map<string, BuildNode> = new Map<string, BuildNode>();
 
@@ -24,11 +25,12 @@ export class BuildModel {
 
         // get the creds
         try {
-            this.m_credsFile = this.m_configSettings.getCredsFile();
-            this.m_credsHandler = new CredsHandler();
-			this.m_credsHandler.loadCredsFromFile(this.m_credsFile);
+            //let credsFile = this.m_configSettings.getCredsFile();
+            let credsHandler = new CredsHandler(this.m_configSettings);
+			//credsHandler.loadCredsFromFile(credsFile);
 
-			this.m_apiHandler = new RawAPI(this.m_credsHandler);
+			let proxyHandler = new ProxyHandler(this.m_configSettings);
+			this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
 
         } catch(e) {
             log.error(e.message);

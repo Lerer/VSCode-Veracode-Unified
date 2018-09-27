@@ -53,6 +53,26 @@
                         "error",
                         "silent"
                     ]
+                },
+                "veracode.proxyAddr": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the IP address of the proxy server (e.g., http://company-proxy.com)"
+                },
+                "veracode.proxyPort": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "Specifies the port number on the proxy server (as a number)"
+                },
+                "veracode.proxyName": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the login name on the proxy server"
+                },
+                "veracode.proxyPassword": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the login password on the proxy server"
                 }
             }
         },

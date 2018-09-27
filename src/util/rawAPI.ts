@@ -10,7 +10,8 @@ import xml2js = require('xml2js');
 import { NodeType } from "./dataTypes";
 import { BuildNode } from "./dataTypes";
 import { FlawInfo } from "./dataTypes";
-import { CredsHandler } from "../util/credsHandler";
+import { CredsHandler } from "./credsHandler";
+import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
@@ -20,11 +21,16 @@ export class RawAPI {
     m_userAgent: string = 'veracode-vscode-plugin';
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
+    m_proxySettings: ProxySettings = null;
 
-    constructor(private m_credsHandler: CredsHandler) { }
+    constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler) { 
+    }
 
     // generic API caller
     private getRequest(endpoint: string, params: object): Thenable<string> {
+
+        // reload, in case the user changed the data
+        //this.m_proxySettings = this.m_proxyHandler.proxySettings;    
 
         // funky for the Veracode HMAC generation
         let queryString = '';
@@ -35,9 +41,23 @@ export class RawAPI {
                 queryString += keys[key] + '=' + params[keys[key]];
         }
 
+        let proxyString = null;
+        if(this.m_proxySettings !== null) {
+            // split the proxy ip addr after the dbl-slash
+            let n = this.m_proxySettings.proxyIpAddr.indexOf('://');
+            let preamble = this.m_proxySettings.proxyIpAddr.substring(0, n+3);
+            let postamble = this.m_proxySettings.proxyIpAddr.substring(n+3);
+
+            proxyString = preamble + this.m_proxySettings.proxyUserName + ':' +
+                            this.m_proxySettings.proxyPassword + '@' +
+                            postamble + ':' +
+                            this.m_proxySettings.proxtPort;
+        }
+
         // set up options for the request call
         var options = {
             url: this.m_protocol + this.m_host + endpoint,
+            proxy: proxyString,
             qs: params,
             headers: {
                 'User-Agent': this.m_userAgent,
@@ -52,6 +72,7 @@ export class RawAPI {
         };
        
         log.info("Calling Veracode with: " + options.url + queryString);
+        log.info("Veracode proxy settings: " + proxyString);
 
         // request = network access, so return the Promise of data later
         return new Promise( (resolve, reject) => {
@@ -73,6 +94,19 @@ export class RawAPI {
 
     // get the app list via API call
     getAppList(): Thenable<BuildNode[]> {
+
+        /* (re-)loading the creds and proxy info here should be sufficient to pick up 
+         * any changes by the user, as once they get the App List working they should 
+         * be good to go and not make more changes
+         */
+
+        // (re-)load the creds, in case the user changed them
+        this.m_credsHandler.loadCredsFromFile();
+
+        // (re-)load the proxy info, in case the user changed them
+        this.m_proxyHandler.loadProxySettings();
+        this.m_proxySettings = this.m_proxyHandler.proxySettings;
+
         return new Promise( (resolve, reject) => {
           this.getRequest("/api/5.0/getapplist.do", null).then( (rawXML) => {
                 resolve(this.handleAppList(rawXML));

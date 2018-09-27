@@ -1,5 +1,7 @@
 'use strict';
 
+import { ConfigSettings } from "./configSettings";
+
 import * as fs from "fs";
 import log = require('loglevel');
 
@@ -8,37 +10,36 @@ import log = require('loglevel');
 export class CredsHandler {
 
     // class properties
-    m_credsFile: string = null;
-    m_apiID: string = null;
-    m_apiKey: string = null;
+    //m_credsFile: string = null;
+    //m_apiID: string = null;
+    //m_apiKey: string = null;
     m_credsMap;
 
     // @constructor
-    constructor() {
-        //this.m_credsFile = credsFile;
+    constructor(private m_configSettings: ConfigSettings) {
         this.m_credsMap = new Map();
     }
 
-    loadCredsFromFile(credsFile: string): string {
-        // today, only 1 choice
-        this.m_credsFile = credsFile;
-        //return this.readCredsFromFile();
+    loadCredsFromFile(/*credsFile: string*/): string {
+        // get the creds file
+        let credsFile = this.m_configSettings.getCredsFile();
 
+        //this.m_credsFile = credsFile;
 
-        if(!this.m_credsFile)
-            throw new Error("Credentials file not set");
+        //if(!this.m_credsFile)
+        //    throw new Error("Credentials file not set");
 
-        log.info("reading creds from file: " + this.m_credsFile);
+        log.info("reading creds from file: " + credsFile);
 
         let data: string = null;
         try {
-            data = fs.readFileSync(this.m_credsFile, 'utf8');
+            data = fs.readFileSync(credsFile, 'utf8');
             log.debug("File data: " + data);
         }
         catch (error) {
             // file does not exist, is not readable, etc.
-            console.log(error.message);
-            throw new Error("Creds file, " + this.m_credsFile + ", not found, or is not readable");
+            log.info(error.message);
+            throw new Error("Creds file, " + credsFile + ", not found, or is not readable");
         }
 
         // parse the data from the file
