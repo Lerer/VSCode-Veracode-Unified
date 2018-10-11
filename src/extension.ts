@@ -5,9 +5,6 @@
 import * as vscode from 'vscode';
 import log = require('loglevel');
 
-//import { MainController } from "./mainController";
-//let controller:MainController;
-
 import { BuildExplorer } from "./buildExplorer";
 let m_buildExplorer: BuildExplorer;
 
@@ -28,16 +25,12 @@ export function activate(context: vscode.ExtensionContext) {
     log.setLevel(logLevel);
     //console.log("Log level set to: " + logLevel);
 
-    // fire up the Main Controller, which does all the work
-    //controller = new MainController(context, configSettings);
-    //controller.activate();
-
+    // fire up the Build Explorer, which does all the work
     m_buildExplorer = new BuildExplorer(context, configSettings);
     
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    //controller.deactivate();
     //m_buildExplorer.deactivate();
 }
