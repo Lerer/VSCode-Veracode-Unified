@@ -43,21 +43,27 @@ export class RawAPI {
 
         let proxyString = null;
         if(this.m_proxySettings !== null) {
+            if(this.m_proxySettings.proxyUserName !== '') {
             // split the proxy ip addr after the dbl-slash
-            let n = this.m_proxySettings.proxyIpAddr.indexOf('://');
-            let preamble = this.m_proxySettings.proxyIpAddr.substring(0, n+3);
-            let postamble = this.m_proxySettings.proxyIpAddr.substring(n+3);
+            let n = this.m_proxySettings.proxyHost.indexOf('://');
+            let preamble = this.m_proxySettings.proxyHost.substring(0, n+3);
+            let postamble = this.m_proxySettings.proxyHost.substring(n+3);
 
             proxyString = preamble + this.m_proxySettings.proxyUserName + ':' +
                             this.m_proxySettings.proxyPassword + '@' +
                             postamble + ':' +
-                            this.m_proxySettings.proxtPort;
+                            this.m_proxySettings.proxyPort;
+            }
+            else{
+                proxyString = this.m_proxySettings.proxyHost + ':' + this.m_proxySettings.proxyPort
+            }
         }
 
         // set up options for the request call
         var options = {
             url: this.m_protocol + this.m_host + endpoint,
             proxy: proxyString,
+            strictSSL: false,       // needed for testing, self-signed cert in Burp proxy
             qs: params,
             headers: {
                 'User-Agent': this.m_userAgent,
@@ -77,8 +83,10 @@ export class RawAPI {
         // request = network access, so return the Promise of data later
         return new Promise( (resolve, reject) => {
             request(options, (err, res, body) => {
-                if(err)
+                if(err) {
                     reject(err);
+                    throw(err);
+                }
                 else if (res.statusCode !== 200) {
                     err = new Error("Unexpected status code: " + res.statusCode);
                     err.res = res;
@@ -107,11 +115,12 @@ export class RawAPI {
         this.m_proxyHandler.loadProxySettings();
         this.m_proxySettings = this.m_proxyHandler.proxySettings;
 
-        return new Promise( (resolve, reject) => {
-          this.getRequest("/api/5.0/getapplist.do", null).then( (rawXML) => {
+        return new Promise( (resolve, reject) => {          
+          this.getRequest("/api/5.0/getapplist.do", null)
+            .then( (rawXML) => {
                 resolve(this.handleAppList(rawXML));
-            });
-        }); 
+            })
+        });
     }
 
     // parse the app list from raw XML into an array of BuildNodes
