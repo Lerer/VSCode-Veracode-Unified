@@ -54,10 +54,10 @@
                         "silent"
                     ]
                 },
-                "veracode.proxyAddr": {
+                "veracode.proxyHost": {
                     "type": "string",
                     "default": "",
-                    "description": "Specifies the IP address of the proxy server (e.g., http://company-proxy.com)"
+                    "description": "Specifies the name of the proxy server (e.g., https://company-proxy.com)"
                 },
                 "veracode.proxyPort": {
                     "type": "number",

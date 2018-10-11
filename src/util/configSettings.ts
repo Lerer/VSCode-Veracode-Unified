@@ -105,7 +105,7 @@ export class ConfigSettings {
 
         this.loadSettings();
 
-        let addr = this.m_veracodeConfigSettings.get('proxyAddr');
+        let addr = this.m_veracodeConfigSettings.get('proxyHost');
 
         // if the addr is null, assume no proxy settings
         if(addr === '')
