@@ -85,7 +85,6 @@ export class RawAPI {
             request(options, (err, res, body) => {
                 if(err) {
                     reject(err);
-                    throw(err);
                 }
                 else if (res.statusCode !== 200) {
                     err = new Error("Unexpected status code: " + res.statusCode);
@@ -119,6 +118,8 @@ export class RawAPI {
           this.getRequest("/api/5.0/getapplist.do", null)
             .then( (rawXML) => {
                 resolve(this.handleAppList(rawXML));
+            }, (err) => {
+                log.error('getAppList ' + err);
             })
         });
     }
