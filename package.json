@@ -60,9 +60,9 @@
                     "description": "Specifies the name of the proxy server (e.g., https://company-proxy.com)"
                 },
                 "veracode.proxyPort": {
-                    "type": "number",
-                    "default": 0,
-                    "description": "Specifies the port number on the proxy server (as a number)"
+                    "type": "string",
+                    "default": "0",
+                    "description": "Specifies the port number on the proxy server (e.g., 8080)"
                 },
                 "veracode.proxyName": {
                     "type": "string",
