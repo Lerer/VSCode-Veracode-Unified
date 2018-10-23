@@ -37,8 +37,14 @@ export class RawAPI {
         if(params !== null) {
             var keys = Object.keys(params);
             queryString = '?';
+            let index = 0;
             for(var key in keys)
+            {   
+                if(index > 0)
+                    queryString += '&';
                 queryString += keys[key] + '=' + params[keys[key]];
+                index++;
+            }
         }
 
         let proxyString = null;
@@ -132,7 +138,7 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.applist.app.forEach( (entry) => {
-                let a = new BuildNode(NodeType.Application, entry.$.app_name, entry.$.app_id);
+                let a = new BuildNode(NodeType.Application, entry.$.app_name, entry.$.app_id, '0');
 
                 log.debug("App: [" + a.toString() + "]");
                 appArray.push( a );
@@ -143,33 +149,46 @@ export class RawAPI {
     }
 
     // get the children of the App (aka sandboxes and scans)
-    public getAppChildren(appID: string, sandboxCount: number, scanCount: number): Thenable<BuildNode[]> {
-
-        let nodeArray:Thenable<BuildNode[]>;
-
-        // get sandboxes
-        nodeArray = this.getSandboxList(appID, sandboxCount);
-
-        // get Scans
+    public getAppChildren(node: BuildNode, sandboxCount: number, scanCount: number): Thenable<BuildNode[]> {
 
         return new Promise( (resolve, reject) => {
 
-            // get sandboxes, if any
+            let sandboxArray:/*Thenable<*/BuildNode[]/*>*/ = [];
+            let buildArray:/*Thenable<*/BuildNode[]/*>*/;
 
-            // get scans
+            if(node.type === NodeType.Application) {
+                // get sandboxes, but only for Apps (no nested sandboxes)
+                this.getSandboxList(node, sandboxCount)
+                    .then( (array) => {
+                        sandboxArray = array;
+                    
+                        // get builds
+                        this.getBuildList(node, scanCount)
+                            .then( (array) => {
+                                buildArray = array;
 
-            resolve(nodeArray);
+                                //finalArray = sandboxArray;
+                                resolve(sandboxArray.concat(buildArray));
+                            }
+                        );
+                    
+                    }
+                );
+            }
+            else {
+                // else, we're working on a sandbox, so builds only
+                resolve(this.getBuildList(node, scanCount));
+            }
         });
-
     }
 
     // get the sandbox list for an app via API call
-    getSandboxList(appID: string, count: number): Thenable<BuildNode[]>{
+    getSandboxList(app: BuildNode, count: number): Thenable<BuildNode[]>{
         return new Promise( (resolve, reject) => {
-          this.getRequest("/api/5.0/getsandboxlist.do", {"app_id": appID}).then( (rawXML) => {
+          this.getRequest("/api/5.0/getsandboxlist.do", {"app_id": app.id}).then( (rawXML) => {
                 resolve(this.handleSandboxList(rawXML, count));
             });
-        }); 
+        });
     }
 
     // parse the sandbox list from raw XML into an array of BuildNodes
@@ -183,8 +202,8 @@ export class RawAPI {
             // check to see if there are any sandboxes
             if(result.sandboxlist.hasOwnProperty("sandbox")) {
                 result.sandboxlist.sandbox.forEach( (entry) => {
-                    let b = new BuildNode(NodeType.Sandbox, entry.$.sandbox_name, entry.$.sandbox_id);
-                    
+                    let b = new BuildNode(NodeType.Sandbox, entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
+
                     log.debug("Sandbox: [" + b.toString() + "]");
                     nodeArray.push( b );
                 });
@@ -200,11 +219,19 @@ export class RawAPI {
     }
 
      // get the build list for an app via API call
-     getBuildList(appID: string, count: number): Thenable<BuildNode[]> {
+     getBuildList(node: BuildNode, count: number): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {
-          this.getRequest("/api/5.0/getbuildlist.do", {"app_id": appID}).then( (rawXML) => {
-                resolve(this.handleBuildList(rawXML, count));
-            });
+            if(node.type === NodeType.Application) {
+                this.getRequest("/api/5.0/getbuildlist.do", {"app_id": node.id}).then( (rawXML) => {
+                    resolve(this.handleBuildList(rawXML, count));
+                });
+            }
+            else {
+                // a sandbox
+                this.getRequest("/api/5.0/getbuildlist.do", {"app_id": node.parent, "sandbox_id": node.id}).then( (rawXML) => {
+                    resolve(this.handleBuildList(rawXML, count));
+                });
+            }
         }); 
     }
 
@@ -216,7 +243,7 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
-                let b = new BuildNode(NodeType.Scan, entry.$.version, entry.$.build_id);
+                let b = new BuildNode(NodeType.Scan, entry.$.version, entry.$.build_id, '0');
 
                 log.debug("Build: [" + b.toString() + "]");
                 buildArray.push( b );

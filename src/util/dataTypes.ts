@@ -16,14 +16,16 @@ export enum NodeType {
  */
 export class BuildNode {
 
-    constructor(private m_type: NodeType, private m_name: string, private m_id: string) { }
+    // parent is the appID for sandboxes, set to 0 for apps
+    constructor(private m_type: NodeType, private m_name: string, private m_id: string, private m_parent: string) { }
 
     public get type(): NodeType { return this.m_type; }
     public get name(): string { return this.m_name;}      // the Map key??
     public get id(): string { return this.m_id; }
+    public get parent(): string { return this.m_parent; }
 
     public toString(): string {
-        return("Name: " + this.m_name + ", ID: " + this.m_id);
+        return("Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
     }
 }
 

@@ -57,7 +57,7 @@ export class BuildModel {
 		//let finalPromise = Promise.all([sandboxPromise, buildPromise]);
 		//return finalPromise;
 
-		return this.m_apiHandler.getAppChildren(node.id, sandboxCount, scanCount);
+		return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);
 		
 	}
  
@@ -93,6 +93,9 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	}
 
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
+
+		// is it necessary to have a command for the NodeType.Application ??
+
 		return {
 			label: element.name,
 			collapsibleState: (element.type === NodeType.Application || element.type === NodeType.Sandbox) ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
@@ -110,7 +113,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 
     /* 
      * called with element == undefined for the root(s) - aka Apps
-     * called again for each app to get the builds
+     * called again for each app to get the sandboxes and/or builds
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
 		return element ? this.m_model.getChildren(element) : this.m_model.roots;
