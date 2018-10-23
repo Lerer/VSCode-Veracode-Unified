@@ -42,13 +42,22 @@ export class ConfigSettings {
             return filename;
     }
 
-    getRefreshCount(): number {
+    getScanCount(): number {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();
 
-        let count = this.m_veracodeConfigSettings.get("refreshCount");
+        let count = this.m_veracodeConfigSettings.get("scanCount");
 
         return count;
+    }
+
+    getSandboxCount(): number {
+        // this needs to be here to pick up when the user changes the settings
+        this.loadSettings();
+
+        let count = this.m_veracodeConfigSettings.get("sandboxCount");
+
+        return parseInt(count, 10);
     }
 
     getLogLevel(): log.LogLevelDesc {

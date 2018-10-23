@@ -142,6 +142,63 @@ export class RawAPI {
         return appArray;
     }
 
+    // get the children of the App (aka sandboxes and scans)
+    public getAppChildren(appID: string, sandboxCount: number, scanCount: number): Thenable<BuildNode[]> {
+
+        let nodeArray:Thenable<BuildNode[]>;
+
+        // get sandboxes
+        nodeArray = this.getSandboxList(appID, sandboxCount);
+
+        // get Scans
+
+        return new Promise( (resolve, reject) => {
+
+            // get sandboxes, if any
+
+            // get scans
+
+            resolve(nodeArray);
+        });
+
+    }
+
+    // get the sandbox list for an app via API call
+    getSandboxList(appID: string, count: number): Thenable<BuildNode[]>{
+        return new Promise( (resolve, reject) => {
+          this.getRequest("/api/5.0/getsandboxlist.do", {"app_id": appID}).then( (rawXML) => {
+                resolve(this.handleSandboxList(rawXML, count));
+            });
+        }); 
+    }
+
+    // parse the sandbox list from raw XML into an array of BuildNodes
+    private handleSandboxList(rawXML: string, count: number): BuildNode[] {
+        log.debug("handling sandbox List: " + rawXML);
+
+        let nodeArray = [];
+
+        xml2js.parseString(rawXML, (err, result) => {
+
+            // check to see if there are any sandboxes
+            if(result.sandboxlist.hasOwnProperty("sandbox")) {
+                result.sandboxlist.sandbox.forEach( (entry) => {
+                    let b = new BuildNode(NodeType.Sandbox, entry.$.sandbox_name, entry.$.sandbox_id);
+                    
+                    log.debug("Sandbox: [" + b.toString() + "]");
+                    nodeArray.push( b );
+                });
+            }
+        });
+
+
+        // sorting works!?!
+
+
+        return this.sort(nodeArray).slice(0,count);
+
+    }
+
      // get the build list for an app via API call
      getBuildList(appID: string, count: number): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {

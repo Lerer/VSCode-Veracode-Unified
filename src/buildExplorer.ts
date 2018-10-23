@@ -43,10 +43,22 @@ export class BuildModel {
 		return this.m_apiHandler.getAppList();	
 	}
 
-	// will be the scans (or sandboxes later)
+	// will be the scans and sandboxes
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
-		let count = this.m_configSettings.getRefreshCount();
-		return this.m_apiHandler.getBuildList(node.id, count);
+		let sandboxCount = this.m_configSettings.getSandboxCount();
+		let scanCount = this.m_configSettings.getScanCount();
+
+		// hold sandboxes (if any) in a temp array
+		//let sandboxPromise = this.m_apiHandler.getSandboxList(node.id, sandboxCount);
+
+		// append the scans to the temp array with the sandboxes
+		//let buildPromise = this.m_apiHandler.getBuildList(node.id, scanCount);
+
+		//let finalPromise = Promise.all([sandboxPromise, buildPromise]);
+		//return finalPromise;
+
+		return this.m_apiHandler.getAppChildren(node.id, sandboxCount, scanCount);
+		
 	}
  
 	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
@@ -83,7 +95,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
 		return {
 			label: element.name,
-			collapsibleState: element.type === NodeType.Application ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
+			collapsibleState: (element.type === NodeType.Application || element.type === NodeType.Sandbox) ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
 			command: element.type === NodeType.Application ? {
 				command: 'veracodeExplorer.getAppBuilds',
 				arguments: [element.id],

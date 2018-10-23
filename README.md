@@ -22,9 +22,9 @@ This extension contributes the following settings (default values are shown in p
   ```
   [default]
   veracode_api_key_id = <your_veracode_api_id>
-  veracode_api_key_secret = <your_veracodoe_api_key>
+  veracode_api_key_secret = <your_veracode_api_key>
   ```
-* `veracode.refreshCount`: (10) how many scans to show for each app.  Scans will be shown from newest to oldest.
+* `veracode.scanCount`: (10) how many scans to show for each app.  Scans will be shown from newest to oldest.
 * `veracode.logLevel`: (info) Logging level that shows in the Debug Console.  Will require a restart for changes to take effect.
 
 # Building
