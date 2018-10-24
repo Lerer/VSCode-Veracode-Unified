@@ -1,7 +1,6 @@
 'use strict';
 
 //import * as vscode from 'vscode';
-import * as path from "path";
 
 import log = require('loglevel');
 import request = require('request');
@@ -153,8 +152,8 @@ export class RawAPI {
 
         return new Promise( (resolve, reject) => {
 
-            let sandboxArray:/*Thenable<*/BuildNode[]/*>*/ = [];
-            let buildArray:/*Thenable<*/BuildNode[]/*>*/;
+            let sandboxArray:BuildNode[];
+            let buildArray:BuildNode[];
 
             if(node.type === NodeType.Application) {
                 // get sandboxes, but only for Apps (no nested sandboxes)
@@ -167,13 +166,9 @@ export class RawAPI {
                             .then( (array) => {
                                 buildArray = array;
 
-                                //finalArray = sandboxArray;
                                 resolve(sandboxArray.concat(buildArray));
-                            }
-                        );
-                    
-                    }
-                );
+                            });
+                    });
             }
             else {
                 // else, we're working on a sandbox, so builds only
@@ -210,12 +205,7 @@ export class RawAPI {
             }
         });
 
-
-        // sorting works!?!
-
-
         return this.sort(nodeArray).slice(0,count);
-
     }
 
      // get the build list for an app via API call

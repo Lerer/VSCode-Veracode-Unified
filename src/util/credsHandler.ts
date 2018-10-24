@@ -10,9 +10,6 @@ import log = require('loglevel');
 export class CredsHandler {
 
     // class properties
-    //m_credsFile: string = null;
-    //m_apiID: string = null;
-    //m_apiKey: string = null;
     m_credsMap;
 
     // @constructor
@@ -20,14 +17,9 @@ export class CredsHandler {
         this.m_credsMap = new Map();
     }
 
-    loadCredsFromFile(/*credsFile: string*/): string {
+    loadCredsFromFile(): string {
         // get the creds file
         let credsFile = this.m_configSettings.getCredsFile();
-
-        //this.m_credsFile = credsFile;
-
-        //if(!this.m_credsFile)
-        //    throw new Error("Credentials file not set");
 
         log.info("reading creds from file: " + credsFile);
 

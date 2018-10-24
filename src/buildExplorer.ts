@@ -16,18 +16,13 @@ import { isUndefined } from 'util';
 
 export class BuildModel {
 
-    //m_credsFile: string;
-    //m_credsHandler: CredsHandler = null;
     m_apiHandler: RawAPI;
-	//private nodes: Map<string, BuildNode> = new Map<string, BuildNode>();
 
 	constructor(private m_configSettings: ConfigSettings) {
 
         // get the creds
         try {
-            //let credsFile = this.m_configSettings.getCredsFile();
             let credsHandler = new CredsHandler(this.m_configSettings);
-			//credsHandler.loadCredsFromFile(credsFile);
 
 			let proxyHandler = new ProxyHandler(this.m_configSettings);
 			this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
@@ -48,36 +43,13 @@ export class BuildModel {
 		let sandboxCount = this.m_configSettings.getSandboxCount();
 		let scanCount = this.m_configSettings.getScanCount();
 
-		// hold sandboxes (if any) in a temp array
-		//let sandboxPromise = this.m_apiHandler.getSandboxList(node.id, sandboxCount);
-
-		// append the scans to the temp array with the sandboxes
-		//let buildPromise = this.m_apiHandler.getBuildList(node.id, scanCount);
-
-		//let finalPromise = Promise.all([sandboxPromise, buildPromise]);
-		//return finalPromise;
-
-		return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);
-		
+		return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);		
 	}
  
 	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
 		return this.m_apiHandler.getBuildInfo(buildID);
 	}
-
-	// maybe sort by Sandboxes before builds??
-	/*
-	private sort(nodes: BuildNode[]): BuildNode[] {
-		return nodes.sort((n1, n2) => {
-			if (n1.id < n2.id) 
-				return -1;
-			else
-				return 0;
-		});
-	}
-	*/
 }
-
 
 
 export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode> {
@@ -94,7 +66,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
 
-		// is it necessary to have a command for the NodeType.Application ??
+		// TODO: is it necessary to have a command for the NodeType.Application ??
 
 		return {
 			label: element.name,
@@ -120,6 +92,9 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	}
 
 	public getParent(element: BuildNode): BuildNode {
+
+		// TODO: wassup with this - ever called??
+		
 		//const parent = element.resource.with({ path: dirname(element.resource.path) });
         //return parent.path !== '//' ? { resource: parent, isDirectory: true } : null;
         log.debug("Tree Item - getParent");
@@ -231,9 +206,9 @@ export class BuildExplorer {
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
 	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
 		switch(sev) {
-			case '5':
-			case '4': return vscode.DiagnosticSeverity.Error;
-			case '3': return vscode.DiagnosticSeverity.Warning;
+			case '5':													// Veracode Very-High
+			case '4': return vscode.DiagnosticSeverity.Error;			// Veracode High
+			case '3': return vscode.DiagnosticSeverity.Warning;			// Veracode Medium
 			default: return vscode.DiagnosticSeverity.Information;
 			// ignore VSCode's 'Hints'
 		}

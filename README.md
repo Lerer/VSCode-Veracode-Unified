@@ -24,8 +24,13 @@ This extension contributes the following settings (default values are shown in p
   veracode_api_key_id = <your_veracode_api_id>
   veracode_api_key_secret = <your_veracode_api_key>
   ```
-* `veracode.scanCount`: (10) how many scans to show for each app.  Scans will be shown from newest to oldest.
+* `veracode.scanCount`: (10) Number of scans to show for each app.  Scans will be shown from newest to oldest.
+* `veracode.sandboxCount`: (5) Number of sandboxes to show for each app
 * `veracode.logLevel`: (info) Logging level that shows in the Debug Console.  Will require a restart for changes to take effect.
+* `veracode.proxyHost`: (none) Proxy host name (e.g., https://my-proxy.com)
+* `veracode.proxyPort`: (none) Port on the proxy host (e.g., 8080)
+* `veracode.proxyName`: (none) Username if the proxy host requires a login 
+* `veracode.proxyPassword`: (none) Password if the proxy host requires a login
 
 # Building
 

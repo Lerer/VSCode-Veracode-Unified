@@ -7,10 +7,6 @@ import log = require('loglevel');
 
 import { ProxySettings } from './proxyHandler';
 
-//import * as fs from "fs";
-//import { isNullOrUndefined } from "util";
-
-
 
 export class ConfigSettings {
 
@@ -33,7 +29,7 @@ export class ConfigSettings {
 
             // get() will return the default value from package.json - 'null' if nothing is actually set
             filename = this.m_veracodeConfigSettings.get("credsFile");
-            if( !filename || filename == "null")
+            if( !filename || filename == "")
             {
                 // default to $HOME/.veracode/credentials
                 filename = os.homedir + path.sep + ".veracode" + path.sep + "credentials";
@@ -57,7 +53,8 @@ export class ConfigSettings {
 
         let count = this.m_veracodeConfigSettings.get("sandboxCount");
 
-        return parseInt(count, 10);
+        //return parseInt(count, 10);
+        return count;
     }
 
     getLogLevel(): log.LogLevelDesc {

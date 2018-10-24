@@ -26,11 +26,8 @@
             "title": "Veracode",
             "properties": {
                 "veracode.credsFile": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "default": "null",
+                    "type": "string",
+                    "default": "",
                     "description": "Specifies the absolute filepath for the API Credentials"
                 },
                 "veracode.scanCount": {
@@ -75,9 +72,9 @@
                     "description": "Specifies the login password on the proxy server"
                 },
                 "veracode.sandboxCount": {
-                    "type": "string",
-                    "default": "5",
-                    "description": "Specifies the maximum number of sandboxes to show in the Explorer view"   
+                    "type": "number",
+                    "default": 5,
+                    "description": "Specifies the maximum number of sandboxes to show for each application"   
                 }
             }
         },
