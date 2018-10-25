@@ -57,21 +57,14 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	}
 
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
-
-		// TODO: is it necessary to have a command for the NodeType.Application ??
-
 		return {
 			label: element.name,
-			collapsibleState: (element.type === NodeType.Application || element.type === NodeType.Sandbox) ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
-			command: element.type === NodeType.Application ? null /*{
-				command: 'veracodeExplorer.getAppBuilds',
-				arguments: [element.id],
-				title: 'Get App Builds'
-			} */: {
+			collapsibleState: element.type === NodeType.Scan ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
+			command: element.type === NodeType.Scan ? {
 				command: 'veracodeExplorer.getBuildResults',
 				arguments: [element.id],
 				title: 'Get Build Results'
-			}
+			} : null
 		};
 	}
 
@@ -105,10 +98,9 @@ export class BuildExplorer {
 
 	private m_buildViewer: vscode.TreeView<BuildNode>;
 	private m_buildModel: BuildModel;
-	//private m_treeDataProvider: any;
 	private m_diagCollection: vscode.DiagnosticCollection;
 	//private m_diagArray: vscode.Diagnostic[];
-	private m_workspaceFiles:string[];	//vscode.TextDocument[];
+	//private m_workspaceFiles:string[];	//vscode.TextDocument[];
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
@@ -123,12 +115,7 @@ export class BuildExplorer {
         let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => treeDataProvider.refresh());
         m_context.subscriptions.push(disposable);
 
-
-
-
-        //disposable = vscode.commands.registerCommand('veracodeExplorer.getAppBuilds', (appID) => this.getBuildsForApp(appID));
-		//m_context.subscriptions.push(disposable);
-		
+		// create the 'getBuildResults' command - called when the user clicks on a scan
 		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
 		m_context.subscriptions.push(disposable);
 		
@@ -138,12 +125,6 @@ export class BuildExplorer {
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
     }
-
-	/*
-    private getBuildsForApp(appID: string) {
-        log.debug("getBuildsForApp: " + appID);
-	}
-	*/
 
 	private getBuildResults(buildID: string) {
 		this.m_buildModel.getBuildInfo(buildID)
@@ -198,7 +179,6 @@ export class BuildExplorer {
 								this.m_diagCollection.set(uri, [].concat(diagArray, diag));
 							}
 						}
-
 					});
 				});
 			}
