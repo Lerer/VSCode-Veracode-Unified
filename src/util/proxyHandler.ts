@@ -33,6 +33,7 @@ export class ProxyHandler {
     public loadProxySettings() {
         this.m_proxySettings = this.m_configSettings.getProxySettings();
     }
+    
     public get proxySettings(): ProxySettings {
         return this.m_proxySettings;
     }

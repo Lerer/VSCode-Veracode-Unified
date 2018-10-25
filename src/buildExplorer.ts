@@ -1,7 +1,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as path from "path";
 import log = require('loglevel');
 import glob = require('glob');
 
@@ -20,17 +19,9 @@ export class BuildModel {
 
 	constructor(private m_configSettings: ConfigSettings) {
 
-        // get the creds
-        try {
-            let credsHandler = new CredsHandler(this.m_configSettings);
-
-			let proxyHandler = new ProxyHandler(this.m_configSettings);
-			this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
-
-        } catch(e) {
-            log.error(e.message);
-            vscode.window.showErrorMessage(e.message);
-        }
+		let credsHandler = new CredsHandler(this.m_configSettings);
+		let proxyHandler = new ProxyHandler(this.m_configSettings);
+		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
 	}
 
     // roots are going to be the Apps
@@ -46,6 +37,7 @@ export class BuildModel {
 		return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);		
 	}
  
+	// get the flaws from a specific build/scan
 	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
 		return this.m_apiHandler.getBuildInfo(buildID);
 	}
@@ -71,11 +63,11 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 		return {
 			label: element.name,
 			collapsibleState: (element.type === NodeType.Application || element.type === NodeType.Sandbox) ? vscode.TreeItemCollapsibleState.Collapsed : void 0,
-			command: element.type === NodeType.Application ? {
+			command: element.type === NodeType.Application ? null /*{
 				command: 'veracodeExplorer.getAppBuilds',
 				arguments: [element.id],
 				title: 'Get App Builds'
-			} : {
+			} */: {
 				command: 'veracodeExplorer.getBuildResults',
 				arguments: [element.id],
 				title: 'Get Build Results'
@@ -86,11 +78,13 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
     /* 
      * called with element == undefined for the root(s) - aka Apps
      * called again for each app to get the sandboxes and/or builds
+	 * called again for each sandbox to get the builds
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
 		return element ? this.m_model.getChildren(element) : this.m_model.roots;
 	}
 
+	/*
 	public getParent(element: BuildNode): BuildNode {
 
 		// TODO: wassup with this - ever called??
@@ -99,10 +93,9 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
         //return parent.path !== '//' ? { resource: parent, isDirectory: true } : null;
         log.debug("Tree Item - getParent");
 
-        // need to store the parent ID (app ID or Sandbox ID)??
-
         return null;
 	}
+	*/
 }
 
 /*
@@ -123,26 +116,35 @@ export class BuildExplorer {
         const treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
 		//context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('veracode', treeDataProvider));
 
-        // first param must match the view name from package.json
+        // link the TreeDataProvider to the Veracode Explorer view
 		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider });
 
+		// link the 'Refresh' command to a method
         let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => treeDataProvider.refresh());
         m_context.subscriptions.push(disposable);
 
-        disposable = vscode.commands.registerCommand('veracodeExplorer.getAppBuilds', (appID) => this.getBuildsForApp(appID));
-		m_context.subscriptions.push(disposable);
+
+
+
+        //disposable = vscode.commands.registerCommand('veracodeExplorer.getAppBuilds', (appID) => this.getBuildsForApp(appID));
+		//m_context.subscriptions.push(disposable);
 		
 		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
 		m_context.subscriptions.push(disposable);
 		
+
+
+
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
     }
 
+	/*
     private getBuildsForApp(appID: string) {
         log.debug("getBuildsForApp: " + appID);
 	}
-	
+	*/
+
 	private getBuildResults(buildID: string) {
 		this.m_buildModel.getBuildInfo(buildID)
 			.then( (flaws) => {
@@ -213,5 +215,4 @@ export class BuildExplorer {
 			// ignore VSCode's 'Hints'
 		}
 	}
-
 }
