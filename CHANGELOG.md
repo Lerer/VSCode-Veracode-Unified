@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.0.3] 
+- download only
+- internal clean-up
+- fixed a problem with not clearing the previous scan's results
+
 ## [0.0.2] 
 - download only
 - added proxy support
