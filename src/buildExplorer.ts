@@ -99,8 +99,6 @@ export class BuildExplorer {
 	private m_buildViewer: vscode.TreeView<BuildNode>;
 	private m_buildModel: BuildModel;
 	private m_diagCollection: vscode.DiagnosticCollection;
-	//private m_diagArray: vscode.Diagnostic[];
-	//private m_workspaceFiles:string[];	//vscode.TextDocument[];
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
@@ -118,19 +116,16 @@ export class BuildExplorer {
 		// create the 'getBuildResults' command - called when the user clicks on a scan
 		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
 		m_context.subscriptions.push(disposable);
-		
-
-
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
     }
 
 	private getBuildResults(buildID: string) {
-		this.m_buildModel.getBuildInfo(buildID)
+		this.m_buildModel.getBuildInfo(buildID)		// new scan, clear the results from the last scan
 			.then( (flaws) => {
+				this.m_diagCollection.clear();
 				var diagArray = [];
-				// Diag collection?  handle re-loading of flaws??
 
 				// file matching constants
 				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
