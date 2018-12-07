@@ -324,7 +324,8 @@ export class RawAPI {
                                         parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                         flaw.$.line,
                                         flaw.$.severity,
-                                        cwe.$.cwename,
+                                        // cwe.$.cweid,         
+                                        cwe.$.cwename,          // 3-word CWE description (category)??
                                         flaw.$.description);
 
                                     log.debug("Flaw: [" + f.toString() + "]");

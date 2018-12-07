@@ -7,7 +7,9 @@
 export enum NodeType {
     Application = 1,
     Sandbox,
-    Scan
+    Scan,
+    FlawSort,
+    Flaw
 }
 
 /*

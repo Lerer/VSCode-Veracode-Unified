@@ -31,6 +31,14 @@ export class BuildModel {
 
 	// will be the scans and sandboxes
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
+
+		// get either app children --> sandboxes and scans
+		// OR, scan children = Flaw categories
+
+
+
+		
+
 		let sandboxCount = this.m_configSettings.getSandboxCount();
 		let scanCount = this.m_configSettings.getScanCount();
 
@@ -123,6 +131,16 @@ export class BuildExplorer {
 	private getBuildResults(buildID: string) {
 		this.m_buildModel.getBuildInfo(buildID)		// new scan, clear the results from the last scan
 			.then( (flaws) => {
+
+
+
+
+
+
+
+
+
+
 				this.m_diagCollection.clear();
 				var diagArray = [];
 
@@ -141,7 +159,7 @@ export class BuildExplorer {
 					 * VSCode's workspace.findFiles() is case-sensative (even on Windows)
 					 * so I need to do my own file matching
 					 */
-					
+										 
 					 // note on the glob library - need to convert Windows '\' to '/'
 					 // (the backslash will look like an esacpe char)
 					glob('**/' + flaw.file, options, (err, matches) => {
