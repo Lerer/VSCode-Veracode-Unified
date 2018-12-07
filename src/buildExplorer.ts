@@ -49,7 +49,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-    constructor(private readonly m_model: BuildModel) { }
+    constructor(private readonly m_buildModel: BuildModel) { }
 
     // a bit sloppy in that it always refreshes from the root...??
 	public refresh(): any {
@@ -74,13 +74,12 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	 * called again for each sandbox to get the builds
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
-		return element ? this.m_model.getChildren(element) : this.m_model.roots;
+		return element ? this.m_buildModel.getChildren(element) : this.m_buildModel.roots;
 	}
 
 	/*
+	// optional method, only required for certain cases
 	public getParent(element: BuildNode): BuildNode {
-
-		// TODO: wassup with this - ever called??
 		
 		//const parent = element.resource.with({ path: dirname(element.resource.path) });
         //return parent.path !== '//' ? { resource: parent, isDirectory: true } : null;

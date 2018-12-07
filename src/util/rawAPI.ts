@@ -273,9 +273,19 @@ export class RawAPI {
     private handleDetailedReport(rawXML: string): FlawInfo[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
-        let flawArray = [];
+        var flawArray = [];
+        let result;
 
         xml2js.parseString(rawXML, (err, result) => {
+
+            // handle unfinished scans (e.g., scan created, but no files uploaded)
+            if(result.hasOwnProperty("error"))
+            {
+                log.info("No report available - has this scan finished?")
+                return flawArray;
+            }
+
+            log.debug('XML parsing done');
 
             /*
             result.detailedreport.severity[1].category[0].cwe[0].staticflaws[0].flaw[0].$.issueid
