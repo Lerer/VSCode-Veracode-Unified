@@ -137,7 +137,8 @@ export class BuildExplorer {
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
 								this.mapSeverityToVSCodeSeverity(flaw.severity));
 					
-					/* VSCode's workspace.findFiles() is case-sensative (even on Windows)
+					/* 
+					 * VSCode's workspace.findFiles() is case-sensative (even on Windows)
 					 * so I need to do my own file matching
 					 */
 					

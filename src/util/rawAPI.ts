@@ -274,7 +274,7 @@ export class RawAPI {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
         var flawArray = [];
-        let result;
+        //let result;
 
         xml2js.parseString(rawXML, (err, result) => {
 
