@@ -8,8 +8,15 @@ export enum NodeType {
     Application = 1,
     Sandbox,
     Scan,
-    FlawSort,
+    FlawCategory,
     Flaw
+}
+
+export enum NodeSubtype {
+    None = 0,
+    Severity = 1,
+    CWE,
+    File
 }
 
 /*
@@ -19,9 +26,10 @@ export enum NodeType {
 export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
-    constructor(private m_type: NodeType, private m_name: string, private m_id: string, private m_parent: string) { }
+    constructor(private m_type: NodeType, private m_subtype: NodeSubtype, private m_name: string, private m_id: string, private m_parent: string) { }
 
     public get type(): NodeType { return this.m_type; }
+    public get subtype(): NodeSubtype { return this.m_subtype; }
     public get name(): string { return this.m_name;}      // the Map key??
     public get id(): string { return this.m_id; }
     public get parent(): string { return this.m_parent; }

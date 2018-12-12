@@ -8,7 +8,7 @@ import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { NodeType, FlawInfo } from "./util/dataTypes";
+import { NodeType, FlawInfo, NodeSubtype } from "./util/dataTypes";
 import { BuildNode } from "./util/dataTypes";
 import { isUndefined } from 'util';
 
@@ -30,25 +30,33 @@ export class BuildModel {
 	}
 
 	// will be the scans and sandboxes
-	public getChildren(node: BuildNode): Thenable<BuildNode[]> {
+	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
 
 		// get either app children --> sandboxes and scans
-		// OR, scan children = Flaw categories
+		if(node.type === NodeType.Application || node.type === NodeType.Sandbox) {
 
+			let sandboxCount = this.m_configSettings.getSandboxCount();
+			let scanCount = this.m_configSettings.getScanCount();
+	
+			// if App or Sandbox, get scans
+			return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);
+		}
+		else if(node.type === NodeType.Scan) {
+			// else if scan, get flaw categories - default to severity
+			return this.m_apiHandler.getBuildInfo(node, NodeSubtype.Severity);
 
-
-		
-
-		let sandboxCount = this.m_configSettings.getSandboxCount();
-		let scanCount = this.m_configSettings.getScanCount();
-
-		return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);		
+		}
+		else {	// node type == flaw category
+			// get the flaws for this category
+			return this.m_apiHandler.getFlaws(node);
+		}
 	}
  
 	// get the flaws from a specific build/scan
-	public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
-		return this.m_apiHandler.getBuildInfo(buildID);
-	}
+	/*public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
+		
+		this.m_apiHandler.getBuildInfo(buildID);
+	} */
 }
 
 
@@ -67,8 +75,8 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
 		return {
 			label: element.name,
-			collapsibleState: element.type === NodeType.Scan ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
-			command: element.type === NodeType.Scan ? {
+			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
+			command: element.type === NodeType.Flaw ? {
 				command: 'veracodeExplorer.getBuildResults',
 				arguments: [element.id],
 				title: 'Get Build Results'
@@ -129,6 +137,8 @@ export class BuildExplorer {
     }
 
 	private getBuildResults(buildID: string) {
+
+		/*
 		this.m_buildModel.getBuildInfo(buildID)		// new scan, clear the results from the last scan
 			.then( (flaws) => {
 
@@ -143,18 +153,18 @@ export class BuildExplorer {
 
 				this.m_diagCollection.clear();
 				var diagArray = [];
-
+*/
 				// file matching constants
-				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-				let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
-
+//				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+//				let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
+/*
 				flaws.forEach( (flaw) => {
 					// why -1 for range??  Needed, but why?
 					var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
 					var diag = new vscode.Diagnostic(range, 
 								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
 								this.mapSeverityToVSCodeSeverity(flaw.severity));
-					
+*/					
 					/* 
 					 * VSCode's workspace.findFiles() is case-sensative (even on Windows)
 					 * so I need to do my own file matching
@@ -162,8 +172,8 @@ export class BuildExplorer {
 										 
 					 // note on the glob library - need to convert Windows '\' to '/'
 					 // (the backslash will look like an esacpe char)
-					glob('**/' + flaw.file, options, (err, matches) => {
-						if(err)
+//					glob('**/' + flaw.file, options, (err, matches) => {
+/*						if(err)
 							log.debug('Glob file match error ' + err.message);
 						else {
 							log.debug('Glob file match ' + matches);
@@ -194,8 +204,11 @@ export class BuildExplorer {
 						}
 					});
 				});
+				
 			}
+			
 		);
+		*/
     }
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6

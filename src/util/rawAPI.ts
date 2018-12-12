@@ -6,7 +6,7 @@ import log = require('loglevel');
 import request = require('request');
 import xml2js = require('xml2js');
 
-import { NodeType } from "./dataTypes";
+import { NodeType, NodeSubtype } from "./dataTypes";
 import { BuildNode } from "./dataTypes";
 import { FlawInfo } from "./dataTypes";
 import { CredsHandler } from "./credsHandler";
@@ -21,6 +21,7 @@ export class RawAPI {
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
     m_proxySettings: ProxySettings = null;
+    m_currentReport: any;
 
     constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler) { 
     }
@@ -137,7 +138,7 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.applist.app.forEach( (entry) => {
-                let a = new BuildNode(NodeType.Application, entry.$.app_name, entry.$.app_id, '0');
+                let a = new BuildNode(NodeType.Application, NodeSubtype.None, entry.$.app_name, entry.$.app_id, '0');
 
                 log.debug("App: [" + a.toString() + "]");
                 appArray.push( a );
@@ -197,7 +198,7 @@ export class RawAPI {
             // check to see if there are any sandboxes
             if(result.sandboxlist.hasOwnProperty("sandbox")) {
                 result.sandboxlist.sandbox.forEach( (entry) => {
-                    let b = new BuildNode(NodeType.Sandbox, entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
+                    let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
 
                     log.debug("Sandbox: [" + b.toString() + "]");
                     nodeArray.push( b );
@@ -233,7 +234,7 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
-                let b = new BuildNode(NodeType.Scan, entry.$.version, entry.$.build_id, '0');
+                let b = new BuildNode(NodeType.Scan, NodeSubtype.None, entry.$.version, entry.$.build_id, '0');
 
                 log.debug("Build: [" + b.toString() + "]");
                 buildArray.push( b );
@@ -261,20 +262,19 @@ export class RawAPI {
 	}
 
      // get the build data for a build via API call
-     getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
+     getBuildInfo(node: BuildNode, category: NodeSubtype): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {
-          this.getRequest("/api/5.0/detailedreport.do", {"build_id": buildID}).then( (rawXML) => {
-                resolve(this.handleDetailedReport(rawXML));
+          this.getRequest("/api/5.0/detailedreport.do", {"build_id": node.id}).then( (rawXML) => {
+                resolve(this.handleDetailedReport(rawXML, category));
             });
         }); 
     }
 
     // parse the detailed report and extract the flaws
-    private handleDetailedReport(rawXML: string): FlawInfo[] {
+    private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
-        var flawArray = [];
-        //let result;
+        var categoryArray = []; // TODO: move into 'error' check??
 
         xml2js.parseString(rawXML, (err, result) => {
 
@@ -282,10 +282,12 @@ export class RawAPI {
             if(result.hasOwnProperty("error"))
             {
                 log.info("No report available - has this scan finished?")
-                return flawArray;
+                return categoryArray;
             }
 
-            log.debug('XML parsing done');
+            // cache for later processing
+            this.m_currentReport = result;
+
 
             /*
             result.detailedreport.severity[1].category[0].cwe[0].staticflaws[0].flaw[0].$.issueid
@@ -304,6 +306,10 @@ export class RawAPI {
                             .flaw[n] = individual flaw detail
             */
 
+            if(category === NodeSubtype.Severity) {
+                categoryArray = this.getSeverities(result);     // TODO: use class variable
+            }
+/*
             result.detailedreport.severity.forEach( (sev) => {
 
                 // if we don't find flaws of a certain severity, this will be empty
@@ -337,7 +343,111 @@ export class RawAPI {
                     });
                 }
             });
+            */
         });
+
+        //return flawArray;
+        return categoryArray;
+    }
+
+    private getSeverities(result: any): BuildNode[] {
+
+        let categoryArray = [];
+
+        result.detailedreport.severity.forEach( (sev) => {
+
+            // if we don't find flaws of a certain severity, this will be empty
+            if(sev.hasOwnProperty("category")) {
+
+                let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.Severity, this.mapSeverityNumToName(sev.$.level), 
+                        sev.$.level, result.detailedreport.$.build_id);
+
+                categoryArray.push(n);
+            }
+        });
+        
+        return categoryArray;
+    }
+
+    private mapSeverityNumToName(sevNum: string): string {
+
+        let name:string;
+
+        switch (sevNum) {
+            case '5':
+                name = 'Very High';
+                break;
+            case '4':
+                name = 'High';
+                break;            
+            case '3':
+                name = 'Medium';
+                break;         
+            case '2':
+                name = 'Low';
+                break;         
+            case '1':
+                name = 'Very Low';
+                break; 
+            case '0':
+                name = 'Informational';
+                break;               
+            default:
+                name = 'Unknown';  
+        }
+
+        return name;
+    }
+
+    getFlaws(node: BuildNode):BuildNode[] {
+
+        let flawArray = [];
+
+        // incoming BuildNode is a Flaw Category
+        if(node.subtype === NodeSubtype.Severity) {
+
+            // severity[0] = VeryHigh, [1] = High, etc.
+            this.m_currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
+                cat.cwe.forEach( (cwe) => {
+                    cwe.staticflaws.forEach( (staticflaw) => {
+                        staticflaw.flaw.forEach( (flaw) => {
+
+                            // don't import fixed flaws
+                            if(flaw.$.remediation_status != 'Fixed')
+                            {
+                                let parts = flaw.$.sourcefilepath.split('/');
+                                let parent = parts[parts.length - 2];
+                                //let tpath = path.join(t2, flaw.$.sourcefile);
+
+                                let f = new BuildNode(NodeType.Flaw, 
+                                        NodeSubtype.None, 
+                                        '[Flaw ID] ' + flaw.$.issueid,
+                                        flaw.$.issueid,
+                                        node.id);
+
+                                flawArray.push(f);
+
+                                // TODO: sort array by flaw #
+
+                                
+                                /*
+                                let f = new FlawInfo(flaw.$.issueid, 
+                                    parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
+                                    flaw.$.line,
+                                    flaw.$.severity,
+                                    // cwe.$.cweid,         
+                                    cwe.$.cwename,          // 3-word CWE description (category)??
+                                    flaw.$.description);
+
+                                log.debug("Flaw: [" + f.toString() + "]");
+                                flawArray.push( f );
+                                */
+                            }
+                        });
+                    });
+                });
+            });
+        }
 
         return flawArray;
     }
