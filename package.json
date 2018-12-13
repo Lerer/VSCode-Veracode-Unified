@@ -2,7 +2,7 @@
     "name": "veracode",
     "displayName": "Veracode",
     "description": "Scan with Veracode",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "buzzcode",
     "engines": {
         "vscode": "^1.25.0"
@@ -74,7 +74,7 @@
                 "veracode.sandboxCount": {
                     "type": "number",
                     "default": 5,
-                    "description": "Specifies the maximum number of sandboxes to show for each application"   
+                    "description": "Specifies the maximum number of sandboxes to show for each application"
                 }
             }
         },
