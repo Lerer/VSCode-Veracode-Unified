@@ -22,6 +22,7 @@ export class RawAPI {
     m_host: string = 'analysiscenter.veracode.com';
     m_proxySettings: ProxySettings = null;
     m_currentReport: any;
+    m_flawCache: any;      // a dictionary to hold the flaw data
 
     constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler) { 
     }
@@ -399,9 +400,11 @@ export class RawAPI {
         return name;
     }
 
+    // get all the flaws in a specified category
     getFlaws(node: BuildNode):BuildNode[] {
 
         let flawArray = [];
+        this.m_flawCache = {};  // re-zero
 
         // incoming BuildNode is a Flaw Category
         if(node.subtype === NodeSubtype.Severity) {
@@ -415,22 +418,24 @@ export class RawAPI {
                             // don't import fixed flaws
                             if(flaw.$.remediation_status != 'Fixed')
                             {
-                                let parts = flaw.$.sourcefilepath.split('/');
-                                let parent = parts[parts.length - 2];
-                                //let tpath = path.join(t2, flaw.$.sourcefile);
-
-                                let f = new BuildNode(NodeType.Flaw, 
+                                let n = new BuildNode(NodeType.Flaw, 
                                         NodeSubtype.None, 
                                         '[Flaw ID] ' + flaw.$.issueid,
                                         flaw.$.issueid,
                                         node.id);
 
-                                flawArray.push(f);
+                                flawArray.push(n);
 
                                 // TODO: sort array by flaw #
 
+                                // Store the flaw data for later use when selected by the user?
+                                    // dict keyed on flawID?
+
+                                let parts = flaw.$.sourcefilepath.split('/');
+                                let parent = parts[parts.length - 2];
+                                //let tpath = path.join(t2, flaw.$.sourcefile);
+
                                 
-                                /*
                                 let f = new FlawInfo(flaw.$.issueid, 
                                     parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                     flaw.$.line,
@@ -440,8 +445,7 @@ export class RawAPI {
                                     flaw.$.description);
 
                                 log.debug("Flaw: [" + f.toString() + "]");
-                                flawArray.push( f );
-                                */
+                                this.m_flawCache[flaw.$.issueid] = f;
                             }
                         });
                     });
@@ -450,6 +454,14 @@ export class RawAPI {
         }
 
         return flawArray;
+    }
+
+    getFlawInfo(flawID: string): FlawInfo {
+
+        // TODO: check for valid ID
+        
+        return this.m_flawCache[flawID];
+
     }
 
 }

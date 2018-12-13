@@ -52,6 +52,11 @@ export class BuildModel {
 		}
 	}
  
+	// TODO: cleaner - give the API handler to the BuildExplorer class??
+	getFlawInfo(flawID: string): FlawInfo {
+		return this.m_apiHandler.getFlawInfo(flawID);
+	}
+
 	// get the flaws from a specific build/scan
 	/*public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
 		
@@ -77,14 +82,14 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 			label: element.name,
 			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
 			command: element.type === NodeType.Flaw ? {
-				command: 'veracodeExplorer.getBuildResults',
+				command: 'veracodeExplorer.getFlawInfo',
 				arguments: [element.id],
-				title: 'Get Build Results'
+				title: 'Get Flaw Info'
 			} : null
 		};
 	}
 
-    /* 
+    /*   TODO: cleanup
      * called with element == undefined for the root(s) - aka Apps
      * called again for each app to get the sandboxes and/or builds
 	 * called again for each sandbox to get the builds
@@ -129,86 +134,74 @@ export class BuildExplorer {
         m_context.subscriptions.push(disposable);
 
 		// create the 'getBuildResults' command - called when the user clicks on a scan
-		disposable = vscode.commands.registerCommand('veracodeExplorer.getBuildResults', (buildID) => this.getBuildResults(buildID));
+		disposable = vscode.commands.registerCommand('veracodeExplorer.getFlawInfo', (flawID) => this.getFlawInfo(flawID));
 		m_context.subscriptions.push(disposable);
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
     }
 
-	private getBuildResults(buildID: string) {
+	private getFlawInfo(flawID: string) {
 
 		/*
 		this.m_buildModel.getBuildInfo(buildID)		// new scan, clear the results from the last scan
 			.then( (flaws) => {
+				*/
 
+		this.m_diagCollection.clear();
+		var diagArray = [];
 
+		// file matching constants
+		let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
+		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
 
+		let flaw = this.m_buildModel.getFlawInfo(flawID);
 
-
-
-
-
-
-
-				this.m_diagCollection.clear();
-				var diagArray = [];
-*/
-				// file matching constants
-//				let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-//				let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
-/*
-				flaws.forEach( (flaw) => {
+				//flaws.forEach( (flaw) => {
 					// why -1 for range??  Needed, but why?
-					var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
-					var diag = new vscode.Diagnostic(range, 
-								'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
-								this.mapSeverityToVSCodeSeverity(flaw.severity));
-*/					
-					/* 
-					 * VSCode's workspace.findFiles() is case-sensative (even on Windows)
-					 * so I need to do my own file matching
-					 */
-										 
-					 // note on the glob library - need to convert Windows '\' to '/'
-					 // (the backslash will look like an esacpe char)
-//					glob('**/' + flaw.file, options, (err, matches) => {
-/*						if(err)
-							log.debug('Glob file match error ' + err.message);
-						else {
-							log.debug('Glob file match ' + matches);
-
-							// take the first, log info if thre are multiple matches
-							if(matches.length > 1) {
-								log.info("Multiple matches found for source file " + flaw.file +
-									": " + matches);
-							}
-
-							let uri = vscode.Uri.file(matches[0]);
-
-							diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-								new vscode.Location(uri, range), flaw.desc)];
-
-							// can't add to diag arrays for a URI, need to (re-)set instead?!?
-							diagArray = this.m_diagCollection.get(uri);
-							if( isUndefined(diagArray) )
-							{
-								diagArray = [];
-								diagArray.push(diag);
-							
-								this.m_diagCollection.set(uri, diagArray);
-							}
-							else {
-								this.m_diagCollection.set(uri, [].concat(diagArray, diag));
-							}
-						}
-					});
-				});
-				
-			}
-			
-		);
+		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
+		var diag = new vscode.Diagnostic(range, 
+					'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
+					this.mapSeverityToVSCodeSeverity(flaw.severity));
+		
+		/* 
+		* VSCode's workspace.findFiles() is case-sensative (even on Windows)
+		* so I need to do my own file matching
 		*/
+							
+		// note on the glob library - need to convert Windows '\' to '/'
+		// (the backslash will look like an esacpe char)
+		glob('**/' + flaw.file, options, (err, matches) => {
+			if(err)
+				log.debug('Glob file match error ' + err.message);
+			else {
+				log.debug('Glob file match ' + matches);
+
+				// take the first, log info if thre are multiple matches
+				if(matches.length > 1) {
+					log.info("Multiple matches found for source file " + flaw.file +
+						": " + matches);
+				}
+
+				let uri = vscode.Uri.file(matches[0]);
+
+				diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+					new vscode.Location(uri, range), flaw.desc)];
+
+				// can't add to diag arrays for a URI, need to (re-)set instead?!?
+				diagArray = this.m_diagCollection.get(uri);
+				if( isUndefined(diagArray) )
+				{
+					diagArray = [];
+					diagArray.push(diag);
+				
+					this.m_diagCollection.set(uri, diagArray);
+				}
+				else {
+					this.m_diagCollection.set(uri, [].concat(diagArray, diag));
+				}
+			}
+		});
     }
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
