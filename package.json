@@ -95,12 +95,44 @@
                     "light": "resources/light/refresh.svg",
                     "dark": "resources/dark/refresh.svg"
                 }
+            },
+            {
+                "command": "veracodeExplorer.sortSeverity",
+                "title": "Sort Flaws by Severity",
+                "category": "Veracode"   
+            },
+            {
+                "command": "veracodeExplorer.sortCwe",
+                "title": "Sort Flaws by CWE",
+                "category": "Veracode"   
+            },
+            {
+                "command": "veracodeExplorer.sortFile",
+                "title": "Sort Flaws by File",
+                "category": "Veracode"   
             }
         ],
         "menus": {
             "view/title": [
                 {
                     "command": "veracodeExplorer.refresh",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "veracodeExplorer.sortSeverity",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.sortCwe",
+                    "when": "view == veracodeExplorer",
+                    "group": "navigation"
+                },
+                {
+                    "command": "veracodeExplorer.sortFile",
                     "when": "view == veracodeExplorer",
                     "group": "navigation"
                 }

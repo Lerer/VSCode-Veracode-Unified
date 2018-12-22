@@ -199,7 +199,8 @@ export class RawAPI {
             // check to see if there are any sandboxes
             if(result.sandboxlist.hasOwnProperty("sandbox")) {
                 result.sandboxlist.sandbox.forEach( (entry) => {
-                    let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
+                    let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
+                        '{SB} ' + entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
 
                     log.debug("Sandbox: [" + b.toString() + "]");
                     nodeArray.push( b );
@@ -207,7 +208,7 @@ export class RawAPI {
             }
         });
 
-        return this.sort(nodeArray).slice(0,count);
+        return this.sortHighLow(nodeArray).slice(0,count);
     }
 
      // get the build list for an app via API call
@@ -235,18 +236,19 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
-                let b = new BuildNode(NodeType.Scan, NodeSubtype.None, entry.$.version, entry.$.build_id, '0');
+                let b = new BuildNode(NodeType.Scan, NodeSubtype.None, 
+                    '{scan} ' + entry.$.version, entry.$.build_id, '0');
 
                 log.debug("Build: [" + b.toString() + "]");
                 buildArray.push( b );
             });
         });
 
-        return this.sort(buildArray).slice(0,count);
+        return this.sortHighLow(buildArray).slice(0,count);
     }
 
     // sort the builds from newest to oldest
-    private sort(nodes: BuildNode[]): BuildNode[] {
+    private sortHighLow(nodes: BuildNode[]): BuildNode[] {
 		return nodes.sort((n1, n2) => {
 
             // TODO: better answer than parseInt() every time
@@ -256,6 +258,23 @@ export class RawAPI {
 			if (num1 < num2) 
                 return 1;
             else if (num1 > num2)
+                return -1;
+			else
+				return 0;
+		});
+    }
+    
+    // sort the other way (e.g., for flaws)
+    private sortLowHigh(nodes: BuildNode[]): BuildNode[] {
+		return nodes.sort((n1, n2) => {
+
+            // TODO: better answer than parseInt() every time
+            let num1 = parseInt(n1.id, 10);
+            let num2 = parseInt(n2.id, 10);
+
+			if (num1 > num2) 
+                return 1;
+            else if (num1 < num2)
                 return -1;
 			else
 				return 0;
@@ -453,7 +472,7 @@ export class RawAPI {
             });
         }
 
-        return flawArray;
+        return this.sortLowHigh(flawArray);
     }
 
     getFlawInfo(flawID: string): FlawInfo {

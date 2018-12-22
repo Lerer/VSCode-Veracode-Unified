@@ -8,8 +8,7 @@ import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { NodeType, FlawInfo, NodeSubtype } from "./util/dataTypes";
-import { BuildNode } from "./util/dataTypes";
+import { BuildNode, NodeType, FlawInfo, NodeSubtype } from "./util/dataTypes";
 import { isUndefined } from 'util';
 
 
@@ -29,7 +28,7 @@ export class BuildModel {
 		return this.m_apiHandler.getAppList();	
 	}
 
-	// will be the scans and sandboxes
+	// will be the scans, sandboxes, flaw categories and flaws
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
 
 		// get either app children --> sandboxes and scans
@@ -44,7 +43,6 @@ export class BuildModel {
 		else if(node.type === NodeType.Scan) {
 			// else if scan, get flaw categories - default to severity
 			return this.m_apiHandler.getBuildInfo(node, NodeSubtype.Severity);
-
 		}
 		else {	// node type == flaw category
 			// get the flaws for this category
@@ -56,12 +54,6 @@ export class BuildModel {
 	getFlawInfo(flawID: string): FlawInfo {
 		return this.m_apiHandler.getFlawInfo(flawID);
 	}
-
-	// get the flaws from a specific build/scan
-	/*public getBuildInfo(buildID: string): Thenable<FlawInfo[]> {
-		
-		this.m_apiHandler.getBuildInfo(buildID);
-	} */
 }
 
 
@@ -124,7 +116,6 @@ export class BuildExplorer {
 
 		this.m_buildModel = new BuildModel(this.m_configSettings);
         const treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
-		//context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('veracode', treeDataProvider));
 
         // link the TreeDataProvider to the Veracode Explorer view
 		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider });
@@ -133,21 +124,24 @@ export class BuildExplorer {
         let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => treeDataProvider.refresh());
         m_context.subscriptions.push(disposable);
 
-		// create the 'getBuildResults' command - called when the user clicks on a scan
+		// create the 'getFlawInfo' command - called when the user clicks on a flaw
 		disposable = vscode.commands.registerCommand('veracodeExplorer.getFlawInfo', (flawID) => this.getFlawInfo(flawID));
 		m_context.subscriptions.push(disposable);
+
+		// Flaw sorting commands
+		disposable = vscode.commands.registerCommand('veracodeExplorer.sortSeverity', () => this.setFlawSort(NodeSubtype.Severity));
+		m_context.subscriptions.push(disposable);
+		disposable = vscode.commands.registerCommand('veracodeExplorer.sortCwe', () => this.setFlawSort(NodeSubtype.CWE));
+		m_context.subscriptions.push(disposable);
+		disposable = vscode.commands.registerCommand('veracodeExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
+		m_context.subscriptions.push(disposable);		
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
     }
 
+	// get the info for a flaw and display it in the Problems view
 	private getFlawInfo(flawID: string) {
-
-		/*
-		this.m_buildModel.getBuildInfo(buildID)		// new scan, clear the results from the last scan
-			.then( (flaws) => {
-				*/
-
 		this.m_diagCollection.clear();
 		var diagArray = [];
 
@@ -157,8 +151,7 @@ export class BuildExplorer {
 
 		let flaw = this.m_buildModel.getFlawInfo(flawID);
 
-				//flaws.forEach( (flaw) => {
-					// why -1 for range??  Needed, but why?
+		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
 		var diag = new vscode.Diagnostic(range, 
 					'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
@@ -203,6 +196,10 @@ export class BuildExplorer {
 			}
 		});
     }
+
+	private setFlawSort(sort:NodeSubtype) {
+		log.debug('Flaw sort :' + sort);
+	}
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
 	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
