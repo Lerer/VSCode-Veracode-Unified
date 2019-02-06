@@ -19,6 +19,27 @@ export enum NodeSubtype {
     File
 }
 
+export function sortNumToName(sortNum:number) {
+
+    let sortName:string;
+
+    switch (sortNum) {
+        case 1:
+            sortName = 'Severity';
+            break;
+        case 2:
+            sortName = 'CWE';
+            break;
+        case 3:
+            sortName = 'Filename';
+            break;
+        default:
+            sortName = 'unknown';
+    }
+
+    return sortName;
+}
+
 /*
  * a node in the Explorer view
  * can represent an App, a Sandbox, or a Scan(Build)

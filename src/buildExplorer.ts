@@ -8,7 +8,7 @@ import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { BuildNode, NodeType, FlawInfo, NodeSubtype } from "./util/dataTypes";
+import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
 import { isUndefined } from 'util';
 
 
@@ -123,17 +123,19 @@ export class BuildExplorer {
 	private m_buildModel: BuildModel;
 	private m_diagCollection: vscode.DiagnosticCollection;
 	private m_sortBarInfo: vscode.StatusBarItem;
+	private m_treeDataProvider: BuildTreeDataProvider;
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
 		this.m_buildModel = new BuildModel(this.m_configSettings);
-        const treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
+		this.m_treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
+		//const treDataProvider = this.m_treeDataProvider;
 
         // link the TreeDataProvider to the Veracode Explorer view
-		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider });
+		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider: this.m_treeDataProvider });
 
 		// link the 'Refresh' command to a method
-        let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => treeDataProvider.refresh());
+        let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => this.m_treeDataProvider.refresh());
         m_context.subscriptions.push(disposable);
 
 		// create the 'getFlawInfo' command - called when the user clicks on a flaw
@@ -218,26 +220,13 @@ export class BuildExplorer {
 
 	private setFlawSort(sort:NodeSubtype) {
 
-		let sortName:string;
-
-		switch (sort) {
-			case 1:
-				sortName = 'Severity';
-				break;
-			case 2:
-				sortName = 'CWE';
-				break;
-			case 3:
-				sortName = 'Filename';
-				break;
-			default:
-				sortName = 'unknown';
-		}
+		let sortName = sortNumToName(sort);
 
 		log.debug('Flaw sort : ' + sortName);
 		this.m_buildModel.setFlawSorting(sort);
 
 		this.m_sortBarInfo.text = 'Flaw Sorting: ' + sortName;
+		this.m_treeDataProvider.refresh();
 	}
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
