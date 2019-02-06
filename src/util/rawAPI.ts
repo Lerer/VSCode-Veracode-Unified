@@ -462,11 +462,24 @@ export class RawAPI {
 
             // if we don't find flaws of a certain severity, this will be empty
             if(sev.hasOwnProperty("category")) {
+                sev.category.forEach( (cat) => {
+                    cat.cwe.forEach( (cwe) => {
+                        cwe.staticflaws.forEach( (staticflaw) => {
+                            staticflaw.flaw.forEach( (flaw) => {
 
-                let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.Severity, this.mapSeverityNumToName(sev.$.level), 
-                        sev.$.level, result.detailedreport.$.build_id);
+                                // don't add filename if it already exists 
+                                if(!categoryArray.find( (elem:BuildNode) => {
+                                    return elem.name == flaw.$.sourcefile;}) ) {
 
-                categoryArray.push(n);
+                                    let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.File, 
+                                        flaw.$.sourcefile, flaw.$.sourcefile, result.detailedreport.$.build_id);
+                
+                                    categoryArray.push(n);
+                                }
+                            });
+                        });
+                    });
+                });
             }
         });
         
@@ -483,49 +496,53 @@ export class RawAPI {
         this.m_flawCache = {};  // re-zero
 
         // incoming BuildNode is a Flaw Category
-        if(node.subtype === NodeSubtype.Severity) {
+        if(node.subtype === NodeSubtype.File) {
 
-            // severity[0] = VeryHigh, [1] = High, etc.
-            this.m_currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
-                cat.cwe.forEach( (cwe) => {
-                    cwe.staticflaws.forEach( (staticflaw) => {
-                        staticflaw.flaw.forEach( (flaw) => {
+            this.m_currentReport.detailedreport.severity.forEach( (sev) => {
+                 // if we don't find flaws of a certain severity, this will be empty
+                 if(sev.hasOwnProperty("category")) {
+                    sev.category.forEach( (cat) => {
+                        cat.cwe.forEach( (cwe) => {
+                            cwe.staticflaws.forEach( (staticflaw) => {
+                                staticflaw.flaw.forEach( (flaw) => {
 
-                            // don't import fixed flaws
-                            if(flaw.$.remediation_status != 'Fixed')
-                            {
-                                let n = new BuildNode(NodeType.Flaw, 
-                                        NodeSubtype.None, 
-                                        '[Flaw ID] ' + flaw.$.issueid,
-                                        flaw.$.issueid,
-                                        node.id);
+                                    // don't import fixed flaws
+                                    if(flaw.$.sourcefile == node.name && flaw.$.remediation_status != 'Fixed')
+                                    {
+                                        let n = new BuildNode(NodeType.Flaw, 
+                                                NodeSubtype.None, 
+                                                '[Flaw ID] ' + flaw.$.issueid,
+                                                flaw.$.issueid,
+                                                node.id);
 
-                                flawArray.push(n);
+                                        flawArray.push(n);
 
-                                // TODO: sort array by flaw #
+                                        // TODO: sort array by flaw #
 
-                                // Store the flaw data for later use when selected by the user?
-                                    // dict keyed on flawID?
+                                        // Store the flaw data for later use when selected by the user?
+                                            // dict keyed on flawID?
 
-                                let parts = flaw.$.sourcefilepath.split('/');
-                                let parent = parts[parts.length - 2];
-                                //let tpath = path.join(t2, flaw.$.sourcefile);
+                                        let parts = flaw.$.sourcefilepath.split('/');
+                                        let parent = parts[parts.length - 2];
+                                        //let tpath = path.join(t2, flaw.$.sourcefile);
 
-                                
-                                let f = new FlawInfo(flaw.$.issueid, 
-                                    parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
-                                    flaw.$.line,
-                                    flaw.$.severity,
-                                    // cwe.$.cweid,         
-                                    cwe.$.cwename,          // 3-word CWE description (category)??
-                                    flaw.$.description);
+                                        
+                                        let f = new FlawInfo(flaw.$.issueid, 
+                                            parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
+                                            flaw.$.line,
+                                            flaw.$.severity,
+                                            // cwe.$.cweid,         
+                                            cwe.$.cwename,          // 3-word CWE description (category)??
+                                            flaw.$.description);
 
-                                log.debug("Flaw: [" + f.toString() + "]");
-                                this.m_flawCache[flaw.$.issueid] = f;
-                            }
+                                        log.debug("Flaw: [" + f.toString() + "]");
+                                        this.m_flawCache[flaw.$.issueid] = f;
+                                    }
+                                });
+                            });
                         });
                     });
-                });
+                }
             });
         }
         else if(node.subtype === NodeSubtype.CWE) {
@@ -580,6 +597,51 @@ export class RawAPI {
                         });
                     });
                 }
+            });
+        }
+        else {      // default to severity
+
+            // severity[0] = VeryHigh, [1] = High, etc.
+            this.m_currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
+                cat.cwe.forEach( (cwe) => {
+                    cwe.staticflaws.forEach( (staticflaw) => {
+                        staticflaw.flaw.forEach( (flaw) => {
+
+                            // don't import fixed flaws
+                            if(flaw.$.remediation_status != 'Fixed')
+                            {
+                                let n = new BuildNode(NodeType.Flaw, 
+                                        NodeSubtype.None, 
+                                        '[Flaw ID] ' + flaw.$.issueid,
+                                        flaw.$.issueid,
+                                        node.id);
+
+                                flawArray.push(n);
+
+                                // TODO: sort array by flaw #
+
+                                // Store the flaw data for later use when selected by the user?
+                                    // dict keyed on flawID?
+
+                                let parts = flaw.$.sourcefilepath.split('/');
+                                let parent = parts[parts.length - 2];
+                                //let tpath = path.join(t2, flaw.$.sourcefile);
+
+                                
+                                let f = new FlawInfo(flaw.$.issueid, 
+                                    parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
+                                    flaw.$.line,
+                                    flaw.$.severity,
+                                    // cwe.$.cweid,         
+                                    cwe.$.cwename,          // 3-word CWE description (category)??
+                                    flaw.$.description);
+
+                                log.debug("Flaw: [" + f.toString() + "]");
+                                this.m_flawCache[flaw.$.issueid] = f;
+                            }
+                        });
+                    });
+                });
             });
         }
 
