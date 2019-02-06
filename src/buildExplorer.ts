@@ -14,10 +14,14 @@ import { isUndefined } from 'util';
 
 export class BuildModel {
 
-    m_apiHandler: RawAPI;
+	m_apiHandler: RawAPI;
+	m_flawSorting: NodeSubtype;
 
 	constructor(private m_configSettings: ConfigSettings) {
 
+		// default to sorting flaws by severity
+		//this.m_flawSorting = NodeSubtype.Severity;
+	
 		let credsHandler = new CredsHandler(this.m_configSettings);
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
@@ -42,7 +46,7 @@ export class BuildModel {
 		}
 		else if(node.type === NodeType.Scan) {
 			// else if scan, get flaw categories - default to severity
-			return this.m_apiHandler.getBuildInfo(node, NodeSubtype.Severity);
+			return this.m_apiHandler.getBuildInfo(node, this.m_flawSorting);
 		}
 		else {	// node type == flaw category
 			// get the flaws for this category
@@ -50,6 +54,13 @@ export class BuildModel {
 		}
 	}
  
+	public setFlawSorting(sort:NodeSubtype) {
+
+		// TODO: invalidate existing children
+
+		this.m_flawSorting = sort;
+	}
+
 	// TODO: cleaner - give the API handler to the BuildExplorer class??
 	getFlawInfo(flawID: string): FlawInfo {
 		return this.m_apiHandler.getFlawInfo(flawID);
@@ -111,6 +122,7 @@ export class BuildExplorer {
 	private m_buildViewer: vscode.TreeView<BuildNode>;
 	private m_buildModel: BuildModel;
 	private m_diagCollection: vscode.DiagnosticCollection;
+	private m_sortBarInfo: vscode.StatusBarItem;
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
@@ -134,7 +146,14 @@ export class BuildExplorer {
 		disposable = vscode.commands.registerCommand('veracodeExplorer.sortCwe', () => this.setFlawSort(NodeSubtype.CWE));
 		m_context.subscriptions.push(disposable);
 		disposable = vscode.commands.registerCommand('veracodeExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
-		m_context.subscriptions.push(disposable);		
+		m_context.subscriptions.push(disposable);	
+		
+		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);	// TODO: arbitrary number??
+		//this.m_sortBarInfo.text = "Flaw Sorting: Severity";
+		this.setFlawSort(NodeSubtype.Severity);		// default to sorting flaws by severity
+		this.m_sortBarInfo.show();
+
+		// TODO: add a command to the status bar to cycle through the flaw sorting types
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
@@ -198,7 +217,27 @@ export class BuildExplorer {
     }
 
 	private setFlawSort(sort:NodeSubtype) {
-		log.debug('Flaw sort :' + sort);
+
+		let sortName:string;
+
+		switch (sort) {
+			case 1:
+				sortName = 'Severity';
+				break;
+			case 2:
+				sortName = 'CWE';
+				break;
+			case 3:
+				sortName = 'Filename';
+				break;
+			default:
+				sortName = 'unknown';
+		}
+
+		log.debug('Flaw sort : ' + sortName);
+		this.m_buildModel.setFlawSorting(sort);
+
+		this.m_sortBarInfo.text = 'Flaw Sorting: ' + sortName;
 	}
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6

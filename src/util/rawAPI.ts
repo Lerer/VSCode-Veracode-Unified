@@ -326,8 +326,14 @@ export class RawAPI {
                             .flaw[n] = individual flaw detail
             */
 
-            if(category === NodeSubtype.Severity) {
-                categoryArray = this.getSeverities(result);     // TODO: use class variable
+            if(category === NodeSubtype.CWE) {
+                categoryArray = this.getCWEs(result);
+            }
+            else if(category === NodeSubtype.File) {
+                categoryArray = this.getFiles(result);
+            }
+            else {                                              // default to severities
+                categoryArray = this.getSeverities(result);     // TODO: use class variable ??
             }
 /*
             result.detailedreport.severity.forEach( (sev) => {
@@ -370,6 +376,7 @@ export class RawAPI {
         return categoryArray;
     }
 
+    // get the list of severities for this scan
     private getSeverities(result: any): BuildNode[] {
 
         let categoryArray = [];
@@ -419,7 +426,57 @@ export class RawAPI {
         return name;
     }
 
+    // get the list of CWEs reported in this scan
+    private getCWEs(result: any): BuildNode[] {
+
+        let categoryArray = [];
+
+        result.detailedreport.severity.forEach( (sev) => {
+
+            // if we don't find flaws of a certain severity, this will be empty
+            if(sev.hasOwnProperty("category")) {
+                sev.category.forEach( (cat) => {
+                    let catName = cat.$.categoryname;
+
+                    cat.cwe.forEach( (cwe) => {
+
+                        // get cweid
+                        let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.CWE, 
+                            'CWE-' + cwe.$.cweid + ', ' + catName, cwe.$.cweid, result.detailedreport.$.build_id);
+
+                        categoryArray.push(n);
+                    });
+                });            
+            }
+        });
+        
+        return categoryArray;
+    }
+
+    // get the list of Files with flaws reported in this scan
+    private getFiles(result: any): BuildNode[] {
+
+        let categoryArray = [];
+
+        result.detailedreport.severity.forEach( (sev) => {
+
+            // if we don't find flaws of a certain severity, this will be empty
+            if(sev.hasOwnProperty("category")) {
+
+                let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.Severity, this.mapSeverityNumToName(sev.$.level), 
+                        sev.$.level, result.detailedreport.$.build_id);
+
+                categoryArray.push(n);
+            }
+        });
+        
+        return categoryArray;
+    }
+
+
     // get all the flaws in a specified category
+    // TODO: currently this dynamically creates the list each time, maybe statically create this
+    //  list when parsing (above)??
     getFlaws(node: BuildNode):BuildNode[] {
 
         let flawArray = [];
@@ -469,6 +526,60 @@ export class RawAPI {
                         });
                     });
                 });
+            });
+        }
+        else if(node.subtype === NodeSubtype.CWE) {
+
+            this.m_currentReport.detailedreport.severity.forEach( (sev) => {
+
+                 // if we don't find flaws of a certain severity, this will be empty
+                if(sev.hasOwnProperty("category")) {
+                    sev.category.forEach( (cat) => {
+                        cat.cwe.forEach( (cwe) => {
+
+                            if(cwe.$.cweid == node.id) {
+                            cwe.staticflaws.forEach( (staticflaw) => {
+                                staticflaw.flaw.forEach( (flaw) => {
+
+                                    // don't import fixed flaws
+                                    if(flaw.$.remediation_status != 'Fixed')
+                                    {
+                                        let n = new BuildNode(NodeType.Flaw, 
+                                                NodeSubtype.None, 
+                                                '[Flaw ID] ' + flaw.$.issueid,
+                                                flaw.$.issueid,
+                                                node.id);
+
+                                        flawArray.push(n);
+
+                                        // TODO: sort array by flaw #
+
+                                        // Store the flaw data for later use when selected by the user?
+                                            // dict keyed on flawID?
+
+                                        let parts = flaw.$.sourcefilepath.split('/');
+                                        let parent = parts[parts.length - 2];
+                                        //let tpath = path.join(t2, flaw.$.sourcefile);
+
+                                        
+                                        let f = new FlawInfo(flaw.$.issueid, 
+                                            parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
+                                            flaw.$.line,
+                                            flaw.$.severity,
+                                            // cwe.$.cweid,         
+                                            cwe.$.cwename,          // 3-word CWE description (category)??
+                                            flaw.$.description);
+
+                                        log.debug("Flaw: [" + f.toString() + "]");
+                                        this.m_flawCache[flaw.$.issueid] = f;
+                                    }
+                            
+                                });
+                            });
+                        }
+                        });
+                    });
+                }
             });
         }
 
