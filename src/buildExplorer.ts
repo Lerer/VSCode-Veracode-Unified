@@ -32,7 +32,7 @@ export class BuildModel {
 		return this.m_apiHandler.getAppList();	
 	}
 
-	// will be the scans, sandboxes, flaw categories and flaws
+	// will be the scans, sandboxes, flaw categories, and flaws
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
 
 		// get either app children --> sandboxes and scans
@@ -129,7 +129,6 @@ export class BuildExplorer {
 
 		this.m_buildModel = new BuildModel(this.m_configSettings);
 		this.m_treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
-		//const treDataProvider = this.m_treeDataProvider;
 
         // link the TreeDataProvider to the Veracode Explorer view
 		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider: this.m_treeDataProvider });
@@ -151,7 +150,6 @@ export class BuildExplorer {
 		m_context.subscriptions.push(disposable);	
 		
 		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);	// TODO: arbitrary number??
-		//this.m_sortBarInfo.text = "Flaw Sorting: Severity";
 		this.setFlawSort(NodeSubtype.Severity);		// default to sorting flaws by severity
 		this.m_sortBarInfo.show();
 

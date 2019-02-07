@@ -27,7 +27,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // fire up the Build Explorer, which does all the work
     m_buildExplorer = new BuildExplorer(context, configSettings);
-    
 }
 
 // this method is called when your extension is deactivated

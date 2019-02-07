@@ -335,44 +335,8 @@ export class RawAPI {
             else {                                              // default to severities
                 categoryArray = this.getSeverities(result);     // TODO: use class variable ??
             }
-/*
-            result.detailedreport.severity.forEach( (sev) => {
-
-                // if we don't find flaws of a certain severity, this will be empty
-                if(sev.hasOwnProperty("category")) {
-                    sev.category.forEach( (cat) => {
-                        cat.cwe.forEach( (cwe) => {
-                            cwe.staticflaws.forEach( (staticflaw) => {
-                                staticflaw.flaw.forEach( (flaw) => {
-
-                                    // don't import fixed flaws
-                                    if(flaw.$.remediation_status != 'Fixed')
-                                    {
-                                        let parts = flaw.$.sourcefilepath.split('/');
-                                        let parent = parts[parts.length - 2];
-                                        //let tpath = path.join(t2, flaw.$.sourcefile);
-
-                                    let f = new FlawInfo(flaw.$.issueid, 
-                                        parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
-                                        flaw.$.line,
-                                        flaw.$.severity,
-                                        // cwe.$.cweid,         
-                                        cwe.$.cwename,          // 3-word CWE description (category)??
-                                        flaw.$.description);
-
-                                    log.debug("Flaw: [" + f.toString() + "]");
-                                    flawArray.push( f );
-                                    }
-                                });
-                            });
-                        });
-                    });
-                }
-            });
-            */
         });
 
-        //return flawArray;
         return categoryArray;
     }
 
@@ -653,7 +617,6 @@ export class RawAPI {
         // TODO: check for valid ID
         
         return this.m_flawCache[flawID];
-
     }
 
 }

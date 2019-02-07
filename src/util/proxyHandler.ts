@@ -1,6 +1,6 @@
 'use strict';
 
-import log = require('loglevel');
+//import log = require('loglevel');
 import { ConfigSettings } from './configSettings';
 
 // deliberately don't interact with the 'context' here - save that for the calling classes

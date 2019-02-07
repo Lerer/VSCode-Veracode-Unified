@@ -19,6 +19,7 @@ export enum NodeSubtype {
     File
 }
 
+// for mapping the sort-type (a number) to a displayable string
 export function sortNumToName(sortNum:number) {
 
     let sortName:string;
@@ -51,7 +52,7 @@ export class BuildNode {
 
     public get type(): NodeType { return this.m_type; }
     public get subtype(): NodeSubtype { return this.m_subtype; }
-    public get name(): string { return this.m_name;}      // the Map key??
+    public get name(): string { return this.m_name;}
     public get id(): string { return this.m_id; }
     public get parent(): string { return this.m_parent; }
 
