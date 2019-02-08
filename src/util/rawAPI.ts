@@ -251,9 +251,8 @@ export class RawAPI {
     private sortHighLow(nodes: BuildNode[]): BuildNode[] {
 		return nodes.sort((n1, n2) => {
 
-            // TODO: better answer than parseInt() every time
-            let num1 = parseInt(n1.id, 10);
-            let num2 = parseInt(n2.id, 10);
+            let num1 = +(n1.id);       //sneaky, fast way to convert to a number, vs. parseInt(n1.id, 10);
+            let num2 = +(n2.id);       //sneaky, fast way to convert to a number, vs. parseInt(n2.id, 10);
 
 			if (num1 < num2) 
                 return 1;
@@ -268,9 +267,8 @@ export class RawAPI {
     private sortLowHigh(nodes: BuildNode[]): BuildNode[] {
 		return nodes.sort((n1, n2) => {
 
-            // TODO: better answer than parseInt() every time
-            let num1 = parseInt(n1.id, 10);
-            let num2 = parseInt(n2.id, 10);
+            let num1 = +(n1.id);
+            let num2 = +(n2.id);
 
 			if (num1 > num2) 
                 return 1;
@@ -294,7 +292,9 @@ export class RawAPI {
     private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
-        var categoryArray = []; // TODO: move into 'error' check??
+        this.m_flawCache = {};  // re-zero      
+
+        var categoryArray = [];
 
         xml2js.parseString(rawXML, (err, result) => {
 
@@ -333,7 +333,7 @@ export class RawAPI {
                 categoryArray = this.getFiles(result);
             }
             else {                                              // default to severities
-                categoryArray = this.getSeverities(result);     // TODO: use class variable ??
+                categoryArray = this.getSeverities(result);
             }
         });
 
@@ -457,7 +457,6 @@ export class RawAPI {
     getFlaws(node: BuildNode):BuildNode[] {
 
         let flawArray = [];
-        this.m_flawCache = {};  // re-zero
 
         // incoming BuildNode is a Flaw Category
         if(node.subtype === NodeSubtype.File) {
@@ -470,6 +469,9 @@ export class RawAPI {
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
 
+                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
+
+                                    /*
                                     // don't import fixed flaws
                                     if(flaw.$.sourcefile == node.name && flaw.$.remediation_status != 'Fixed')
                                     {
@@ -495,13 +497,13 @@ export class RawAPI {
                                             parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                             flaw.$.line,
                                             flaw.$.severity,
-                                            // cwe.$.cweid,         
-                                            cwe.$.cwename,          // 3-word CWE description (category)??
+                                            '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
                                             flaw.$.description);
 
                                         log.debug("Flaw: [" + f.toString() + "]");
                                         this.m_flawCache[flaw.$.issueid] = f;
                                     }
+                                    */
                                 });
                             });
                         });
@@ -522,6 +524,9 @@ export class RawAPI {
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
 
+                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
+
+                                    /*
                                     // don't import fixed flaws
                                     if(flaw.$.remediation_status != 'Fixed')
                                     {
@@ -547,14 +552,13 @@ export class RawAPI {
                                             parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                             flaw.$.line,
                                             flaw.$.severity,
-                                            // cwe.$.cweid,         
-                                            cwe.$.cwename,          // 3-word CWE description (category)??
+                                            '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
                                             flaw.$.description);
 
                                         log.debug("Flaw: [" + f.toString() + "]");
                                         this.m_flawCache[flaw.$.issueid] = f;
                                     }
-                            
+                            */
                                 });
                             });
                         }
@@ -564,13 +568,15 @@ export class RawAPI {
             });
         }
         else {      // default to severity
-
             // severity[0] = VeryHigh, [1] = High, etc.
             this.m_currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
                 cat.cwe.forEach( (cwe) => {
                     cwe.staticflaws.forEach( (staticflaw) => {
                         staticflaw.flaw.forEach( (flaw) => {
 
+                            this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
+
+                            /*
                             // don't import fixed flaws
                             if(flaw.$.remediation_status != 'Fixed')
                             {
@@ -596,13 +602,13 @@ export class RawAPI {
                                     parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
                                     flaw.$.line,
                                     flaw.$.severity,
-                                    // cwe.$.cweid,         
-                                    cwe.$.cwename,          // 3-word CWE description (category)??
+                                    '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
                                     flaw.$.description);
 
                                 log.debug("Flaw: [" + f.toString() + "]");
                                 this.m_flawCache[flaw.$.issueid] = f;
                             }
+                            */
                         });
                     });
                 });
@@ -610,6 +616,40 @@ export class RawAPI {
         }
 
         return this.sortLowHigh(flawArray);
+    }
+
+    private addFlaw(nodeParent, flaw, cwe, flawArray):void {
+        // don't import fixed flaws
+        if(flaw.remediation_status != 'Fixed')
+        {
+            let n = new BuildNode(NodeType.Flaw, 
+                    NodeSubtype.None, 
+                    '[Flaw ID] ' + flaw.issueid,
+                    flaw.issueid,
+                    nodeParent);
+
+            flawArray.push(n);
+
+            // TODO: sort array by flaw #
+
+            // Store the flaw data for later use when selected by the user?
+                // dict keyed on flawID?
+
+            let parts = flaw.sourcefilepath.split('/');
+            let parent = parts[parts.length - 2];
+            //let tpath = path.join(t2, flaw.$.sourcefile);
+
+            
+            let f = new FlawInfo(flaw.issueid, 
+                parent + '/' + flaw.sourcefile,   // glob does not like '\'
+                flaw.line,
+                flaw.severity,
+                '[CWE-' + cwe.cweid + '] ' + cwe.cwename,
+                flaw.description);
+
+            log.debug("Flaw: [" + f.toString() + "]");
+            this.m_flawCache[flaw.issueid] = f;
+        }
     }
 
     getFlawInfo(flawID: string): FlawInfo {

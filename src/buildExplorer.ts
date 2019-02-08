@@ -18,13 +18,9 @@ export class BuildModel {
 	m_flawSorting: NodeSubtype;
 
 	constructor(private m_configSettings: ConfigSettings) {
-
-		// default to sorting flaws by severity
-		//this.m_flawSorting = NodeSubtype.Severity;
-	
 		let credsHandler = new CredsHandler(this.m_configSettings);
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
-		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);
+		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);			// TODO: switch to Findings API
 	}
 
     // roots are going to be the Apps
@@ -55,13 +51,9 @@ export class BuildModel {
 	}
  
 	public setFlawSorting(sort:NodeSubtype) {
-
-		// TODO: invalidate existing children
-
 		this.m_flawSorting = sort;
 	}
 
-	// TODO: cleaner - give the API handler to the BuildExplorer class??
 	getFlawInfo(flawID: string): FlawInfo {
 		return this.m_apiHandler.getFlawInfo(flawID);
 	}
@@ -92,10 +84,12 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 		};
 	}
 
-    /*   TODO: cleanup
+    /*
      * called with element == undefined for the root(s) - aka Apps
      * called again for each app to get the sandboxes and/or builds
 	 * called again for each sandbox to get the builds
+	 * called again for each build to get the categories
+	 * called again to get the flaws in each category
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
 		return element ? this.m_buildModel.getChildren(element) : this.m_buildModel.roots;
@@ -148,8 +142,8 @@ export class BuildExplorer {
 		m_context.subscriptions.push(disposable);
 		disposable = vscode.commands.registerCommand('veracodeExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
 		m_context.subscriptions.push(disposable);	
-		
-		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1000);	// TODO: arbitrary number??
+																			// arbitrary number, relative to other items I create?
+		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);	
 		this.setFlawSort(NodeSubtype.Severity);		// default to sorting flaws by severity
 		this.m_sortBarInfo.show();
 
