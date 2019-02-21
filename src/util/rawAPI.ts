@@ -237,8 +237,10 @@ export class RawAPI {
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
 
-                // TODO: don't include dynamic scans
-
+                // don't include dynamic scans
+                if(entry.$.hasOwnProperty('dynamic_scan_type')) {
+                    return;
+                }
 
                 let b = new BuildNode(NodeType.Scan, NodeSubtype.None, 
                     '{scan} ' + entry.$.version, entry.$.build_id, '0');
@@ -308,12 +310,8 @@ export class RawAPI {
                 log.info("No report available - has this scan finished?")
                 return categoryArray;
             }
-
-            // TODO: ignore dynamic scans
-
             
             // keep for later processing
-            //this.m_currentReport = result;
             this.m_flawReports[result.detailedreport.$.build_id] = result;
             this.m_flawCache[result.detailedreport.$.build_id] = {};        // create the empty dict of flaws for this build
 

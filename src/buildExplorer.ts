@@ -206,6 +206,8 @@ export class BuildExplorer {
 				else {
 					this.m_diagCollection.set(uri, [].concat(diagArray, diag));
 				}
+
+				// TODO: can I switch focus to the file with the flaw?
 			}
 		});
     }
