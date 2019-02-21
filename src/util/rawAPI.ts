@@ -21,8 +21,8 @@ export class RawAPI {
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
     m_proxySettings: ProxySettings = null;
-    m_currentReport: any;
-    m_flawCache: any;      // a dictionary to hold the flaw data
+    m_flawReports = {};             // dictionary of downloaded reports (JSON format)
+    m_flawCache = {};               // a dictionary of dictionarys.  Outer key = buildID.  Inner key = flawID.
 
     constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler) { 
     }
@@ -236,6 +236,10 @@ export class RawAPI {
 
         xml2js.parseString(rawXML, (err, result) => {
             result.buildlist.build.forEach( (entry) => {
+
+                // TODO: don't include dynamic scans
+
+
                 let b = new BuildNode(NodeType.Scan, NodeSubtype.None, 
                     '{scan} ' + entry.$.version, entry.$.build_id, '0');
 
@@ -292,7 +296,7 @@ export class RawAPI {
     private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
-        this.m_flawCache = {};  // re-zero      
+        //this.m_flawCache = {};  // re-zero      
 
         var categoryArray = [];
 
@@ -305,9 +309,13 @@ export class RawAPI {
                 return categoryArray;
             }
 
-            // cache for later processing
-            this.m_currentReport = result;
+            // TODO: ignore dynamic scans
 
+            
+            // keep for later processing
+            //this.m_currentReport = result;
+            this.m_flawReports[result.detailedreport.$.build_id] = result;
+            this.m_flawCache[result.detailedreport.$.build_id] = {};        // create the empty dict of flaws for this build
 
             /*
             result.detailedreport.severity[1].category[0].cwe[0].staticflaws[0].flaw[0].$.issueid
@@ -453,57 +461,23 @@ export class RawAPI {
 
     // get all the flaws in a specified category
     // TODO: currently this dynamically creates the list each time, maybe statically create this
-    //  list when parsing (above)??
     getFlaws(node: BuildNode):BuildNode[] {
 
         let flawArray = [];
+        let currentReport = this.m_flawReports[node.parent];    // node.parent is the buildID
 
         // incoming BuildNode is a Flaw Category
         if(node.subtype === NodeSubtype.File) {
 
-            this.m_currentReport.detailedreport.severity.forEach( (sev) => {
+            currentReport.detailedreport.severity.forEach( (sev) => {
                  // if we don't find flaws of a certain severity, this will be empty
                  if(sev.hasOwnProperty("category")) {
                     sev.category.forEach( (cat) => {
                         cat.cwe.forEach( (cwe) => {
                             cwe.staticflaws.forEach( (staticflaw) => {
                                 staticflaw.flaw.forEach( (flaw) => {
-
-                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
-
-                                    /*
-                                    // don't import fixed flaws
-                                    if(flaw.$.sourcefile == node.name && flaw.$.remediation_status != 'Fixed')
-                                    {
-                                        let n = new BuildNode(NodeType.Flaw, 
-                                                NodeSubtype.None, 
-                                                '[Flaw ID] ' + flaw.$.issueid,
-                                                flaw.$.issueid,
-                                                node.id);
-
-                                        flawArray.push(n);
-
-                                        // TODO: sort array by flaw #
-
-                                        // Store the flaw data for later use when selected by the user?
-                                            // dict keyed on flawID?
-
-                                        let parts = flaw.$.sourcefilepath.split('/');
-                                        let parent = parts[parts.length - 2];
-                                        //let tpath = path.join(t2, flaw.$.sourcefile);
-
-                                        
-                                        let f = new FlawInfo(flaw.$.issueid, 
-                                            parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
-                                            flaw.$.line,
-                                            flaw.$.severity,
-                                            '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
-                                            flaw.$.description);
-
-                                        log.debug("Flaw: [" + f.toString() + "]");
-                                        this.m_flawCache[flaw.$.issueid] = f;
-                                    }
-                                    */
+                                    
+                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
                                 });
                             });
                         });
@@ -513,7 +487,7 @@ export class RawAPI {
         }
         else if(node.subtype === NodeSubtype.CWE) {
 
-            this.m_currentReport.detailedreport.severity.forEach( (sev) => {
+            currentReport.detailedreport.severity.forEach( (sev) => {
 
                  // if we don't find flaws of a certain severity, this will be empty
                 if(sev.hasOwnProperty("category")) {
@@ -521,47 +495,13 @@ export class RawAPI {
                         cat.cwe.forEach( (cwe) => {
 
                             if(cwe.$.cweid == node.id) {
-                            cwe.staticflaws.forEach( (staticflaw) => {
-                                staticflaw.flaw.forEach( (flaw) => {
-
-                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
-
-                                    /*
-                                    // don't import fixed flaws
-                                    if(flaw.$.remediation_status != 'Fixed')
-                                    {
-                                        let n = new BuildNode(NodeType.Flaw, 
-                                                NodeSubtype.None, 
-                                                '[Flaw ID] ' + flaw.$.issueid,
-                                                flaw.$.issueid,
-                                                node.id);
-
-                                        flawArray.push(n);
-
-                                        // TODO: sort array by flaw #
-
-                                        // Store the flaw data for later use when selected by the user?
-                                            // dict keyed on flawID?
-
-                                        let parts = flaw.$.sourcefilepath.split('/');
-                                        let parent = parts[parts.length - 2];
-                                        //let tpath = path.join(t2, flaw.$.sourcefile);
-
-                                        
-                                        let f = new FlawInfo(flaw.$.issueid, 
-                                            parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
-                                            flaw.$.line,
-                                            flaw.$.severity,
-                                            '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
-                                            flaw.$.description);
-
-                                        log.debug("Flaw: [" + f.toString() + "]");
-                                        this.m_flawCache[flaw.$.issueid] = f;
-                                    }
-                            */
+                                cwe.staticflaws.forEach( (staticflaw) => {
+                                    staticflaw.flaw.forEach( (flaw) => {
+                            
+                                        this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
+                                    });
                                 });
-                            });
-                        }
+                            }
                         });
                     });
                 }
@@ -569,46 +509,12 @@ export class RawAPI {
         }
         else {      // default to severity
             // severity[0] = VeryHigh, [1] = High, etc.
-            this.m_currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
+            currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
                 cat.cwe.forEach( (cwe) => {
                     cwe.staticflaws.forEach( (staticflaw) => {
                         staticflaw.flaw.forEach( (flaw) => {
 
-                            this.addFlaw(node.id, flaw.$, cwe.$, flawArray);
-
-                            /*
-                            // don't import fixed flaws
-                            if(flaw.$.remediation_status != 'Fixed')
-                            {
-                                let n = new BuildNode(NodeType.Flaw, 
-                                        NodeSubtype.None, 
-                                        '[Flaw ID] ' + flaw.$.issueid,
-                                        flaw.$.issueid,
-                                        node.id);
-
-                                flawArray.push(n);
-
-                                // TODO: sort array by flaw #
-
-                                // Store the flaw data for later use when selected by the user?
-                                    // dict keyed on flawID?
-
-                                let parts = flaw.$.sourcefilepath.split('/');
-                                let parent = parts[parts.length - 2];
-                                //let tpath = path.join(t2, flaw.$.sourcefile);
-
-                                
-                                let f = new FlawInfo(flaw.$.issueid, 
-                                    parent + '/' + flaw.$.sourcefile,   // glob does not like '\'
-                                    flaw.$.line,
-                                    flaw.$.severity,
-                                    '[CWE-' + cwe.$.cweid + '] ' + cwe.$.cwename,
-                                    flaw.$.description);
-
-                                log.debug("Flaw: [" + f.toString() + "]");
-                                this.m_flawCache[flaw.$.issueid] = f;
-                            }
-                            */
+                            this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
                         });
                     });
                 });
@@ -618,45 +524,48 @@ export class RawAPI {
         return this.sortLowHigh(flawArray);
     }
 
-    private addFlaw(nodeParent, flaw, cwe, flawArray):void {
+    private addFlaw(nodeParent: string, flaw: any, cwe: any, flawArray, buildID: string):void {
         // don't import fixed flaws
         if(flaw.remediation_status != 'Fixed')
         {
+            // the list of flaws for the explorer bar
             let n = new BuildNode(NodeType.Flaw, 
                     NodeSubtype.None, 
                     '[Flaw ID] ' + flaw.issueid,
                     flaw.issueid,
-                    nodeParent);
+                    nodeParent, buildID);
 
             flawArray.push(n);
 
-            // TODO: sort array by flaw #
+            // TODO: sort array by flaw #?
 
-            // Store the flaw data for later use when selected by the user?
-                // dict keyed on flawID?
+            // Store the flaw data for later use when selected by the user
 
             let parts = flaw.sourcefilepath.split('/');
             let parent = parts[parts.length - 2];
-            //let tpath = path.join(t2, flaw.$.sourcefile);
-
-            
+    
             let f = new FlawInfo(flaw.issueid, 
                 parent + '/' + flaw.sourcefile,   // glob does not like '\'
                 flaw.line,
                 flaw.severity,
                 '[CWE-' + cwe.cweid + '] ' + cwe.cwename,
-                flaw.description);
+                flaw.description,
+                buildID);
 
             log.debug("Flaw: [" + f.toString() + "]");
-            this.m_flawCache[flaw.issueid] = f;
+            let fd = {};
+            fd = this.m_flawCache[buildID];         // dict, indexed by flawID
+            fd[flaw.issueid] = f;
         }
     }
 
-    getFlawInfo(flawID: string): FlawInfo {
+    getFlawInfo(flawID: string, buildID: string): FlawInfo {
 
-        // TODO: check for valid ID
-        
-        return this.m_flawCache[flawID];
+        // TODO: check for valid ID - good hygiene, but this is coming from data I create
+
+        // this is a nested dict of dicts
+        let fd = this.m_flawCache[buildID];             // dict of dicts
+        return fd[flawID];
     }
 
 }

@@ -54,8 +54,8 @@ export class BuildModel {
 		this.m_flawSorting = sort;
 	}
 
-	getFlawInfo(flawID: string): FlawInfo {
-		return this.m_apiHandler.getFlawInfo(flawID);
+	getFlawInfo(flawID: string, buildID: string): FlawInfo {
+		return this.m_apiHandler.getFlawInfo(flawID, buildID);
 	}
 }
 
@@ -78,7 +78,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
 			command: element.type === NodeType.Flaw ? {
 				command: 'veracodeExplorer.getFlawInfo',
-				arguments: [element.id],
+				arguments: [element.id, element.optional],
 				title: 'Get Flaw Info'
 			} : null
 		};
@@ -132,7 +132,7 @@ export class BuildExplorer {
         m_context.subscriptions.push(disposable);
 
 		// create the 'getFlawInfo' command - called when the user clicks on a flaw
-		disposable = vscode.commands.registerCommand('veracodeExplorer.getFlawInfo', (flawID) => this.getFlawInfo(flawID));
+		disposable = vscode.commands.registerCommand('veracodeExplorer.getFlawInfo', (flawID, buildID) => this.getFlawInfo(flawID, buildID));
 		m_context.subscriptions.push(disposable);
 
 		// Flaw sorting commands
@@ -154,7 +154,7 @@ export class BuildExplorer {
     }
 
 	// get the info for a flaw and display it in the Problems view
-	private getFlawInfo(flawID: string) {
+	private getFlawInfo(flawID: string, buildID: string) {
 		this.m_diagCollection.clear();
 		var diagArray = [];
 
@@ -162,7 +162,7 @@ export class BuildExplorer {
 		let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
 		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
 
-		let flaw = this.m_buildModel.getFlawInfo(flawID);
+		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);

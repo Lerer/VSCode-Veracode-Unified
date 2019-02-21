@@ -43,18 +43,20 @@ export function sortNumToName(sortNum:number) {
 
 /*
  * a node in the Explorer view
- * can represent an App, a Sandbox, or a Scan(Build)
+ * can represent an App, a Sandbox, a Scan(Build), a flaw sorting category, or a flaw
  */
 export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
-    constructor(private m_type: NodeType, private m_subtype: NodeSubtype, private m_name: string, private m_id: string, private m_parent: string) { }
+    constructor(private m_type: NodeType, private m_subtype: NodeSubtype, private m_name: string, 
+        private m_id: string, private m_parent: string, private m_optional?: any) { }
 
     public get type(): NodeType { return this.m_type; }
     public get subtype(): NodeSubtype { return this.m_subtype; }
     public get name(): string { return this.m_name;}
     public get id(): string { return this.m_id; }
     public get parent(): string { return this.m_parent; }
+    public get optional(): any { return this.m_optional; }      // will return 'undefined' if not set
 
     public toString(): string {
         return("Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
@@ -71,7 +73,8 @@ export class FlawInfo {
                 private m_line: string,
                 private m_severity: string,
                 private m_cweDesc: string,
-                private m_flawDesc: string) {}
+                private m_flawDesc: string,
+                private m_buildID: string) {}
 
     public get id(): string { return this.m_id; }
     public get file(): string { return this.m_file; }
@@ -79,6 +82,7 @@ export class FlawInfo {
     public get severity(): string { return this.m_severity; }
     public get cweDesc(): string { return this.m_cweDesc; }
     public get desc(): string { return this.m_flawDesc; }
+    public get buildID(): string { return this.m_buildID; }
 
     public toString(): string {
         return("ID: " + this.m_id);
