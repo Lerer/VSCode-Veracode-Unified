@@ -29,10 +29,7 @@ export class RawAPI {
     }
 
     // generic API caller
-    private getRequest(endpoint: string, params: object): Thenable<string> {
-
-        // reload, in case the user changed the data
-        //this.m_proxySettings = this.m_proxyHandler.proxySettings;    
+    private getRequest(endpoint: string, params: object): Thenable<string> {  
 
         // funky for the Veracode HMAC generation
         let queryString = '';
@@ -176,8 +173,10 @@ export class RawAPI {
                                 buildArray = array;
 
                                 resolve(sandboxArray.concat(buildArray));
-                            });
-                    });
+                            }
+                        );
+                    }
+                );
             }
             else {
                 // else, we're working on a sandbox, so builds only

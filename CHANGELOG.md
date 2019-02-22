@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.0.4]
+- download only
+- significant internal re-work due to the fact that extensins run differently in the debugger vs. a normal install
+
 ## [0.0.3] 
 - download only
 - internal clean-up
