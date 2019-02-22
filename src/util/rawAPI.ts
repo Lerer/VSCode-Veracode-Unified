@@ -1,6 +1,6 @@
 'use strict';
 
-//import * as vscode from 'vscode';
+import * as vscode from 'vscode';
 
 import log = require('loglevel');
 import request = require('request');
@@ -14,6 +14,7 @@ import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
+//      ?? error windows...??
 
 export class RawAPI {
 
@@ -115,7 +116,13 @@ export class RawAPI {
          */
 
         // (re-)load the creds, in case the user changed them
-        this.m_credsHandler.loadCredsFromFile();
+        try {
+            this.m_credsHandler.loadCredsFromFile();
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(error.message);
+            return null;
+        }
 
         // (re-)load the proxy info, in case the user changed them
         this.m_proxyHandler.loadProxySettings();
@@ -297,8 +304,6 @@ export class RawAPI {
     // parse the detailed report and extract the flaws
     private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
-
-        //this.m_flawCache = {};  // re-zero      
 
         var categoryArray = [];
 
@@ -538,7 +543,6 @@ export class RawAPI {
             // TODO: sort array by flaw #?
 
             // Store the flaw data for later use when selected by the user
-
             let parts = flaw.sourcefilepath.split('/');
             let parent = parts[parts.length - 2];
     

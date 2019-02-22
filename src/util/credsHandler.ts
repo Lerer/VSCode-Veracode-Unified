@@ -31,7 +31,7 @@ export class CredsHandler {
         catch (error) {
             // file does not exist, is not readable, etc.
             log.info(error.message);
-            throw new Error("Creds file, " + credsFile + ", not found, or is not readable");
+            throw new Error("Veracode credentials file " + credsFile + " not found or is not readable");
         }
 
         // parse the data from the file
@@ -47,10 +47,10 @@ export class CredsHandler {
 
         // sanity checking
         if(!this.m_credsMap.has("veracode_api_key_id"))
-            throw new Error("missing API ID from credentials file");
+            throw new Error("Missing API ID from Veracode credentials file");
 
         if(!this.m_credsMap.has("veracode_api_key_secret"))
-            throw new Error("missing API Secret Key from credentials file")
+            throw new Error("Missing API Secret Key from Veracode credentials file")
 
         return null;
     }
