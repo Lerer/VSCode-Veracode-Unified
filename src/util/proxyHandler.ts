@@ -24,7 +24,7 @@ export class ProxySettings {
 export class ProxyHandler {
 
     // class properties
-    private m_proxySettings: ProxySettings = null;
+    private m_proxySettings: ProxySettings|null = null;
 
     // @constructor
     constructor(private m_configSettings: ConfigSettings) {
@@ -34,7 +34,7 @@ export class ProxyHandler {
         this.m_proxySettings = this.m_configSettings.getProxySettings();
     }
     
-    public get proxySettings(): ProxySettings {
+    public get proxySettings(): ProxySettings|null {
         return this.m_proxySettings;
     }
 }

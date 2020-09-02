@@ -1,6 +1,7 @@
 'use strict';
 
 import { ConfigSettings } from "./configSettings";
+import { ConfigParser } from "./configparser/configparser";
 
 import * as fs from "fs";
 import log = require('loglevel');
@@ -10,57 +11,50 @@ import log = require('loglevel');
 export class CredsHandler {
 
     // class properties
-    m_credsMap;
+    credHolder: ConfigParser;
+    profile: string;
 
     // @constructor
     constructor(private m_configSettings: ConfigSettings) {
-        this.m_credsMap = new Map();
+        //this.m_credsMap = new Map();
+        this.credHolder = new ConfigParser();
+        this.profile = this.m_configSettings.getCredentialProfile();
     }
 
-    loadCredsFromFile(): string {
+    async loadCredsFromFile () {
         // get the creds file
         let credsFile = this.m_configSettings.getCredsFile();
 
         log.info("reading creds from file: " + credsFile);
+        log.info("Will be looking for profile: " + this.profile);
 
-        let data: string = null;
         try {
-            data = fs.readFileSync(credsFile, 'utf8');
-            log.debug("File data: " + data);
+            this.credHolder = new ConfigParser();
+            await this.credHolder.readAsync(credsFile);
         }
         catch (error) {
             // file does not exist, is not readable, etc.
             log.info(error.message);
-            throw new Error("Veracode credentials file " + credsFile + " not found or is not readable");
+            throw error;
         }
 
-        // parse the data from the file
-        // string split on CR and/or LF
-        let lines = data.split(/\r?\n/);
         
-        for(var i = 0; i < lines.length; i++) {
-            let pieces = lines[i].split("=");
-            if(pieces.length == 2) {
-                this.m_credsMap.set(pieces[0].trim(), pieces[1].trim() );
-            }
-        }
 
         // sanity checking
-        if(!this.m_credsMap.has("veracode_api_key_id"))
+        if(!this.getApiId()||this.getApiId()?.length===0)
             throw new Error("Missing API ID from Veracode credentials file");
 
-        if(!this.m_credsMap.has("veracode_api_key_secret"))
+        if(!this.getApiKey()||this.getApiKey()?.length===0)
             throw new Error("Missing API Secret Key from Veracode credentials file")
 
-        return null;
     }
 
-    getApiId(): string {
-        return this.m_credsMap.get("veracode_api_key_id");
+    getApiId(): string|undefined {
+        return this.credHolder.get(this.profile,"veracode_api_key_id");
     }
 
-    getApiKey(): string {
-        return this.m_credsMap.get("veracode_api_key_secret");
+    getApiKey(): string|undefined {
+        return this.credHolder.get(this.profile,"veracode_api_key_secret");
     }
 
 }
