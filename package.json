@@ -1,11 +1,11 @@
 {
     "name": "veracode",
     "displayName": "Veracode",
-    "description": "Scan with Veracode",
-    "version": "0.0.4",
+    "description": "Veracode Scan result viewer",
+    "version": "0.0.5",
     "publisher": "buzzcode",
     "engines": {
-        "vscode": "^1.25.0"
+        "vscode": "^1.34.0"
     },
     "repository": {
         "type": "git",
@@ -16,8 +16,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:veracodeExplorer.refresh",
-        "onView:veracodeExplorer"
+        "onCommand:veracodeStaticExplorer.refresh",
+        "onView:veracodeStaticExplorer"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -25,6 +25,13 @@
             "type": "object",
             "title": "Veracode",
             "properties": {
+                "veracode.API profile in configuration file": {
+                    "$id": "securityProfile",
+                    "type": "string",
+                    "default": "default",
+                    "markdownDescription": "The profile (or section) of API credentials to be used for communicating with Veracode Platform.",
+                    "scope": "application"
+                },
                 "veracode.credsFile": {
                     "type": "string",
                     "default": "",
@@ -81,14 +88,14 @@
         "views": {
             "explorer": [
                 {
-                    "id": "veracodeExplorer",
+                    "id": "veracodeStaticExplorer",
                     "name": "Veracode"
                 }
             ]
         },
         "commands": [
             {
-                "command": "veracodeExplorer.refresh",
+                "command": "veracodeStaticExplorer.refresh",
                 "title": "Refresh",
                 "category": "Veracode",
                 "icon": {
@@ -97,43 +104,43 @@
                 }
             },
             {
-                "command": "veracodeExplorer.sortSeverity",
+                "command": "veracodeStaticExplorer.sortSeverity",
                 "title": "Sort Flaws by Severity",
-                "category": "Veracode"   
+                "category": "Veracode"
             },
             {
-                "command": "veracodeExplorer.sortCwe",
+                "command": "veracodeStaticExplorer.sortCwe",
                 "title": "Sort Flaws by CWE",
-                "category": "Veracode"   
+                "category": "Veracode"
             },
             {
-                "command": "veracodeExplorer.sortFile",
+                "command": "veracodeStaticExplorer.sortFile",
                 "title": "Sort Flaws by File",
-                "category": "Veracode"   
+                "category": "Veracode"
             }
         ],
         "menus": {
             "view/title": [
                 {
-                    "command": "veracodeExplorer.refresh",
-                    "when": "view == veracodeExplorer",
+                    "command": "veracodeStaticExplorer.refresh",
+                    "when": "view == veracodeStaticExplorer",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "veracodeExplorer.sortSeverity",
-                    "when": "view == veracodeExplorer",
+                    "command": "veracodeStaticExplorer.sortSeverity",
+                    "when": "view == veracodeStaticExplorer",
                     "group": "navigation"
                 },
                 {
-                    "command": "veracodeExplorer.sortCwe",
-                    "when": "view == veracodeExplorer",
+                    "command": "veracodeStaticExplorer.sortCwe",
+                    "when": "view == veracodeStaticExplorer",
                     "group": "navigation"
                 },
                 {
-                    "command": "veracodeExplorer.sortFile",
-                    "when": "view == veracodeExplorer",
+                    "command": "veracodeStaticExplorer.sortFile",
+                    "when": "view == veracodeStaticExplorer",
                     "group": "navigation"
                 }
             ]
@@ -143,25 +150,26 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+        "test": "npm run compile && node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "@types/mocha": "^8.0.3",
+        "@types/node": "^14.6.0",
+        "mocha": "^8.1.2",
+        "typescript": "^4.0.2",
+        "vscode-test": "^1.4.0"
     },
     "dependencies": {
-        "@types/glob": "^5.0.35",
-        "@types/loglevel": "^1.5.3",
-        "@types/request": "^2.47.1",
-        "@types/sjcl": "^1.0.28",
-        "@types/xml2js": "^0.4.3",
-        "glob": "^7.1.3",
-        "loglevel": "^1.6.1",
-        "request": "^2.88.0",
-        "sjcl": "^1.0.7",
-        "xml2js": "^0.4.19"
+        "@types/glob": "^7.1.3",
+        "@types/loglevel": "^1.6.3",
+        "@types/request": "^2.48.5",
+        "@types/sjcl": "^1.0.29",
+        "@types/vscode": "^1.48.0",
+        "@types/xml2js": "^0.4.5",
+        "glob": "^7.1.6",
+        "loglevel": "^1.6.8",
+        "request": "^2.88.2",
+        "sjcl": "^1.0.8",
+        "xml2js": "^0.4.23"
     }
 }

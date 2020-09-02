@@ -12,6 +12,7 @@ import { FlawInfo } from "./dataTypes";
 import { CredsHandler } from "./credsHandler";
 import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');
+import { ProjectConfigHandler } from './projectConfigHandler';
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
 //      ?? error windows...??
@@ -21,19 +22,19 @@ export class RawAPI {
     m_userAgent: string = 'veracode-vscode-plugin';
     m_protocol: string = 'https://';
     m_host: string = 'analysiscenter.veracode.com';
-    m_proxySettings: ProxySettings = null;
-    m_flawReports = {};             // dictionary of downloaded reports (JSON format)
-    m_flawCache = {};               // a dictionary of dictionarys.  Outer key = buildID.  Inner key = flawID.
+    m_proxySettings: ProxySettings|null = null;
+    m_flawReports: any = {};             // dictionary of downloaded reports (JSON format)
+    m_flawCache: any = {};               // a dictionary of dictionarys.  Outer key = buildID.  Inner key = flawID.
 
-    constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler) { 
+    constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler,private m_projectConfigHandler: ProjectConfigHandler) { 
     }
 
     // generic API caller
-    private getRequest(endpoint: string, params: object): Thenable<string> {  
+    private getRequest(endpoint: string, params: any): Thenable<string> {  
 
         // funky for the Veracode HMAC generation
         let queryString = '';
-        if(params !== null) {
+        if(params !== null && Object.keys(params).length>0) {
             var keys = Object.keys(params);
             queryString = '?';
             let index = 0;
@@ -72,9 +73,9 @@ export class RawAPI {
             qs: params,
             headers: {
                 'User-Agent': this.m_userAgent,
-                'Authorization': veracodehmac.calculateAuthorizationHeader(
-                                    this.m_credsHandler.getApiId(), 
-                                    this.m_credsHandler.getApiKey(), 
+                'Authorization': veracodehmac.generateHeader(
+                                    this.m_credsHandler.getApiId()||'', 
+                                    this.m_credsHandler.getApiKey()||'', 
                                     this.m_host, endpoint,
                                     queryString,
                                     'GET')
@@ -83,7 +84,7 @@ export class RawAPI {
         };
        
         log.info("Calling Veracode with: " + options.url + queryString);
-        log.info("Veracode proxy settings: " + proxyString);
+        log.debug("Veracode proxy settings: " + proxyString);
 
         // request = network access, so return the Promise of data later
         return new Promise( (resolve, reject) => {
@@ -105,8 +106,8 @@ export class RawAPI {
     
 
     // get the app list via API call
-    getAppList(): Thenable<BuildNode[]> {
-
+    async getAppList(): Promise<BuildNode[]> {
+        log.debug('getAppList');
         /* (re-)loading the creds and proxy info here should be sufficient to pick up 
          * any changes by the user, as once they get the App List working they should 
          * be good to go and not make more changes
@@ -114,11 +115,12 @@ export class RawAPI {
 
         // (re-)load the creds, in case the user changed them
         try {
-            this.m_credsHandler.loadCredsFromFile();
+            await this.m_credsHandler.loadCredsFromFile();
+            await this.m_projectConfigHandler.loadPluginConfigFromFile();
         }
         catch (error) {
             vscode.window.showErrorMessage(error.message);
-            return null;
+            return Promise.resolve([]);
         }
 
         // (re-)load the proxy info, in case the user changed them
@@ -126,7 +128,7 @@ export class RawAPI {
         this.m_proxySettings = this.m_proxyHandler.proxySettings;
 
         return new Promise( (resolve, reject) => {          
-          this.getRequest("/api/5.0/getapplist.do", null)
+          this.getRequest("/api/5.0/getapplist.do", {})
             .then( (rawXML) => {
                 resolve(this.handleAppList(rawXML));
             }, (err) => {
@@ -139,15 +141,31 @@ export class RawAPI {
     private handleAppList(rawXML: string): BuildNode[] {
         log.debug("handling app List: " + rawXML);
 
-        let appArray = [];
+        let appArray : BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
-            result.applist.app.forEach( (entry) => {
-                let a = new BuildNode(NodeType.Application, NodeSubtype.None, entry.$.app_name, entry.$.app_id, '0');
-
-                log.debug("App: [" + a.toString() + "]");
-                appArray.push( a );
-            });
+            // do we have the specific application?
+            let applicationName: string|undefined = this.m_projectConfigHandler.getApplicationName();
+            log.debug('Applicaiton for search: ['+applicationName+']');
+            let uniquApplication :boolean= false;
+            if (applicationName!==undefined) {
+                let neededApp: Array<any> = result.applist.app.filter((entry:any) => {
+                    return  (applicationName === entry.$.app_name);
+                })
+                if (neededApp.length===1) {
+                    let a = new BuildNode(NodeType.Application, NodeSubtype.None, neededApp[0].$.app_name, neededApp[0].$.app_id, '0');
+                    appArray.push( a );
+                    uniquApplication = true;
+                }
+            }
+            if (!uniquApplication){
+                result.applist.app.forEach( (entry:any) => {
+                    let a = new BuildNode(NodeType.Application, NodeSubtype.None, entry.$.app_name, entry.$.app_id, '0');
+                    
+                    log.debug("App: [" + a.toString() + "]");
+                    appArray.push( a );
+                });
+            }
         });
 
         return appArray;
@@ -155,26 +173,31 @@ export class RawAPI {
 
     // get the children of the App (aka sandboxes and scans)
     public getAppChildren(node: BuildNode, sandboxCount: number, scanCount: number): Thenable<BuildNode[]> {
-
+        log.debug('getAppChildren');
+        let sandbox:string|undefined = this.m_projectConfigHandler.getSandboxName();
         return new Promise( (resolve, reject) => {
 
             let sandboxArray:BuildNode[];
             let buildArray:BuildNode[];
 
-            if(node.type === NodeType.Application) {
+            if(node.type === NodeType.Application && (!this.m_projectConfigHandler.isPolicySandbox())) {
                 // get sandboxes, but only for Apps (no nested sandboxes)
                 this.getSandboxList(node, sandboxCount)
-                    .then( (array) => {
+                    .then( (array: BuildNode[]) => {
                         sandboxArray = array;
-                    
-                        // get builds
-                        this.getBuildList(node, scanCount)
-                            .then( (array) => {
-                                buildArray = array;
+                        if (array.length===1 && array[0].name==='{SB} ' +sandbox) {
+                            // the sandboxes already filtered - no need to add build for policy
+                            resolve(sandboxArray);
+                        } else {
+                            // get builds
+                            this.getBuildList(node, scanCount)
+                                .then( (array) => {
+                                    buildArray = array;
 
-                                resolve(sandboxArray.concat(buildArray));
-                            }
-                        );
+                                    resolve(sandboxArray.concat(buildArray));
+                                }
+                            );
+                        }
                     }
                 );
             }
@@ -186,7 +209,8 @@ export class RawAPI {
     }
 
     // get the sandbox list for an app via API call
-    getSandboxList(app: BuildNode, count: number): Thenable<BuildNode[]>{
+    async getSandboxList(app: BuildNode, count: number): Promise<BuildNode[]>{
+        log.debug('getSandboxList');
         return new Promise( (resolve, reject) => {
           this.getRequest("/api/5.0/getsandboxlist.do", {"app_id": app.id}).then( (rawXML) => {
                 resolve(this.handleSandboxList(rawXML, count));
@@ -198,19 +222,38 @@ export class RawAPI {
     private handleSandboxList(rawXML: string, count: number): BuildNode[] {
         log.debug("handling sandbox List: " + rawXML);
 
-        let nodeArray = [];
+        let nodeArray: BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
 
             // check to see if there are any sandboxes
             if(result.sandboxlist.hasOwnProperty("sandbox")) {
-                result.sandboxlist.sandbox.forEach( (entry) => {
-                    let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
-                        '{SB} ' + entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
+                // Check for specific sandbox
+                let namedSandbox : string|undefined = this.m_projectConfigHandler.getSandboxName();
+                let uniqueSandbox:boolean = false;
+                if (namedSandbox!==undefined && !this.m_projectConfigHandler.isPolicySandbox()) {
+                    let filteredSandboxes: Array<any> = result.sandboxlist.sandbox.filter((entry:any) => {
+                        return (entry.$.sandbox_name===namedSandbox);
+                    });
+                    if (filteredSandboxes.length===1) {
+                        log.debug('found specific named sandbox: '+namedSandbox);
+                        let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
+                            '{SB} ' + filteredSandboxes[0].$.sandbox_name, filteredSandboxes[0].$.sandbox_id, result.sandboxlist.$.app_id);
+    
+                        log.debug("Sandbox: [" + b.toString() + "]");
+                        nodeArray.push( b );
+                        uniqueSandbox = true;
+                    }
+                }
+                if (!uniqueSandbox) {
+                    result.sandboxlist.sandbox.forEach( (entry:any) => {
+                        let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
+                            '{SB} ' + entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
 
-                    log.debug("Sandbox: [" + b.toString() + "]");
-                    nodeArray.push( b );
-                });
+                        log.debug("Sandbox: [" + b.toString() + "]");
+                        nodeArray.push( b );
+                    });
+                }
             }
         });
 
@@ -218,7 +261,8 @@ export class RawAPI {
     }
 
      // get the build list for an app via API call
-     getBuildList(node: BuildNode, count: number): Thenable<BuildNode[]> {
+     getBuildList(node: BuildNode, count: number): Promise<BuildNode[]> {
+        log.debug('getBuildList');
         return new Promise( (resolve, reject) => {
             if(node.type === NodeType.Application) {
                 this.getRequest("/api/5.0/getbuildlist.do", {"app_id": node.id}).then( (rawXML) => {
@@ -238,10 +282,10 @@ export class RawAPI {
     private handleBuildList(rawXML: string, count: number): BuildNode[] {
         log.debug("handling build List: " + rawXML);
 
-        let buildArray = [];
+        let buildArray: BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
-            result.buildlist.build.forEach( (entry) => {
+            result.buildlist.build.forEach( (entry:any) => {
 
                 // don't include dynamic scans
                 if(entry.$.hasOwnProperty('dynamic_scan_type')) {
@@ -304,7 +348,7 @@ export class RawAPI {
     private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
-        var categoryArray = [];
+        var categoryArray: BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
 
@@ -353,15 +397,15 @@ export class RawAPI {
     // get the list of severities for this scan
     private getSeverities(result: any): BuildNode[] {
 
-        let categoryArray = [];
+        let categoryArray:BuildNode[] = [];
 
-        result.detailedreport.severity.forEach( (sev) => {
+        result.detailedreport.severity.forEach( (sev:any) => {
 
             // if we don't find flaws of a certain severity, this will be empty
             if(sev.hasOwnProperty("category")) {
 
                 let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.Severity, this.mapSeverityNumToName(sev.$.level), 
-                        sev.$.level, result.detailedreport.$.build_id);
+                        sev['$'].level, result.detailedreport.$.build_id);
 
                 categoryArray.push(n);
             }
@@ -403,16 +447,16 @@ export class RawAPI {
     // get the list of CWEs reported in this scan
     private getCWEs(result: any): BuildNode[] {
 
-        let categoryArray = [];
+        let categoryArray:BuildNode[] = [];
 
-        result.detailedreport.severity.forEach( (sev) => {
+        result.detailedreport.severity.forEach( (sev:any) => {
 
             // if we don't find flaws of a certain severity, this will be empty
             if(sev.hasOwnProperty("category")) {
-                sev.category.forEach( (cat) => {
+                sev.category.forEach( (cat:any) => {
                     let catName = cat.$.categoryname;
 
-                    cat.cwe.forEach( (cwe) => {
+                    cat.cwe.forEach( (cwe:any) => {
 
                         // get cweid
                         let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.CWE, 
@@ -430,16 +474,16 @@ export class RawAPI {
     // get the list of Files with flaws reported in this scan
     private getFiles(result: any): BuildNode[] {
 
-        let categoryArray = [];
+        let categoryArray:BuildNode[] = [];
 
-        result.detailedreport.severity.forEach( (sev) => {
+        result.detailedreport.severity.forEach( (sev:any) => {
 
             // if we don't find flaws of a certain severity, this will be empty
             if(sev.hasOwnProperty("category")) {
-                sev.category.forEach( (cat) => {
-                    cat.cwe.forEach( (cwe) => {
-                        cwe.staticflaws.forEach( (staticflaw) => {
-                            staticflaw.flaw.forEach( (flaw) => {
+                sev.category.forEach( (cat:any) => {
+                    cat.cwe.forEach( (cwe:any) => {
+                        cwe.staticflaws.forEach( (staticflaw:any) => {
+                            staticflaw.flaw.forEach( (flaw:any) => {
 
                                 // don't add filename if it already exists 
                                 if(!categoryArray.find( (elem:BuildNode) => {
@@ -464,20 +508,22 @@ export class RawAPI {
     // get all the flaws in a specified category
     // TODO: currently this dynamically creates the list each time, maybe statically create this
     getFlaws(node: BuildNode):BuildNode[] {
-
-        let flawArray = [];
+        log.info('getFlaws');
+        let flawArray:BuildNode[] = [];
         let currentReport = this.m_flawReports[node.parent];    // node.parent is the buildID
+
+        log.info(node);
 
         // incoming BuildNode is a Flaw Category
         if(node.subtype === NodeSubtype.File) {
 
-            currentReport.detailedreport.severity.forEach( (sev) => {
+            currentReport.detailedreport.severity.forEach( (sev:any) => {
                  // if we don't find flaws of a certain severity, this will be empty
                  if(sev.hasOwnProperty("category")) {
-                    sev.category.forEach( (cat) => {
-                        cat.cwe.forEach( (cwe) => {
-                            cwe.staticflaws.forEach( (staticflaw) => {
-                                staticflaw.flaw.forEach( (flaw) => {
+                    sev.category.forEach( (cat:any) => {
+                        cat.cwe.forEach( (cwe:any) => {
+                            cwe.staticflaws.forEach( (staticflaw:any) => {
+                                staticflaw.flaw.forEach( (flaw:any) => {
                                     
                                     this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
                                 });
@@ -489,16 +535,16 @@ export class RawAPI {
         }
         else if(node.subtype === NodeSubtype.CWE) {
 
-            currentReport.detailedreport.severity.forEach( (sev) => {
+            currentReport.detailedreport.severity.forEach( (sev:any) => {
 
                  // if we don't find flaws of a certain severity, this will be empty
                 if(sev.hasOwnProperty("category")) {
-                    sev.category.forEach( (cat) => {
-                        cat.cwe.forEach( (cwe) => {
+                    sev.category.forEach( (cat:any) => {
+                        cat.cwe.forEach( (cwe:any) => {
 
                             if(cwe.$.cweid == node.id) {
-                                cwe.staticflaws.forEach( (staticflaw) => {
-                                    staticflaw.flaw.forEach( (flaw) => {
+                                cwe.staticflaws.forEach( (staticflaw:any) => {
+                                    staticflaw.flaw.forEach( (flaw:any) => {
                             
                                         this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
                                     });
@@ -511,10 +557,10 @@ export class RawAPI {
         }
         else {      // default to severity
             // severity[0] = VeryHigh, [1] = High, etc.
-            currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat) => {
-                cat.cwe.forEach( (cwe) => {
-                    cwe.staticflaws.forEach( (staticflaw) => {
-                        staticflaw.flaw.forEach( (flaw) => {
+            currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat:any) => {
+                cat.cwe.forEach( (cwe:any) => {
+                    cwe.staticflaws.forEach( (staticflaw:any) => {
+                        staticflaw.flaw.forEach( (flaw:any) => {
 
                             this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
                         });
@@ -526,10 +572,11 @@ export class RawAPI {
         return this.sortLowHigh(flawArray);
     }
 
-    private addFlaw(nodeParent: string, flaw: any, cwe: any, flawArray, buildID: string):void {
+    private addFlaw(nodeParent: string, flaw: any, cwe: any, flawArray:BuildNode[], buildID: string):void {
         // don't import fixed flaws
         if(flaw.remediation_status != 'Fixed')
         {
+            console.log(flaw);
             // the list of flaws for the explorer bar
             let n = new BuildNode(NodeType.Flaw, 
                     NodeSubtype.None, 
@@ -546,22 +593,23 @@ export class RawAPI {
             let parent = parts[parts.length - 2];
     
             let f = new FlawInfo(flaw.issueid, 
-                parent + '/' + flaw.sourcefile,   // glob does not like '\'
+                /*parent + '/' + */ flaw.sourcefile,   // glob does not like '\'
                 flaw.line,
                 flaw.severity,
                 '[CWE-' + cwe.cweid + '] ' + cwe.cwename,
                 flaw.description,
                 buildID);
 
-            log.debug("Flaw: [" + f.toString() + "]");
-            let fd = {};
+            log.info("Flaw: [" + f.toString() + "]");
+            let fd :any= {};
             fd = this.m_flawCache[buildID];         // dict, indexed by flawID
             fd[flaw.issueid] = f;
+            vscode.commands.executeCommand("veracodeStaticExplorer.getFlawInfo",flaw.issueid,buildID);
         }
     }
 
     getFlawInfo(flawID: string, buildID: string): FlawInfo {
-
+        log.debug('getFlawInfo');
         // TODO: check for valid ID - good hygiene, but this is coming from data I create
 
         // this is a nested dict of dicts

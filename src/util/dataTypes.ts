@@ -59,7 +59,7 @@ export class BuildNode {
     public get optional(): any { return this.m_optional; }      // will return 'undefined' if not set
 
     public toString(): string {
-        return("Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
+        return("Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
     }
 }
 

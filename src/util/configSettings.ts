@@ -21,6 +21,18 @@ export class ConfigSettings {
     
     saveSettings() { }
 
+    getCredentialProfile(): string {
+        this.loadSettings();
+
+        let profile:string = this.m_veracodeConfigSettings.get("API profile in configuration file");
+        if (!profile || profile.length===0) {
+            console.log('profile setting: '+profile);
+            profile = 'default';
+        }
+
+        return profile;
+    }
+
     getCredsFile(): string {
 
             this.loadSettings();
@@ -36,6 +48,22 @@ export class ConfigSettings {
             }
 
             return filename;
+    }
+
+    getCredentialsProfile(): string {
+        this.loadSettings();
+
+        let profile:string;
+
+        // get() will return the default value from package.json - 'null' if nothing is actually set
+        profile = this.m_veracodeConfigSettings.get("securityProfile");
+        if( !profile || profile == "")
+        {
+            // default to $HOME/.veracode/credentials
+            profile = "default";
+        }
+
+        return profile;
     }
 
     getScanCount(): number {
@@ -107,7 +135,7 @@ export class ConfigSettings {
             return realLevel;
     }
 
-    getProxySettings(): ProxySettings {
+    getProxySettings(): ProxySettings|null {
 
         this.loadSettings();
 

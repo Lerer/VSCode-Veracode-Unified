@@ -6,6 +6,7 @@ import glob = require('glob');
 
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
+import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
@@ -19,8 +20,10 @@ export class BuildModel {
 
 	constructor(private m_configSettings: ConfigSettings) {
 		let credsHandler = new CredsHandler(this.m_configSettings);
+		let projectConfig = new ProjectConfigHandler();
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
-		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler);			// TODO: switch to Findings API
+		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler,projectConfig);			// TODO: switch to Findings API
+		this.m_flawSorting = NodeSubtype.None;
 	}
 
     // roots are going to be the Apps
@@ -30,7 +33,8 @@ export class BuildModel {
 
 	// will be the scans, sandboxes, flaw categories, and flaws
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
-
+		log.info('getChildren');
+		log.debug('getting children of: '+node);
 		// get either app children --> sandboxes and scans
 		if(node.type === NodeType.Application || node.type === NodeType.Sandbox) {
 
@@ -69,18 +73,28 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 
     // a bit sloppy in that it always refreshes from the root...??
 	public refresh(): any {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
 	}
 
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
+		let nodeType : NodeType = element.type;
+		let command: vscode.Command | undefined = undefined;
+		if (nodeType===NodeType.Scan || nodeType===NodeType.Application || nodeType===NodeType.Sandbox) {
+			command = {
+				title: nodeType+ 'selected',
+				command: 'veracodeStaticExplorer.diagnosticsRefresh'
+			};
+		} else if (nodeType===NodeType.Flaw) {
+			command = {
+				command: 'veracodeStaticExplorer.getFlawInfo',
+				arguments: [element.id, element.optional],
+				title: 'Get Flaw Info'
+			};
+		}
 		return {
 			label: element.name,
 			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
-			command: element.type === NodeType.Flaw ? {
-				command: 'veracodeExplorer.getFlawInfo',
-				arguments: [element.id, element.optional],
-				title: 'Get Flaw Info'
-			} : null
+			command
 		};
 	}
 
@@ -125,22 +139,29 @@ export class BuildExplorer {
 		this.m_treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
 
         // link the TreeDataProvider to the Veracode Explorer view
-		this.m_buildViewer = vscode.window.createTreeView('veracodeExplorer', { treeDataProvider: this.m_treeDataProvider });
+		this.m_buildViewer = vscode.window.createTreeView('veracodeStaticExplorer', { treeDataProvider: this.m_treeDataProvider });
 
 		// link the 'Refresh' command to a method
-        let disposable = vscode.commands.registerCommand('veracodeExplorer.refresh', () => this.m_treeDataProvider.refresh());
+        let disposable = vscode.commands.registerCommand('veracodeStaticExplorer.refresh', () => {
+			this.clearFlawsInfo();
+			this.m_treeDataProvider.refresh()
+		});
         m_context.subscriptions.push(disposable);
 
 		// create the 'getFlawInfo' command - called when the user clicks on a flaw
-		disposable = vscode.commands.registerCommand('veracodeExplorer.getFlawInfo', (flawID, buildID) => this.getFlawInfo(flawID, buildID));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.getFlawInfo', (flawID, buildID) => this.getFlawInfo(flawID, buildID));
+		m_context.subscriptions.push(disposable);
+
+		// clean the diagnostics data due to a new application, sandbox or scan is selected
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.diagnosticsRefresh', () => this.clearFlawsInfo());
 		m_context.subscriptions.push(disposable);
 
 		// Flaw sorting commands
-		disposable = vscode.commands.registerCommand('veracodeExplorer.sortSeverity', () => this.setFlawSort(NodeSubtype.Severity));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortSeverity', () => this.setFlawSort(NodeSubtype.Severity));
 		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeExplorer.sortCwe', () => this.setFlawSort(NodeSubtype.CWE));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortCwe', () => this.setFlawSort(NodeSubtype.CWE));
 		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
 		m_context.subscriptions.push(disposable);	
 																			// arbitrary number, relative to other items I create?
 		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);	
@@ -151,18 +172,28 @@ export class BuildExplorer {
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
-    }
+	}
+	
+	/**
+	 * This function clear the diagnostics data.
+	 * It should be use as a refresh mechanism when switching between scans 
+	 */
+	private clearFlawsInfo (): void {
+		this.m_diagCollection.clear();
+	}
 
 	// get the info for a flaw and display it in the Problems view
 	private getFlawInfo(flawID: string, buildID: string) {
-		this.m_diagCollection.clear();
-		var diagArray = [];
+		log.info('getFlawInfo');
+		//this.clearFlawsInfo();
+		var diagArray: Array<vscode.Diagnostic> | undefined = [];
 
 		// file matching constants
-		let root = vscode.workspace.workspaceFolders[0].uri.fsPath;
-		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true};
+		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true,nodir:true};
 
 		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
+		log.info('buildExplorer:getFlawInfo: '+flaw);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
@@ -177,25 +208,29 @@ export class BuildExplorer {
 							
 		// note on the glob library - need to convert Windows '\' to '/'
 		// (the backslash will look like an esacpe char)
+		log.info('buildExplorer:getFlawInfo:flaw file: '+flaw.file);
+		
 		glob('**/' + flaw.file, options, (err, matches) => {
 			if(err)
 				log.debug('Glob file match error ' + err.message);
 			else {
-				log.debug('Glob file match ' + matches);
+				log.info('Glob file match ' + matches.length);
 
 				// take the first, log info if thre are multiple matches
 				if(matches.length > 1) {
 					log.info("Multiple matches found for source file " + flaw.file +
 						": " + matches);
 				}
-
+				log.info(matches);
 				let uri = vscode.Uri.file(matches[0]);
+				console.log(uri.toString());
 
 				diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
 					new vscode.Location(uri, range), flaw.desc)];
 
 				// can't add to diag arrays for a URI, need to (re-)set instead?!?
-				diagArray = this.m_diagCollection.get(uri);
+				//diagArray = Array.clone(this.m_diagCollection.get(uri));
+				diagArray = Object.assign([], this.m_diagCollection.get(uri));
 				if( isUndefined(diagArray) )
 				{
 					diagArray = [];
@@ -204,7 +239,9 @@ export class BuildExplorer {
 					this.m_diagCollection.set(uri, diagArray);
 				}
 				else {
-					this.m_diagCollection.set(uri, [].concat(diagArray, diag));
+					let newDiagArr:Array<vscode.Diagnostic> = diagArray;
+					newDiagArr.push(diag);
+					this.m_diagCollection.set(uri, newDiagArr);
 				}
 			}
 		});
