@@ -12,6 +12,7 @@ import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
 import { isUndefined } from 'util';
 
+const flawDiagnosticsPrefix: string = 'FlawID: ';
 
 export class BuildModel {
 
@@ -184,7 +185,7 @@ export class BuildExplorer {
 
 	// get the info for a flaw and display it in the Problems view
 	private getFlawInfo(flawID: string, buildID: string) {
-		log.info('getFlawInfo');
+		log.debug('getFlawInfo');
 		//this.clearFlawsInfo();
 		var diagArray: Array<vscode.Diagnostic> | undefined = [];
 
@@ -198,7 +199,7 @@ export class BuildExplorer {
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
 		var diag = new vscode.Diagnostic(range, 
-					'FlawID: ' + flaw.id + ' (' + flaw.cweDesc + ')',
+					flawDiagnosticsPrefix + flaw.id + ' (' + flaw.cweDesc + ')',
 					this.mapSeverityToVSCodeSeverity(flaw.severity));
 		
 		/* 
@@ -240,8 +241,17 @@ export class BuildExplorer {
 				}
 				else {
 					let newDiagArr:Array<vscode.Diagnostic> = diagArray;
-					newDiagArr.push(diag);
-					this.m_diagCollection.set(uri, newDiagArr);
+					log.debug(newDiagArr);
+					const existing = newDiagArr.filter((existingDiagnostic: vscode.Diagnostic) => {
+						return (existingDiagnostic.message.indexOf(flawDiagnosticsPrefix+flaw.id) > -1);
+					})
+					if (existing.length===0){
+						log.debug('issue not showing. adding to set');
+						newDiagArr.push(diag);
+						this.m_diagCollection.set(uri, newDiagArr);
+					} else {
+						log.debug('issue already showing');
+					}
 				}
 			}
 		});
