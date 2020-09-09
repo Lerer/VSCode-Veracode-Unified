@@ -574,6 +574,7 @@ export class RawAPI {
 
     private addFlaw(nodeParent: string, flaw: any, cwe: any, flawArray:BuildNode[], buildID: string):void {
         // don't import fixed flaws
+        //log.warn('flaw remediation status: '+flaw.remediation_status+" mitigation: "+flaw.mitigation_status+" mitigation desc: "+flaw.mitigation_status_desc);
         if(flaw.remediation_status != 'Fixed')
         {
             console.log(flaw);
@@ -598,7 +599,9 @@ export class RawAPI {
                 flaw.severity,
                 '[CWE-' + cwe.cweid + '] ' + cwe.cwename,
                 flaw.description,
-                buildID);
+                buildID,
+                flaw.mitigation_status,
+                flaw.mitigation_status_desc);
 
             log.info("Flaw: [" + f.toString() + "]");
             let fd :any= {};

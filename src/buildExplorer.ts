@@ -194,13 +194,20 @@ export class BuildExplorer {
 		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true,nodir:true};
 
 		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
-		log.info('buildExplorer:getFlawInfo: '+flaw);
+		log.info('buildExplorer:getFlawInfo: '+flaw+' mitigation:'+flaw.mitigated);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
-		var diag = new vscode.Diagnostic(range, 
-					flawDiagnosticsPrefix + flaw.id + ' (' + flaw.cweDesc + ')',
-					this.mapSeverityToVSCodeSeverity(flaw.severity));
+
+		let mitigationPrefix :string= '';
+		if (flaw.mitigated!=='none') {
+			mitigationPrefix = `[${flaw.mitigationStatus}] `;
+		}
+		var diag = new vscode.Diagnostic(
+			range, 
+			mitigationPrefix +flawDiagnosticsPrefix + flaw.id + ' (' + flaw.cweDesc + ')',
+			this.mapSeverityToVSCodeSeverity(flaw.severity)
+		);
 		
 		/* 
 		* VSCode's workspace.findFiles() is case-sensative (even on Windows)
@@ -209,7 +216,7 @@ export class BuildExplorer {
 							
 		// note on the glob library - need to convert Windows '\' to '/'
 		// (the backslash will look like an esacpe char)
-		log.info('buildExplorer:getFlawInfo:flaw file: '+flaw.file);
+		log.debug('buildExplorer:getFlawInfo:flaw file: '+flaw.file);
 		
 		glob('**/' + flaw.file, options, (err, matches) => {
 			if(err)

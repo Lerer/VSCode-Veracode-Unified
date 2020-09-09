@@ -74,7 +74,9 @@ export class FlawInfo {
                 private m_severity: string,
                 private m_cweDesc: string,
                 private m_flawDesc: string,
-                private m_buildID: string) {}
+                private m_buildID: string,
+                private m_remediation_status: 'none'|'proposed'|'accepted'|'rejected',
+                private m_mitigation_status_desc:string) {}
 
     public get id(): string { return this.m_id; }
     public get file(): string { return this.m_file; }
@@ -83,6 +85,10 @@ export class FlawInfo {
     public get cweDesc(): string { return this.m_cweDesc; }
     public get desc(): string { return this.m_flawDesc; }
     public get buildID(): string { return this.m_buildID; }
+    public get mitigationStatus():string {return this.m_mitigation_status_desc}
+    public get mitigated(): string {return this.m_remediation_status}
+
+    public isMitigated():boolean { return this.m_remediation_status==='accepted'}
 
     public toString(): string {
         return("ID: " + this.m_id);
