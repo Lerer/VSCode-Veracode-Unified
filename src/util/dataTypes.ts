@@ -49,7 +49,7 @@ export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
     constructor(private m_type: NodeType, private m_subtype: NodeSubtype, private m_name: string, 
-        private m_id: string, private m_parent: string, private m_optional?: any) { }
+        private m_id: string, private m_parent: string, private m_optional?: any,private m_mitigationStatus?: 'na'|'none'|'accepted'|'rejected'|'proposed') { }
 
     public get type(): NodeType { return this.m_type; }
     public get subtype(): NodeSubtype { return this.m_subtype; }
@@ -57,6 +57,7 @@ export class BuildNode {
     public get id(): string { return this.m_id; }
     public get parent(): string { return this.m_parent; }
     public get optional(): any { return this.m_optional; }      // will return 'undefined' if not set
+    public get mitigationStatus() : string {return this.m_mitigationStatus || 'na';}
 
     public toString(): string {
         return("Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);

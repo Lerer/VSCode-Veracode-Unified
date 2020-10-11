@@ -11,6 +11,8 @@ import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
 import { isUndefined } from 'util';
+import {proposeMitigationCommandHandler} from './util/mitigationHandler';
+import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
@@ -80,23 +82,28 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	public getTreeItem(element: BuildNode): vscode.TreeItem {
 		let nodeType : NodeType = element.type;
 		let command: vscode.Command | undefined = undefined;
+		let retItem: vscode.TreeItem = {
+			label: element.name,
+			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
+		}
 		if (nodeType===NodeType.Scan || nodeType===NodeType.Application || nodeType===NodeType.Sandbox) {
 			command = {
 				title: nodeType+ 'selected',
 				command: 'veracodeStaticExplorer.diagnosticsRefresh'
 			};
+			retItem.command = command;
 		} else if (nodeType===NodeType.Flaw) {
+
 			command = {
 				command: 'veracodeStaticExplorer.getFlawInfo',
 				arguments: [element.id, element.optional],
 				title: 'Get Flaw Info'
 			};
+			retItem.command = command;
+			retItem.contextValue = 'flaw';
 		}
-		return {
-			label: element.name,
-			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
-			command
-		};
+		
+		return retItem;
 	}
 
     /*
@@ -136,6 +143,7 @@ export class BuildExplorer {
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
+
 		this.m_buildModel = new BuildModel(this.m_configSettings);
 		this.m_treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
 
@@ -169,6 +177,19 @@ export class BuildExplorer {
 		this.setFlawSort(NodeSubtype.Severity);		// default to sorting flaws by severity
 		this.m_sortBarInfo.show();
 
+		// mitigation command
+		vscode.commands.registerCommand("veracodeStaticExplorer.proposeMitigation",async (flawBuildNode: BuildNode) => {
+			console.log(flawBuildNode);
+			const input = await proposeMitigationCommandHandler(flawBuildNode.mitigationStatus);
+			if (input) {
+				let credsHandler = new CredsHandler(this.m_configSettings);
+				const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
+				await handler.postMitigationInfo(flawBuildNode.optional,flawBuildNode.id,input.reason,input.comment);
+				this.clearFlawsInfo();
+				await this.m_treeDataProvider.refresh();
+			}
+		});
+
 		// TODO: add a command to the status bar to cycle through the flaw sorting types
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
@@ -194,7 +215,7 @@ export class BuildExplorer {
 		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true,nodir:true};
 
 		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
-		log.info('buildExplorer:getFlawInfo: '+flaw+' mitigation:'+flaw.mitigated);
+		//log.info('buildExplorer:getFlawInfo: '+flaw+' mitigation:'+flaw.mitigated);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
@@ -285,4 +306,6 @@ export class BuildExplorer {
 			// ignore VSCode's 'Hints'
 		}
 	}
+
+
 }

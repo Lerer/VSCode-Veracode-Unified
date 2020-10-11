@@ -141,6 +141,12 @@ export class RawAPI {
     private handleAppList(rawXML: string): BuildNode[] {
         log.debug("handling app List: " + rawXML);
 
+        // let identity = new IdentityHandler(this.m_credsHandler,null);
+        // identity.getCurrentUser()
+        //     .then((currentUser) => {
+        //         log.info(currentUser);
+        //     })
+
         let appArray : BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
@@ -583,7 +589,7 @@ export class RawAPI {
                     NodeSubtype.None, 
                     '[Flaw ID] ' + flaw.issueid,
                     flaw.issueid,
-                    nodeParent, buildID);
+                    nodeParent, buildID,flaw.mitigation_status);
 
             flawArray.push(n);
 
