@@ -49,6 +49,17 @@ sandbox=__policy
 The configuration allow to filter with exact name (application and/or sandbox).  
 To get only the scans in the main policy (not in sandbox), set: `sandbox=__policy` 
 
+# Flaw mitigations and comments  
+User can propose mitigations for none mitigated flaws and comments to all flaws. The annotations assosiated with the annotations will be saved to the cloud platform. 
+
+<p align=center>
+<img src="media/ScreenShot_2020-10-12 _010906.png" width="30%">
+</p>
+
+<p align=center>
+<img src="media/ScreenShot_2020-10-12_010929.png" width="60%">
+</p>
+
 
 # Building
 

@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.0.6]
+- Added Axios for new api calls - request package is no longer supported
+- Added ability to support comments and propose mitigations for flaws
+- Flaw info in the 'Problems' pane now include the mitigation state of flaws
+
 ## [0.0.5]
 - Rewrite the code to add Types
 - Upgrade dependencies to the latest vscode
