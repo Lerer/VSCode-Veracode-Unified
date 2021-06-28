@@ -3,7 +3,6 @@
 import { ConfigSettings } from "./configSettings";
 import { ConfigParser } from "./configparser/configparser";
 
-import * as fs from "fs";
 import log = require('loglevel');
 
 // deliberately don't interact with the 'context' here - save that for the calling classes
@@ -16,7 +15,6 @@ export class CredsHandler {
 
     // @constructor
     constructor(private m_configSettings: ConfigSettings) {
-        //this.m_credsMap = new Map();
         this.credHolder = new ConfigParser();
         this.profile = this.m_configSettings.getCredentialProfile();
     }
@@ -38,15 +36,12 @@ export class CredsHandler {
             throw error;
         }
 
-        
-
         // sanity checking
         if(!this.getApiId()||this.getApiId()?.length===0)
             throw new Error("Missing API ID from Veracode credentials file");
 
         if(!this.getApiKey()||this.getApiKey()?.length===0)
             throw new Error("Missing API Secret Key from Veracode credentials file")
-
     }
 
     getApiId(): string|undefined {

@@ -23,7 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
     let configSettings = new ConfigSettings(context);
     let logLevel = configSettings.getLogLevel();
     log.setLevel(logLevel);
-    //console.log("Log level set to: " + logLevel);
 
     // fire up the Build Explorer, which does all the work
     m_buildExplorer = new BuildExplorer(context, configSettings);
@@ -31,5 +30,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    //m_buildExplorer.deactivate();
+    // This is intentional
 }

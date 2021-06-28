@@ -1,11 +1,9 @@
 'use strict';
 
-//import { ConfigSettings } from "./configSettings";
 import { ConfigParser } from "./configparser/configparser";
 import * as vscode from 'vscode';
 
 import {sep} from "path";
-//import * as fs from "fs";
 import log = require('loglevel');
 
 // deliberately don't interact with the 'context' here - save that for the calling classes

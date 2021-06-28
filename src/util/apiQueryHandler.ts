@@ -23,7 +23,7 @@ export class APIHandler {
             {   
                 if(index > 0)
                     queryString += '&';
-                queryString += keys[key] + '=' + (params[keys[key]]).replace(/\s/g, "+");// params[keys[key]];
+                queryString += keys[key] + '=' + (params[keys[key]]).replace(/\s/g, "+");
                 index++;
             }
         }
@@ -65,7 +65,6 @@ export class APIHandler {
         //     json: false
         // };
        
-        //log.info("Calling Veracode with: " + options.url + queryString);
         log.debug("Veracode proxy settings: " + proxyString);
 
         // request = network access, so return the Promise of data later

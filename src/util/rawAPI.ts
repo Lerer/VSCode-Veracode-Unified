@@ -6,9 +6,7 @@ import log = require('loglevel');
 import request = require('request');
 import xml2js = require('xml2js');
 
-import { NodeType, NodeSubtype } from "./dataTypes";
-import { BuildNode } from "./dataTypes";
-import { FlawInfo } from "./dataTypes";
+import { NodeType, NodeSubtype,BuildNode,FlawInfo } from "./dataTypes";
 import { CredsHandler } from "./credsHandler";
 import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');
@@ -29,6 +27,26 @@ export class RawAPI {
     constructor(private m_credsHandler: CredsHandler, private m_proxyHandler: ProxyHandler,private m_projectConfigHandler: ProjectConfigHandler) { 
     }
 
+    private getProxyString() {
+        let proxyString = null;
+        if(this.m_proxySettings !== null) {
+            if(this.m_proxySettings.proxyUserName !== '') {
+            // split the proxy ip addr after the dbl-slash
+            let n = this.m_proxySettings.proxyHost.indexOf('://');
+            let preamble = this.m_proxySettings.proxyHost.substring(0, n+3);
+            let postamble = this.m_proxySettings.proxyHost.substring(n+3);
+
+            proxyString = preamble + this.m_proxySettings.proxyUserName + ':' +
+                            this.m_proxySettings.proxyPassword + '@' +
+                            postamble + ':' +
+                            this.m_proxySettings.proxyPort;
+            } else{
+                proxyString = this.m_proxySettings.proxyHost + ':' + this.m_proxySettings.proxyPort
+            }
+        }
+        return proxyString;
+    }
+
     // generic API caller
     private getRequest(endpoint: string, params: any): Thenable<string> {  
 
@@ -47,23 +65,7 @@ export class RawAPI {
             }
         }
 
-        let proxyString = null;
-        if(this.m_proxySettings !== null) {
-            if(this.m_proxySettings.proxyUserName !== '') {
-            // split the proxy ip addr after the dbl-slash
-            let n = this.m_proxySettings.proxyHost.indexOf('://');
-            let preamble = this.m_proxySettings.proxyHost.substring(0, n+3);
-            let postamble = this.m_proxySettings.proxyHost.substring(n+3);
-
-            proxyString = preamble + this.m_proxySettings.proxyUserName + ':' +
-                            this.m_proxySettings.proxyPassword + '@' +
-                            postamble + ':' +
-                            this.m_proxySettings.proxyPort;
-            }
-            else{
-                proxyString = this.m_proxySettings.proxyHost + ':' + this.m_proxySettings.proxyPort
-            }
-        }
+        let proxyString = this.getProxyString();
 
         // set up options for the request call
         var options = {
@@ -141,12 +143,6 @@ export class RawAPI {
     private handleAppList(rawXML: string): BuildNode[] {
         log.debug("handling app List: " + rawXML);
 
-        // let identity = new IdentityHandler(this.m_credsHandler,null);
-        // identity.getCurrentUser()
-        //     .then((currentUser) => {
-        //         log.info(currentUser);
-        //     })
-
         let appArray : BuildNode[] = [];
 
         xml2js.parseString(rawXML, (err, result) => {
@@ -197,8 +193,8 @@ export class RawAPI {
                         } else {
                             // get builds
                             this.getBuildList(node, scanCount)
-                                .then( (array) => {
-                                    buildArray = array;
+                                .then( (buildListArray) => {
+                                    buildArray = buildListArray;
 
                                     resolve(sandboxArray.concat(buildArray));
                                 }
@@ -510,6 +506,11 @@ export class RawAPI {
         return categoryArray;
     }
 
+    private addFlowList (node: BuildNode,flawArray:BuildNode[],cwe:any,staticflaw:any) {
+        staticflaw.flaw.forEach( (flaw:any) => {
+            this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
+        });
+    }
 
     // get all the flaws in a specified category
     // TODO: currently this dynamically creates the list each time, maybe statically create this
@@ -529,10 +530,7 @@ export class RawAPI {
                     sev.category.forEach( (cat:any) => {
                         cat.cwe.forEach( (cwe:any) => {
                             cwe.staticflaws.forEach( (staticflaw:any) => {
-                                staticflaw.flaw.forEach( (flaw:any) => {
-                                    
-                                    this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
-                                });
+                                this.addFlowList(node,flawArray,cwe,staticflaw);
                             });
                         });
                     });
@@ -547,13 +545,9 @@ export class RawAPI {
                 if(sev.hasOwnProperty("category")) {
                     sev.category.forEach( (cat:any) => {
                         cat.cwe.forEach( (cwe:any) => {
-
                             if(cwe.$.cweid == node.id) {
                                 cwe.staticflaws.forEach( (staticflaw:any) => {
-                                    staticflaw.flaw.forEach( (flaw:any) => {
-                            
-                                        this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
-                                    });
+                                    this.addFlowList(node,flawArray,cwe,staticflaw);
                                 });
                             }
                         });
@@ -565,11 +559,9 @@ export class RawAPI {
             // severity[0] = VeryHigh, [1] = High, etc.
             currentReport.detailedreport.severity[5-parseInt(node.id,10)].category.forEach( (cat:any) => {
                 cat.cwe.forEach( (cwe:any) => {
-                    cwe.staticflaws.forEach( (staticflaw:any) => {
-                        staticflaw.flaw.forEach( (flaw:any) => {
-
-                            this.addFlaw(node.id, flaw.$, cwe.$, flawArray, node.parent);
-                        });
+                    cwe.staticflaws.forEach( 
+                        (staticflaw:any) => {
+                            this.addFlowList(node,flawArray,cwe,staticflaw);
                     });
                 });
             });
@@ -596,11 +588,11 @@ export class RawAPI {
             // TODO: sort array by flaw #?
 
             // Store the flaw data for later use when selected by the user
-            let parts = flaw.sourcefilepath.split('/');
-            let parent = parts[parts.length - 2];
+            //let parts = flaw.sourcefilepath.split('/');
+            //let parent = parts[parts.length - 2];
     
             let f = new FlawInfo(flaw.issueid, 
-                /*parent + '/' + */ flaw.sourcefile,   // glob does not like '\'
+                flaw.sourcefile,   // glob does not like '\'
                 flaw.line,
                 flaw.severity,
                 '[CWE-' + cwe.cweid + '] ' + cwe.cwename,

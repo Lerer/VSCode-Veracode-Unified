@@ -10,7 +10,6 @@ import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
-import { isUndefined } from 'util';
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
 
@@ -207,7 +206,6 @@ export class BuildExplorer {
 	// get the info for a flaw and display it in the Problems view
 	private getFlawInfo(flawID: string, buildID: string) {
 		log.debug('getFlawInfo');
-		//this.clearFlawsInfo();
 		var diagArray: Array<vscode.Diagnostic> | undefined = [];
 
 		// file matching constants
@@ -215,7 +213,6 @@ export class BuildExplorer {
 		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true,nodir:true};
 
 		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
-		//log.info('buildExplorer:getFlawInfo: '+flaw+' mitigation:'+flaw.mitigated);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
@@ -240,48 +237,50 @@ export class BuildExplorer {
 		log.debug('buildExplorer:getFlawInfo:flaw file: '+flaw.file);
 		
 		glob('**/' + flaw.file, options, (err, matches) => {
-			if(err)
+			if(err) {
 				log.debug('Glob file match error ' + err.message);
+				return;
+			}
+			
+			log.info('Glob file match ' + matches.length);
+
+			// take the first, log info if thre are multiple matches
+			if(matches.length > 1) {
+				log.info("Multiple matches found for source file " + flaw.file +
+					": " + matches);
+			}
+			log.info(matches);
+			let uri = vscode.Uri.file(matches[0]);
+			console.log(uri.toString());
+
+			diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+				new vscode.Location(uri, range), flaw.desc)];
+
+			// can't add to diag arrays for a URI, need to (re-)set instead?!?
+			//diagArray = Array.clone(this.m_diagCollection.get(uri));
+			diagArray = Object.assign([], this.m_diagCollection.get(uri));
+			if( diagArray===undefined )
+			{
+				diagArray = [];
+				diagArray.push(diag);
+			
+				this.m_diagCollection.set(uri, diagArray);
+			}
 			else {
-				log.info('Glob file match ' + matches.length);
-
-				// take the first, log info if thre are multiple matches
-				if(matches.length > 1) {
-					log.info("Multiple matches found for source file " + flaw.file +
-						": " + matches);
-				}
-				log.info(matches);
-				let uri = vscode.Uri.file(matches[0]);
-				console.log(uri.toString());
-
-				diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-					new vscode.Location(uri, range), flaw.desc)];
-
-				// can't add to diag arrays for a URI, need to (re-)set instead?!?
-				//diagArray = Array.clone(this.m_diagCollection.get(uri));
-				diagArray = Object.assign([], this.m_diagCollection.get(uri));
-				if( isUndefined(diagArray) )
-				{
-					diagArray = [];
-					diagArray.push(diag);
-				
-					this.m_diagCollection.set(uri, diagArray);
-				}
-				else {
-					let newDiagArr:Array<vscode.Diagnostic> = diagArray;
-					log.debug(newDiagArr);
-					const existing = newDiagArr.filter((existingDiagnostic: vscode.Diagnostic) => {
-						return (existingDiagnostic.message.indexOf(flawDiagnosticsPrefix+flaw.id) > -1);
-					})
-					if (existing.length===0){
-						log.debug('issue not showing. adding to set');
-						newDiagArr.push(diag);
-						this.m_diagCollection.set(uri, newDiagArr);
-					} else {
-						log.debug('issue already showing');
-					}
+				let newDiagArr:Array<vscode.Diagnostic> = diagArray;
+				log.debug(newDiagArr);
+				const existing = newDiagArr.filter((existingDiagnostic: vscode.Diagnostic) => {
+					return (existingDiagnostic.message.indexOf(flawDiagnosticsPrefix+flaw.id) > -1);
+				})
+				if (existing.length===0){
+					log.debug('issue not showing. adding to set');
+					newDiagArr.push(diag);
+					this.m_diagCollection.set(uri, newDiagArr);
+				} else {
+					log.debug('issue already showing');
 				}
 			}
+		
 		});
     }
 
