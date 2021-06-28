@@ -4,7 +4,7 @@
 
 export class FindingsAPI {
 
-    constructor() {}
+    //constructor() {}
 
     private getAuthHeader()
     {

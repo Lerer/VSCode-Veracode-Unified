@@ -19,7 +19,9 @@ export class ConfigSettings {
         this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode");
     }
     
-    saveSettings() { }
+    //saveSettings() { 
+    //   This is intentional
+    //}
 
     getCredentialProfile(): string {
         this.loadSettings();
