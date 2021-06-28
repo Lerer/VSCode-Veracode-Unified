@@ -10,7 +10,6 @@ import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
-import { isUndefined } from 'util';
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
 
