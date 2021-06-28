@@ -176,7 +176,7 @@
         "@types/sjcl": "^1.0.29",
         "@types/vscode": "^1.48.0",
         "@types/xml2js": "^0.4.5",
-        "axios": "^0.19.0",
+        "axios": "^0.21.1",
         "glob": "^7.1.6",
         "loglevel": "^1.6.8",
         "request": "^2.88.2",
