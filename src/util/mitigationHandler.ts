@@ -1,11 +1,11 @@
 import { window } from 'vscode';
 
-export interface mitigationObj  {
+export interface MitigationObj  {
     label: string;
     value: 'fp'|'osenv'|'netenv'|'appdesign'|'acceptrisk'|'comment';
 }
 
-const mitigations: mitigationObj[] = [
+const mitigations: MitigationObj[] = [
     {
         label: 'Comment',
         value: 'comment'
@@ -33,7 +33,6 @@ const mitigations: mitigationObj[] = [
 ]
 
 const firstInput = async (mitigationStatus:string) => {
-    //let items = mitigations.map((item) => item.label);
     let items = itemsList(mitigationStatus);
  
     return window.showQuickPick(items, {

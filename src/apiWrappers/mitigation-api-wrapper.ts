@@ -18,8 +18,7 @@ export class MitigationHandler {
         }
         
         const requestPath = '/updatemitigationinfo.do';
-        //let roles: UserRule[] = [];
-        //let currentUser :User;
+        
         try {
             await APIHandler.request(
                 MitigationHandler.api_host,
@@ -38,8 +37,8 @@ export class MitigationHandler {
             log.error(err);
             log.error(err.response);
             window.showErrorMessage(`Annotation submittion failed. Please make sure no special charcters are included in the comment`);
-        };
+        }
     }
 
 
-};
+}

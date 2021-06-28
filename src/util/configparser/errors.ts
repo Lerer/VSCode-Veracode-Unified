@@ -5,11 +5,6 @@
  * @constructor
  */
 
-// function DuplicateSectionError(section:string) {
-//     this.name = 'DuplicateSectionError';
-//     this.message = section + ' already exists';
-//     Error.captureStackTrace(this, this.constructor);
-// }
 export class DuplicateSectionError extends Error {
   public readonly name: 'DuplicateSectionError';
 
@@ -31,11 +26,6 @@ export class DuplicateSectionError extends Error {
  * @param {string} section - Section Name
  * @constructor
  */
-// function NoSectionError(section:string) {
-//     this.name = this.constructor.name;
-//     this.message =  'Section ' + section + ' does not exist.';
-//     Error.captureStackTrace(this, this.constructor);
-// }
 export class NoSectionError extends Error {
     public readonly name: 'NoSectionError';
   
@@ -56,12 +46,6 @@ export class NoSectionError extends Error {
  * @param {string} line - Contents of the line
  * @constructor
  */
-// function ParseError(filename:string, lineNumber:number, line) {
-//     this.name = this.constructor.name;
-//     this.message = 'Source contains parsing errors.\nfile: ' + filename +
-//         ' line: ' + lineNumber + '\n' + line;
-//     Error.captureStackTrace(this, this.constructor);
-// }
 export class ParseError extends Error {
     public readonly name: 'ParseError';
   
@@ -84,12 +68,6 @@ export class ParseError extends Error {
  * @param {string} line - Contents of the line
  * @constructor
  */
-// function MissingSectionHeaderError(filename:string, lineNumber, line) {
-//     this.name = this.constructor.name;
-//     this.message = 'File contains no section headers.\nfile: ' + filename +
-//         ' line: ' + lineNumber + '\n' + line;
-//     Error.captureStackTrace(this, this.constructor);
-// }
 export class MissingSectionHeaderError extends Error {
     public readonly name: 'MissingSectionHeaderError';
   
@@ -113,12 +91,6 @@ export class MissingSectionHeaderError extends Error {
  * @param {int} maxDepth - Maximum recursion depth
  * @constructor
  */
-// function MaximumInterpolationDepthError(section:string, key:string, value:string, maxDepth:number) {
-//     this.name = this.constructor.name;
-//     this.message = 'Exceeded Maximum Recursion Depth (' + maxDepth +
-//         ') for key ' + key + ' in section ' + section + '\nvalue: ' + value;
-//     Error.captureStackTrace(this, this.constructor);
-// }
 export class MaximumInterpolationDepthError extends Error {
     public readonly name: 'MaximumInterpolationDepthError';
   

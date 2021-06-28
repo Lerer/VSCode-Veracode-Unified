@@ -4,21 +4,20 @@ import fs = require('fs');
 import errors = require('./errors');
 import log = require('loglevel');
 
-//import { interpolation } from './interpolation';
 
 /**
  * Regular Expression to match section headers.
  * @type {RegExp}
  * @private
  */
-const SECTION = new RegExp(/\s*\[([^\]]+)]/);
+const SECTION: RegExp = new RegExp(/\s*\[([^\]]+)]/);
 
 /**
  * Regular expression to match key, value pairs.
  * @type {RegExp}
  * @private
  */
-const KEY = new RegExp(/\s*(.*?)\s*[=:]\s*(.*)/);
+const KEY: RegExp = new RegExp(/\s*(.*?)\s*[=:]\s*(.*)/);
 
 /**
  * Regular expression to match comments. Either starting with a
@@ -26,7 +25,7 @@ const KEY = new RegExp(/\s*(.*?)\s*[=:]\s*(.*)/);
  * @type {RegExp}
  * @private
  */
-const COMMENT = new RegExp(/^\s*[;#]/);
+const COMMENT: RegExp = new RegExp(/^\s*[;#]/);
 
 // RL1.6 Line Boundaries (for unicode)
 // ... it shall recognize not only CRLF, LF, CR,
@@ -34,9 +33,6 @@ const COMMENT = new RegExp(/^\s*[;#]/);
 const LINE_BOUNDARY = new RegExp(/\r\n|[\n\r\u0085\u2028\u2029]/g);
 
 const readFileAsync = util.promisify(fs.readFile);
-//const writeFileAsync = util.promisify(fs.writeFile);
-//const statAsync = util.promisify(fs.stat);
-//const mkdirAsync = util.promisify(mkdirp);
 
 /**
  * @constructor
@@ -55,7 +51,7 @@ export class ConfigParser{
      */
     sections (): Array<string>  {
         return Object.keys(this._sections);
-    };
+    }
 
 
     /**
@@ -68,7 +64,7 @@ export class ConfigParser{
             throw new errors.DuplicateSectionError(section)
         }
         this._sections[section] = {};
-    };
+    }
 
 
     /**
@@ -77,7 +73,7 @@ export class ConfigParser{
      */
     getSections (): Array<string> {
         return Array.from( this._sections.keys() );
-    };
+    }
 
 
     /**
@@ -88,7 +84,7 @@ export class ConfigParser{
      */
     hasSection (section:string): boolean {
         return this._sections.hasOwnProperty(section);
-    };
+    }
 
 
     /**
@@ -102,7 +98,7 @@ export class ConfigParser{
         } catch(err){
             throw new errors.NoSectionError(section);
         }
-    };
+    }
 
 
     /**
@@ -114,7 +110,7 @@ export class ConfigParser{
     hasKey (section:string, key:string): boolean {
         return this._sections.hasOwnProperty(section) &&
             this._sections[section].hasOwnProperty(key);
-    };
+    }
 
 
     /**
@@ -126,7 +122,7 @@ export class ConfigParser{
             .toString('utf8')
             .split(LINE_BOUNDARY);
         this.parseLines(file, lines);
-    };
+    }
 
 
     /**
@@ -156,7 +152,7 @@ export class ConfigParser{
             // }
         }
         return undefined;
-    };
+    }
 
 
     /**
@@ -172,7 +168,7 @@ export class ConfigParser{
             return parseInt(this._sections[section][key], radix);
         }
         return undefined;
-    };
+    }
 
 
     /**
@@ -186,7 +182,7 @@ export class ConfigParser{
             return parseFloat(this._sections[section][key]);
         }
         return undefined;
-    };
+    }
 
     /**
      * Returns an object with every key, value pair for the named section.
@@ -195,7 +191,7 @@ export class ConfigParser{
      */
     items (section:string) : any{
         return this._sections[section];
-    };
+    }
 
 
     /**
@@ -208,7 +204,7 @@ export class ConfigParser{
         if(this._sections.hasOwnProperty(section)){
             this._sections[section][key] = value;
         }
-    };
+    }
 
     /**
      * Removes the property specified by key in the named section.
@@ -223,7 +219,7 @@ export class ConfigParser{
             return delete this._sections[section][key];
         }
         return false;
-    };
+    }
 
 
     /**
@@ -236,7 +232,7 @@ export class ConfigParser{
             return delete this._sections[section];
         }
         return false;
-    };
+    }
 
 
     /**
@@ -249,9 +245,6 @@ export class ConfigParser{
     //     if (createMissingDirs) {
     //         this.ensureDirectoriesExist(file);
     //     }
-
-    //     fs.writeFileSync(file, this.getSectionsAsString.call(this));
-    // };
 
     /**
      * Writes the representation of the config file to the
@@ -270,25 +263,24 @@ export class ConfigParser{
 
 
     parseLines (file:string,lines:Array<string>) {
-        //let curSec:any = {};
         let currentSectionName:string = '';
         lines.forEach((line, lineNumber) => {
             if(!line || line.match(COMMENT)) return;
             let res = SECTION.exec(line);
             if(res){
                 const header = res[1];
-                //curSec = {};
+
                 log.debug('adding section: '+header+' - '+line);
                 this.addSection(header);
                 currentSectionName = header;
-                //this._sections[header] = curSec;
+
             } else if(currentSectionName.length===0) {
                 throw new errors.MissingSectionHeaderError(file, lineNumber, line);
             } else {
                 res = KEY.exec(line);
                 if(res){
                     const key = res[1];
-                    //curSec[key] = res[2];
+
                     this.set(currentSectionName,key,res[2]);
                     log.debug(`value added: for ${currentSectionName} on key [${key}]`);
                 } else {

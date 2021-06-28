@@ -70,19 +70,15 @@ export class ConfigSettings {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();
 
-        let count = this.m_veracodeConfigSettings.get("scanCount");
-
-        return count;
+        return this.m_veracodeConfigSettings.get("scanCount");
     }
 
     getSandboxCount(): number {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();
 
-        let count = this.m_veracodeConfigSettings.get("sandboxCount");
+        return this.m_veracodeConfigSettings.get("sandboxCount");
 
-        //return parseInt(count, 10);
-        return count;
     }
 
     getLogLevel(): log.LogLevelDesc {
@@ -93,8 +89,9 @@ export class ConfigSettings {
             level = this.m_veracodeConfigSettings.get("logLevel");
             
             // default to 'info' (redundant due to default setting in package.json)
-            if( !level || level == "null")
-            level = "info";
+            if( !level || level == "null"){
+                level = "info";
+            }
 
             // map string in config file to log level type
             let realLevel: log.LogLevelDesc;
