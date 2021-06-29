@@ -86,7 +86,6 @@ export class RawAPI {
         };
        
         log.info("Calling Veracode with: " + options.url + queryString);
-        log.debug("Veracode proxy settings: " + proxyString);
 
         // request = network access, so return the Promise of data later
         return new Promise( (resolve, reject) => {
