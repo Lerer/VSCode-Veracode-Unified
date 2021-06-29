@@ -596,10 +596,9 @@ export class RawAPI {
                 flaw.severity,
                 '[CWE-' + cwe.cweid + '] ' + cwe.cwename,
                 flaw.description,
-                buildID,
-                flaw.mitigation_status,
-                flaw.mitigation_status_desc);
-
+                buildID);
+            f.mitigated = flaw.mitigation_status;
+            f.mitigationStatus = flaw.mitigation_status_desc;
             log.info("Flaw: [" + f.toString() + "]");
             let fd :any= {};
             fd = this.m_flawCache[buildID];         // dict, indexed by flawID

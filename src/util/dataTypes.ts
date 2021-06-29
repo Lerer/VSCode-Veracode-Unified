@@ -19,6 +19,8 @@ export enum NodeSubtype {
     File
 }
 
+export type MitigationStatus = 'none' | 'proposed' | 'accepted' | 'rejected';
+
 // for mapping the sort-type (a number) to a displayable string
 export function sortNumToName(sortNum:number) {
 
@@ -67,7 +69,11 @@ export class BuildNode {
 /* 
  * Flaw into displayed in the VSCode Problems window
  */
+
+
 export class FlawInfo {
+    private m_remediation_status:MitigationStatus  = 'none';
+    private m_mitigation_status_desc:string | undefined;
 
     constructor(private m_id: string,
                 private m_file: string,
@@ -76,9 +82,14 @@ export class FlawInfo {
                 private m_cweDesc: string,
                 private m_flawDesc: string,
                 private m_buildID: string,
-                private m_remediation_status: 'none'|'proposed'|'accepted'|'rejected',
-                private m_mitigation_status_desc:string) {}
+                ) {}
 
+    public set mitigated(value:MitigationStatus) {
+        this.m_remediation_status = value;
+    }
+    public set mitigationStatus(value: string|undefined) {
+        this.m_mitigation_status_desc = value;
+    }
     public get id(): string { return this.m_id; }
     public get file(): string { return this.m_file; }
     public get line(): string { return this.m_line; }
@@ -86,8 +97,8 @@ export class FlawInfo {
     public get cweDesc(): string { return this.m_cweDesc; }
     public get desc(): string { return this.m_flawDesc; }
     public get buildID(): string { return this.m_buildID; }
-    public get mitigationStatus():string {return this.m_mitigation_status_desc}
-    public get mitigated(): string {return this.m_remediation_status}
+    public get mitigationStatus():string|undefined {return this.m_mitigation_status_desc}
+    public get mitigated(): MitigationStatus {return this.m_remediation_status}
 
     public isMitigated():boolean { return this.m_remediation_status==='accepted'}
 
