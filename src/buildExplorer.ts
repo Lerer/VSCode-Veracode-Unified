@@ -12,6 +12,7 @@ import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
+import {getAppList} from './apiWrappers/applicationsAPIWrapper';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
@@ -19,18 +20,22 @@ export class BuildModel {
 
 	m_apiHandler: RawAPI;
 	m_flawSorting: NodeSubtype;
+	credsHandler: CredsHandler;
+	projectConfig: ProjectConfigHandler;
 
 	constructor(private m_configSettings: ConfigSettings) {
-		let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-		let projectConfig = new ProjectConfigHandler();
+		this.credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
+		this.projectConfig = new ProjectConfigHandler();
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
-		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler,projectConfig);			// TODO: switch to Findings API
+		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);			// TODO: switch to Findings API
 		this.m_flawSorting = NodeSubtype.None;
 	}
 
     // roots are going to be the Apps
 	public get roots(): Thenable<BuildNode[]> {
-		return this.m_apiHandler.getAppList();	
+		let proxyHandler = new ProxyHandler(this.m_configSettings);
+		proxyHandler.loadProxySettings();
+		return getAppList(this.credsHandler,proxyHandler.proxySettings,this.projectConfig);
 	}
 
 	// will be the scans, sandboxes, flaw categories, and flaws
@@ -115,18 +120,6 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
 		return element ? this.m_buildModel.getChildren(element) : this.m_buildModel.roots;
 	}
-
-	/*
-	// optional method, only required for certain cases
-	public getParent(element: BuildNode): BuildNode {
-		
-		//const parent = element.resource.with({ path: dirname(element.resource.path) });
-        //return parent.path !== '//' ? { resource: parent, isDirectory: true } : null;
-        log.debug("Tree Item - getParent");
-
-        return null;
-	}
-	*/
 }
 
 /*
