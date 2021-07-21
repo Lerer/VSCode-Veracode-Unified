@@ -21,7 +21,7 @@ export class BuildModel {
 	m_flawSorting: NodeSubtype;
 
 	constructor(private m_configSettings: ConfigSettings) {
-		let credsHandler = new CredsHandler(this.m_configSettings);
+		let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 		let projectConfig = new ProjectConfigHandler();
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		this.m_apiHandler = new RawAPI(credsHandler, proxyHandler,projectConfig);			// TODO: switch to Findings API
@@ -181,7 +181,7 @@ export class BuildExplorer {
 			console.log(flawBuildNode);
 			const input = await proposeMitigationCommandHandler(flawBuildNode.mitigationStatus);
 			if (input) {
-				let credsHandler = new CredsHandler(this.m_configSettings);
+				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 				const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
 				await handler.postMitigationInfo(flawBuildNode.optional,flawBuildNode.id,input.reason,input.comment);
 				this.clearFlawsInfo();

@@ -1,6 +1,5 @@
 'use strict';
 
-import { ConfigSettings } from "./configSettings";
 import { ConfigParser } from "./configparser/configparser";
 
 import log = require('loglevel');
@@ -9,26 +8,20 @@ import log = require('loglevel');
 
 export class CredsHandler {
 
-    // class properties
-    credHolder: ConfigParser;
-    profile: string;
+    credHolder:ConfigParser ; 
 
-    // @constructor
-    constructor(private m_configSettings: ConfigSettings) {
+    constructor(private credFile:string,private credProfile:string) {
         this.credHolder = new ConfigParser();
-        this.profile = this.m_configSettings.getCredentialProfile();
     }
 
     async loadCredsFromFile () {
-        // get the creds file
-        let credsFile = this.m_configSettings.getCredsFile();
 
-        log.info("reading creds from file: " + credsFile);
-        log.info("Will be looking for profile: " + this.profile);
+        log.info("reading creds from file: " + this.credFile);
+        log.info("Will be looking for profile: " + this.credProfile);
 
         try {
             this.credHolder = new ConfigParser();
-            await this.credHolder.readAsync(credsFile);
+            await this.credHolder.readAsync(this.credFile);
         }
         catch (error) {
             // file does not exist, is not readable, etc.
@@ -45,11 +38,11 @@ export class CredsHandler {
     }
 
     getApiId(): string|undefined {
-        return this.credHolder.get(this.profile,"veracode_api_key_id");
+        return this.credHolder.get(this.credProfile,"veracode_api_key_id");
     }
 
     getApiKey(): string|undefined {
-        return this.credHolder.get(this.profile,"veracode_api_key_secret");
+        return this.credHolder.get(this.credProfile,"veracode_api_key_secret");
     }
 
 }

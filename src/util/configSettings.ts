@@ -23,10 +23,10 @@ export class ConfigSettings {
     //   This is intentional
     //}
 
-    getCredentialProfile(): string {
+    getCredsProfile(): string {
         this.loadSettings();
 
-        let profile:string = this.m_veracodeConfigSettings.get("API profile in configuration file");
+        let profile:string = this.m_veracodeConfigSettings.get("API profile in credentials configuration file");
         if (!profile || profile.length===0) {
             console.log('profile setting: '+profile);
             profile = 'default';
@@ -50,22 +50,6 @@ export class ConfigSettings {
             }
 
             return filename;
-    }
-
-    getCredentialsProfile(): string {
-        this.loadSettings();
-
-        let profile:string;
-
-        // get() will return the default value from package.json - 'null' if nothing is actually set
-        profile = this.m_veracodeConfigSettings.get("securityProfile");
-        if( !profile || profile == "")
-        {
-            // default to $HOME/.veracode/credentials
-            profile = "default";
-        }
-
-        return profile;
     }
 
     getScanCount(): number {
