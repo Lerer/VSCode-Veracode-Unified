@@ -1,8 +1,10 @@
-# What is this?
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lerer_VSCode-Veracode-Unified&metric=alert_status)](https://sonarcloud.io/dashboard?id=Lerer_VSCode-Veracode-Unified)
 
-This is a plugin for Visual Studio Code that enables integration with the Veracode platform.
+# About
 
-Currently, this only supports flaw download, but will be enhanced to support upload as well in the future.
+This is a VSCode plugin which integrate with the Veracode platform and enables downloading of scan results (findings).
+
+The plugin does not support upload for scan action. 
 
 <p align=center>
 <img src="media/ScreenShot_2020-09-01.png">
@@ -61,19 +63,16 @@ User can propose mitigations for none mitigated flaws and comments to all flaws.
 </p>
 
 
-# Building
-
-[Clone](https://www.atlassian.com/git/tutorials/setting-up-a-repository/git-clone)
-
-run npm install
-
-# Help with problems
+# Found a problem?
 Please log an issue.  You can get extra info by changing the veracode.logLevel to debug and viewing the debug log in the Developer Tools Console.  Help --> Developer Tools (Console tab)
 
 # A note about the author
-While it's true that [I](https://gitlab.com/buzzcode) work for Veracode, this is NOT an official Veracode-supported product.  I've written this in my own time in an effort to help support our customers.
+While it's true that I work at [Veracode](https://www.veracode.com/) at the time of writing this plugin - this is not an official supported plugin by Veracode.
 
-Over time, the plugin added additional features, the contribution of my colleagues from Veracode.
+# Credit
+The base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode) who started this plugin initiative and effort.
+
+
 
 
 
