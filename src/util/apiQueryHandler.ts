@@ -23,11 +23,10 @@ export class APIHandler {
             {   
                 if(index > 0)
                     queryString += '&';
-                queryString += keys[key] + '=' + params[keys[key]];//replace(/\s/g, "+");
+                queryString += keys[key] + '=' + params[keys[key]];
                 index++;
             }
         }
-        console.log(queryString);
 
         // Set up proxy settings
         let proxyString = null;
