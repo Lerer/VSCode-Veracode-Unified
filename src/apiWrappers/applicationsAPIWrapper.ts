@@ -38,6 +38,30 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
     return applications;
 }
 
+const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null,sandboxName:string|null) => {
+    let sandboxes = {};
+    let path = `${API_BASE_PATH}/${appGUID}/sandboxes`;
+    if (sandboxGUID) {
+        path = `${path}/${sandboxGUID}`;
+    }
+    try {
+        sandboxes = await APIHandler.request(
+            API_HOST,
+            path,
+            {},
+            credentialHandler,  
+            proxySettings  
+        );
+        console.log("Finished API request");
+        
+    } catch (error) {
+        console.log(error.response);
+        return {};
+    }
+    console.log('end getApplication request');
+    return sandboxes;
+}
+
 export const getApplications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null) => {
     console.log('getApplications');
     let applications:any = await applicationRequest(credentialHandler,proxySettings,null,null);
@@ -49,10 +73,10 @@ export const getApplications = async (credentialHandler:CredsHandler, proxySetti
     }
 }
 
-const getApplicationById = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string) => {
-    console.log('getApplicationById');
+export const getApplicationByGUID = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string) => {
+    console.log('getApplicationByGUID');
     let application = await applicationRequest(credentialHandler,proxySettings,appGUID,null);
-    console.log('end getApplicationById');
+    console.log('end getApplicationByGUID');
     return application;
 }
 
@@ -120,4 +144,27 @@ const handleAppList = (applications: any) /*(rawXML: string)*/: BuildNode[] => {
     return appArray;
 }
 
+export const getSandboxList = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string):Promise<Array<any>> => {
+    console.log('getSandboxList');
+    let sandboxes:any = await sandboxRequest(credentialHandler,proxySettings,appGUID,null,null);
+    console.log('end getSandboxList');
+    if (sandboxes.data) {
+        if (sandboxes.data._embedded.sandboxes) {
+            return sandboxes.data._embedded.sandboxes;
+        }
+    } else {
+        log.error('Error getting results for sandboxes list');
+        log.error(JSON.stringify(sandboxes));
+    }
+    log.info('No sandboxes found');
+    return [];
+}
 
+export const getSandboxByName = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxName:string) => {
+    console.log('getSandboxByName');
+    let sandboxes:Array<any> = await getSandboxList(credentialHandler,proxySettings,appGUID);
+    console.log('end getSandboxByName');
+    return sandboxes.filter((sandbox)=> {
+        return sandbox.name===sandboxName;
+    });
+}
