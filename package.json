@@ -39,7 +39,7 @@
                 },
                 "veracode.scanCount": {
                     "type": "number",
-                    "default": 10,
+                    "default": 15,
                     "description": "Number of scans to show for each application"
                 },
                 "veracode.logLevel": {
@@ -80,7 +80,7 @@
                 },
                 "veracode.sandboxCount": {
                     "type": "number",
-                    "default": 5,
+                    "default": 15,
                     "description": "Specifies the maximum number of sandboxes to show for each application"
                 }
             }
@@ -114,8 +114,8 @@
                 "category": "Veracode"
             },
             {
-                "command": "veracodeStaticExplorer.sortFile",
-                "title": "Sort Flaws by File",
+                "command": "veracodeStaticExplorer.sortFlawCategory",
+                "title": "Sort Flaws by Flaw Category",
                 "category": "Veracode"
             },
             {
@@ -144,7 +144,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "veracodeStaticExplorer.sortFile",
+                    "command": "veracodeStaticExplorer.sortFlawCategory",
                     "when": "view == veracodeStaticExplorer",
                     "group": "navigation"
                 },

@@ -6,7 +6,7 @@ import log = require('loglevel');
 import request = require('request');
 import xml2js = require('xml2js');
 
-import { NodeType, NodeSubtype,BuildNode,FlawInfo } from "./dataTypes";
+import { NodeType, BuildNode,FlawInfo, TreeGroupingHierarchy } from "./dataTypes";
 import { CredsHandler } from "./credsHandler";
 import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');
@@ -171,8 +171,7 @@ export class RawAPI {
                     });
                     if (filteredSandboxes.length===1) {
                         log.debug('found specific named sandbox: '+namedSandbox);
-                        let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
-                            '{SB} ' + filteredSandboxes[0].$.sandbox_name, filteredSandboxes[0].$.sandbox_id, result.sandboxlist.$.app_id);
+                        let b = new BuildNode(NodeType.Sandbox, '{SB} ' + filteredSandboxes[0].$.sandbox_name, filteredSandboxes[0].$.sandbox_id, result.sandboxlist.$.app_id);
     
                         log.debug("Sandbox: [" + b.toString() + "]");
                         nodeArray.push( b );
@@ -181,8 +180,7 @@ export class RawAPI {
                 }
                 if (!uniqueSandbox) {
                     result.sandboxlist.sandbox.forEach( (entry:any) => {
-                        let b = new BuildNode(NodeType.Sandbox, NodeSubtype.None, 
-                            '{SB} ' + entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
+                        let b = new BuildNode(NodeType.Sandbox, '{SB} ' + entry.$.sandbox_name, entry.$.sandbox_id, result.sandboxlist.$.app_id);
 
                         log.debug("Sandbox: [" + b.toString() + "]");
                         nodeArray.push( b );
@@ -226,8 +224,7 @@ export class RawAPI {
                     return;
                 }
 
-                let b = new BuildNode(NodeType.Scan, NodeSubtype.None, 
-                    '{scan} ' + entry.$.version, entry.$.build_id, '0');
+                let b = new BuildNode(NodeType.Scan, '{scan} ' + entry.$.version, entry.$.build_id, '0');
 
                 log.debug("Build: [" + b.toString() + "]");
                 buildArray.push( b );
@@ -270,16 +267,16 @@ export class RawAPI {
 	}
 
      // get the build data for a build via API call
-     getBuildInfo(node: BuildNode, category: NodeSubtype): Thenable<BuildNode[]> {
+     getBuildInfo(node: BuildNode, groupBy: TreeGroupingHierarchy): Thenable<BuildNode[]> {
         return new Promise( (resolve, reject) => {
           this.getRequest("/api/5.0/detailedreport.do", {"build_id": node.id}).then( (rawXML) => {
-                resolve(this.handleDetailedReport(rawXML, category));
+                resolve(this.handleDetailedReport(rawXML, groupBy));
             });
         }); 
     }
 
     // parse the detailed report and extract the flaws
-    private handleDetailedReport(rawXML: string, category: NodeSubtype): BuildNode[] {
+    private handleDetailedReport(rawXML: string, groupBy: TreeGroupingHierarchy): BuildNode[] {
         log.debug("handling build Info: " + rawXML.substring(0,256));   // trim for logging
 
         var categoryArray: BuildNode[] = [];
@@ -314,11 +311,12 @@ export class RawAPI {
                             .flaw[n] = individual flaw detail
             */
 
-            if(category === NodeSubtype.CWE) {
+            if(groupBy === TreeGroupingHierarchy.CWE) {
                 categoryArray = this.getCWEs(result);
             }
-            else if(category === NodeSubtype.File) {
-                categoryArray = this.getFiles(result);
+            else if(groupBy === TreeGroupingHierarchy.FlawCategory) {
+                // TODO - implement flaw Category
+            //     categoryArray = this.getFiles(result);
             }
             else {                                              // default to severities
                 categoryArray = this.getSeverities(result);
@@ -338,7 +336,7 @@ export class RawAPI {
             // if we don't find flaws of a certain severity, this will be empty
             if(sev.hasOwnProperty("category")) {
 
-                let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.Severity, this.mapSeverityNumToName(sev.$.level), 
+                let n = new BuildNode(NodeType.FlawCategory, this.mapSeverityNumToName(sev.$.level), 
                         sev['$'].level, result.detailedreport.$.build_id);
 
                 categoryArray.push(n);
@@ -393,45 +391,11 @@ export class RawAPI {
                     cat.cwe.forEach( (cwe:any) => {
 
                         // get cweid
-                        let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.CWE, 
-                            'CWE-' + cwe.$.cweid + ', ' + catName, cwe.$.cweid, result.detailedreport.$.build_id);
+                        let n = new BuildNode(NodeType.FlawCategory, 'CWE-' + cwe.$.cweid + ', ' + catName, `CWE${cwe.$.cweid}`, result.detailedreport.$.build_id);
 
                         categoryArray.push(n);
                     });
                 });            
-            }
-        });
-        
-        return categoryArray;
-    }
-
-    // get the list of Files with flaws reported in this scan
-    private getFiles(result: any): BuildNode[] {
-
-        let categoryArray:BuildNode[] = [];
-
-        result.detailedreport.severity.forEach( (sev:any) => {
-
-            // if we don't find flaws of a certain severity, this will be empty
-            if(sev.hasOwnProperty("category")) {
-                sev.category.forEach( (cat:any) => {
-                    cat.cwe.forEach( (cwe:any) => {
-                        cwe.staticflaws.forEach( (staticflaw:any) => {
-                            staticflaw.flaw.forEach( (flaw:any) => {
-
-                                // don't add filename if it already exists 
-                                if(!categoryArray.find( (elem:BuildNode) => {
-                                    return elem.name == flaw.$.sourcefile;}) ) {
-
-                                    let n = new BuildNode(NodeType.FlawCategory, NodeSubtype.File, 
-                                        flaw.$.sourcefile, flaw.$.sourcefile, result.detailedreport.$.build_id);
-                
-                                    categoryArray.push(n);
-                                }
-                            });
-                        });
-                    });
-                });
             }
         });
         
@@ -454,22 +418,7 @@ export class RawAPI {
         log.info(node);
 
         // incoming BuildNode is a Flaw Category
-        if(node.subtype === NodeSubtype.File) {
-
-            currentReport.detailedreport.severity.forEach( (sev:any) => {
-                 // if we don't find flaws of a certain severity, this will be empty
-                 if(sev.hasOwnProperty("category")) {
-                    sev.category.forEach( (cat:any) => {
-                        cat.cwe.forEach( (cwe:any) => {
-                            cwe.staticflaws.forEach( (staticflaw:any) => {
-                                this.addFlowList(node,flawArray,cwe,staticflaw);
-                            });
-                        });
-                    });
-                }
-            });
-        }
-        else if(node.subtype === NodeSubtype.CWE) {
+        if(node.type === NodeType.CWE) {
 
             currentReport.detailedreport.severity.forEach( (sev:any) => {
 
@@ -510,10 +459,9 @@ export class RawAPI {
             console.log(flaw);
             // the list of flaws for the explorer bar
             let n = new BuildNode(NodeType.Flaw, 
-                    NodeSubtype.None, 
                     '[Flaw ID] ' + flaw.issueid,
                     flaw.issueid,
-                    nodeParent, buildID,flaw.mitigation_status);
+                    nodeParent,true /* effecting policy */ , buildID,flaw.mitigation_status);
 
             flawArray.push(n);
 

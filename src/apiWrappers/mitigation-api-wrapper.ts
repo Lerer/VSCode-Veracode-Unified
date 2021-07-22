@@ -11,7 +11,7 @@ export class MitigationHandler {
     
     constructor(private credentialHandler:CredsHandler, private proxySettings: ProxySettings|null) { }
     
-    public async postMitigationInfo(buildId:string,flowId:string,annotation:MitigationObj,comment:string){
+    public async postMitigationInfo(buildId:string|undefined,flowId:string,annotation:MitigationObj,comment:string){
         log.info('postMitigationInfo');
         if (!this.credentialHandler.getApiId() || this.credentialHandler.getApiId()?.length==0) {
             await this.credentialHandler.loadCredsFromFile();

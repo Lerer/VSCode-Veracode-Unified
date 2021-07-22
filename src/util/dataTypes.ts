@@ -9,14 +9,31 @@ export enum NodeType {
     Sandbox,
     Scan,
     FlawCategory,
-    Flaw
+    Flaw,
+    CWE
 }
 
-export enum NodeSubtype {
-    None = 0,
-    Severity = 1,
-    CWE,
-    File
+// export enum NodeSubtype {
+//     None = 0,
+//     Severity = 1,
+//     CWE,
+//     File
+// }
+
+export enum TreeGroupingHierarchy {
+    Severity =1,
+    CWE = 2,
+    FlawCategory=3,
+}
+
+export enum FilterMitigation {
+    IncludeMitigated,
+    ExcludeMitigated
+}
+
+export enum FilterByPolicyImpact {
+    AllFlaws,
+    OnlyEffectingPolicy
 }
 
 export type MitigationStatus = 'none' | 'proposed' | 'accepted' | 'rejected';
@@ -27,14 +44,14 @@ export function sortNumToName(sortNum:number) {
     let sortName:string;
 
     switch (sortNum) {
-        case 1:
+        case TreeGroupingHierarchy.Severity:
             sortName = 'Severity';
             break;
-        case 2:
+        case TreeGroupingHierarchy.CWE:
             sortName = 'CWE';
             break;
-        case 3:
-            sortName = 'Filename';
+        case TreeGroupingHierarchy.FlawCategory:
+            sortName = 'Flaw Category';
             break;
         default:
             sortName = 'unknown';
@@ -50,19 +67,20 @@ export function sortNumToName(sortNum:number) {
 export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
-    constructor(private m_type: NodeType, private m_subtype: NodeSubtype, private m_name: string, 
-        private m_id: string, private m_parent: string, private m_optional?: any,private m_mitigationStatus?: 'na'|'none'|'accepted'|'rejected'|'proposed') { }
+    constructor(private m_type: NodeType, private m_name: string, 
+        private m_id: string, private m_parent: string,private isEffectPolicy?:boolean,private vBuildId?:string, private m_mitigationStatus?: 'na'|'none'|'accepted'|'rejected'|'proposed') { }
 
     public get type(): NodeType { return this.m_type; }
-    public get subtype(): NodeSubtype { return this.m_subtype; }
     public get name(): string { return this.m_name;}
     public get id(): string { return this.m_id; }
+    public get buildId(): string|undefined {return this.vBuildId;}
     public get parent(): string { return this.m_parent; }
-    public get optional(): any { return this.m_optional; }      // will return 'undefined' if not set
     public get mitigationStatus() : string {return this.m_mitigationStatus || 'na';}
+    public get effectPolicy(): boolean {return this.isEffectPolicy || false;}
+
 
     public toString(): string {
-        return("Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
+        return("Node Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
     }
 }
 

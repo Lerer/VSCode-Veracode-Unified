@@ -1,6 +1,6 @@
 import {APIHandler} from '../util/apiQueryHandler';
 import { CredsHandler } from '../util/credsHandler';
-import { BuildNode, NodeSubtype, NodeType } from '../util/dataTypes';
+import { BuildNode, NodeType } from '../util/dataTypes';
 import { ProxySettings } from '../util/proxyHandler';
 
 import log from 'loglevel';
@@ -113,7 +113,7 @@ const handleAppList = (applications: any) /*(rawXML: string)*/: BuildNode[] => {
 
     if (typeof applications==='object' && applications.length) {
         appArray = applications.map((app:any) => {
-            return new BuildNode(NodeType.Application, NodeSubtype.None, app.profile.name, app.id, '0');
+            return new BuildNode(NodeType.Application, app.profile.name, app.id, '0');
         });
     }
 

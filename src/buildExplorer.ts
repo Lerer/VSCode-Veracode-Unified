@@ -9,7 +9,7 @@ import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { BuildNode, NodeType, FlawInfo, NodeSubtype, sortNumToName } from "./util/dataTypes";
+import { BuildNode, NodeType, FlawInfo, sortNumToName,TreeGroupingHierarchy } from "./util/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
 import {getAppList} from './apiWrappers/applicationsAPIWrapper';
@@ -19,7 +19,7 @@ const flawDiagnosticsPrefix: string = 'FlawID: ';
 export class BuildModel {
 
 	m_apiHandler: RawAPI;
-	m_flawSorting: NodeSubtype;
+	m_flawSorting: TreeGroupingHierarchy;
 	credsHandler: CredsHandler;
 	projectConfig: ProjectConfigHandler;
 
@@ -28,7 +28,7 @@ export class BuildModel {
 		this.projectConfig = new ProjectConfigHandler();
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);			// TODO: switch to Findings API
-		this.m_flawSorting = NodeSubtype.None;
+		this.m_flawSorting = TreeGroupingHierarchy.Severity;
 	}
 
     // roots are going to be the Apps
@@ -61,7 +61,7 @@ export class BuildModel {
 		}
 	}
  
-	public setFlawSorting(sort:NodeSubtype) {
+	public setFlawSorting(sort:TreeGroupingHierarchy) {
 		this.m_flawSorting = sort;
 	}
 
@@ -100,7 +100,7 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 
 			command = {
 				command: 'veracodeStaticExplorer.getFlawInfo',
-				arguments: [element.id, element.optional],
+				arguments: [element.id, element.buildId],
 				title: 'Get Flaw Info'
 			};
 			retItem.command = command;
@@ -158,15 +158,15 @@ export class BuildExplorer {
 		m_context.subscriptions.push(disposable);
 
 		// Flaw sorting commands
-		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortSeverity', () => this.setFlawSort(NodeSubtype.Severity));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortSeverity', () => this.setFlawSort(TreeGroupingHierarchy.Severity));
 		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortCwe', () => this.setFlawSort(NodeSubtype.CWE));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortCwe', () => this.setFlawSort(TreeGroupingHierarchy.CWE));
 		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortFile', () => this.setFlawSort(NodeSubtype.File));
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortFlawCategory', () => this.setFlawSort(TreeGroupingHierarchy.FlawCategory));
 		m_context.subscriptions.push(disposable);	
 																			// arbitrary number, relative to other items I create?
 		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);	
-		this.setFlawSort(NodeSubtype.Severity);		// default to sorting flaws by severity
+		this.setFlawSort(TreeGroupingHierarchy.Severity);		// default to sorting flaws by severity
 		this.m_sortBarInfo.show();
 
 		// mitigation command
@@ -176,7 +176,7 @@ export class BuildExplorer {
 			if (input) {
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 				const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
-				await handler.postMitigationInfo(flawBuildNode.optional,flawBuildNode.id,input.reason,input.comment);
+				await handler.postMitigationInfo(flawBuildNode.buildId,flawBuildNode.id,input.reason,input.comment);
 				this.clearFlawsInfo();
 				await this.m_treeDataProvider.refresh();
 			}
@@ -277,7 +277,7 @@ export class BuildExplorer {
 		});
     }
 
-	private setFlawSort(sort:NodeSubtype) {
+	private setFlawSort(sort:TreeGroupingHierarchy) {
 
 		let sortName = sortNumToName(sort);
 

@@ -62,6 +62,23 @@ User can propose mitigations for none mitigated flaws and comments to all flaws.
 <img src="media/ScreenShot_2020-10-12_010929.png" width="60%">
 </p>
 
+# Sorting and Filtering
+The menu (from the Veracode tree explorer pane) have few sorting and filtering options.
+
+## Sorting and Grouping
+- __Sort by Severity__: will organize flaws by their severity
+  - Medium
+    - #6 - CWE-80 - \<File_Name\>:\<line number\>
+- __Sort by CWE__: will organize the findings by CWE with a title:
+  - CWE-80 - Medium - Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)
+    - #4 - \<File_Name\>:\<line number\>
+- __Sort by Flaw Category__: will organize and group findings by the flaw Category
+  - \<Flaw Category Name\>
+    - #5 - \<Severity\> - CWE-XXX - \<File_Name\>:\<line number\>
+
+## Filtering
+- __Mitigations__ : will allow to include or exclude mitigated findings
+- __Effecting Policy__ : Will enable to remove findings which are not effecting policy associate with the Application Profile 
 
 # Found a problem?
 Please log an issue.  You can get extra info by changing the veracode.logLevel to debug and viewing the debug log in the Developer Tools Console.  Help --> Developer Tools (Console tab)
