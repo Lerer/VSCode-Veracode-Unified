@@ -2,9 +2,10 @@ import {APIHandler} from '../util/apiQueryHandler';
 import { CredsHandler } from '../util/credsHandler';
 import { BuildNode, NodeType } from '../util/dataTypes';
 import { ProxySettings } from '../util/proxyHandler';
+import { ProjectConfigHandler } from '../util/projectConfigHandler';
+import {getNested} from '../util/jsonUtil';
 
 import log from 'loglevel';
-import { ProjectConfigHandler } from '../util/projectConfigHandler';
 
 const API_HOST:string = 'api.veracode.com';
 const API_BASE_PATH:string = '/appsec/v1/applications'
@@ -41,6 +42,7 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
 const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null,sandboxName:string|null) => {
     let sandboxes = {};
     let path = `${API_BASE_PATH}/${appGUID}/sandboxes`;
+
     if (sandboxGUID) {
         path = `${path}/${sandboxGUID}`;
     }
@@ -58,7 +60,7 @@ const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: Pro
         console.log(error.response);
         return {};
     }
-    console.log('end getApplication request');
+    console.log('end getSandboxes request');
     return sandboxes;
 }
 
@@ -103,7 +105,7 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
     // (re-)load the creds, in case the user changed them
     try {
         await credentialHandler.loadCredsFromFile();
-        await projectConfig.loadPluginConfigFromFile();
+        await projectConfig.loadProjectConfigFromFile();
     }
     catch (error) {
         log.error(error.message);
@@ -137,7 +139,7 @@ const handleAppList = (applications: any) /*(rawXML: string)*/: BuildNode[] => {
 
     if (typeof applications==='object' && applications.length) {
         appArray = applications.map((app:any) => {
-            return new BuildNode(NodeType.Application, app.profile.name, app.id, '0');
+            return new BuildNode(NodeType.Application, app.profile.name, app.guid, '0');
         });
     }
 
@@ -148,8 +150,9 @@ export const getSandboxList = async (credentialHandler:CredsHandler, proxySettin
     console.log('getSandboxList');
     let sandboxes:any = await sandboxRequest(credentialHandler,proxySettings,appGUID,null,null);
     console.log('end getSandboxList');
-    if (sandboxes.data) {
-        if (sandboxes.data._embedded.sandboxes) {
+
+    if (sandboxes.data){
+        if (getNested(sandboxes,'data','_embedded','sandboxes')) {
             return sandboxes.data._embedded.sandboxes;
         }
     } else {
@@ -168,3 +171,58 @@ export const getSandboxByName = async (credentialHandler:CredsHandler, proxySett
         return sandbox.name===sandboxName;
     });
 }
+
+// TODO - fix this function
+const handleSandboxList = (sandboxes: any) : BuildNode[] => {
+    log.debug("handling sandbox List: " + JSON.stringify(sandboxes));
+
+    let sandboxArray : BuildNode[] = [];
+
+    if (typeof sandboxes==='object' && sandboxes.length) {
+        sandboxArray = sandboxes.map((sandbox:any) => {
+            const name = sandbox.name === 'POLICY' ? sandbox.name : `Sandbox - ${sandbox.name}`;
+            return new BuildNode(NodeType.Sandbox, name, sandbox.guid, sandbox.application_guid);
+        });
+    }
+
+    return sandboxArray;
+    
+}
+
+ // get the children of the App (aka sandboxes and scans)
+export const getAppChildren = async (appNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,projectConfig:ProjectConfigHandler, sandboxCount: number): Promise<BuildNode[]> => {
+    log.debug('getAppChildren');
+    await projectConfig.loadProjectConfigFromFile();
+
+    let sandboxes: any = [
+        {
+            guid: `${appNode.id}-policy`,
+            name: 'POLICY',
+            application_guid: appNode.id
+        }
+    ];
+
+    console.log(projectConfig.getSandboxName());
+    console.log(projectConfig.isPolicySandbox());
+    if (projectConfig.isPolicySandbox()) {
+        // do nothing here
+    } else if (projectConfig.getSandboxName()) {
+        sandboxes = await getSandboxByName(credentialHandler,proxySettings,appNode.id,projectConfig.getApplicationName()!);
+    } else {
+        const sandboxesList = await getSandboxList(credentialHandler,proxySettings,appNode.id);
+        sandboxes = sandboxes.concat(sandboxesList);
+    }
+
+    console.log(sandboxes);
+
+    return new Promise((resolve,reject) => {
+        const sandboxNodes = handleSandboxList(sandboxes);
+        if (sandboxNodes.length>0) {
+            resolve(sandboxNodes);
+        } else {
+            log.error("Could not get the requested sandbox/es from the Veracode Platform");
+            reject();
+        }
+    })
+}
+

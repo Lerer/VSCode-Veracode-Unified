@@ -67,23 +67,6 @@ export class APIHandler {
        
         log.debug("Veracode proxy settings: " + proxyString);
 
-        // request = network access, so return the Promise of data later
-        // return new Promise( (resolve, reject) => {
-        //     request(options, (err, res, body) => {
-        //         if(err) {
-        //             console.error(err);
-        //             reject(err);
-        //         }
-        //         else if (err || res.statusCode !== 200) {
-        //             err = new Error("Unexpected status code: " + res.statusCode);
-        //             err.res = res;
-        //             reject(err);
-        //         }
-
-        //         // return the body of the response
-        //         resolve(body);
-        //     });
-        // });
         return Axios.request({
             method,
             headers:{

@@ -23,7 +23,7 @@ export class ProjectConfigHandler {
         this.configHolder = new ConfigParser();
     }
 
-    async loadPluginConfigFromFile () {
+    async loadProjectConfigFromFile () {
 
         let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
         if (root===undefined) {

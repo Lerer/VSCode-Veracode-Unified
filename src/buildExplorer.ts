@@ -12,7 +12,7 @@ import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, sortNumToName,TreeGroupingHierarchy } from "./util/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
-import {getAppList} from './apiWrappers/applicationsAPIWrapper';
+import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
@@ -42,14 +42,16 @@ export class BuildModel {
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
 		log.info('getChildren');
 		log.debug('getting children of: '+node);
+
+		let proxyHandler = new ProxyHandler(this.m_configSettings);
+		proxyHandler.loadProxySettings();
 		// get either app children --> sandboxes and scans
-		if(node.type === NodeType.Application || node.type === NodeType.Sandbox) {
+		if(node.type === NodeType.Application){ // || node.type === NodeType.Sandbox) {
 
 			let sandboxCount = this.m_configSettings.getSandboxCount();
-			let scanCount = this.m_configSettings.getScanCount();
 	
 			// if App or Sandbox, get scans
-			return this.m_apiHandler.getAppChildren(node, sandboxCount, scanCount);
+			return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
 		}
 		else if(node.type === NodeType.Scan) {
 			// else if scan, get flaw categories - default to severity
