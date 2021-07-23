@@ -172,7 +172,6 @@ export const getSandboxByName = async (credentialHandler:CredsHandler, proxySett
     });
 }
 
-// TODO - fix this function
 const handleSandboxList = (sandboxes: any) : BuildNode[] => {
     log.debug("handling sandbox List: " + JSON.stringify(sandboxes));
 
