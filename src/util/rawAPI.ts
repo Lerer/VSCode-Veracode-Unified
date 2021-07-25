@@ -339,8 +339,6 @@ export class RawAPI {
 
             flawArray.push(n);
 
-            // TODO: sort array by flaw #?
-
             // Store the flaw data for later use when selected by the user
             //let parts = flaw.sourcefilepath.split('/');
             //let parent = parts[parts.length - 2];
@@ -364,7 +362,6 @@ export class RawAPI {
 
     getFlawInfo(flawID: string, buildID: string): FlawInfo {
         log.debug('getFlawInfo');
-        // TODO: check for valid ID - good hygiene, but this is coming from data I create
 
         // this is a nested dict of dicts
         let fd = this.m_flawCache[buildID];             // dict of dicts

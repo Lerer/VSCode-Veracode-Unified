@@ -27,7 +27,7 @@ export class BuildModel {
 		this.credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 		this.projectConfig = new ProjectConfigHandler();
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
-		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);			// TODO: switch to Findings API
+		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);	
 		this.m_flawSorting = TreeGroupingHierarchy.Severity;
 	}
 
@@ -183,8 +183,6 @@ export class BuildExplorer {
 				await this.m_treeDataProvider.refresh();
 			}
 		});
-
-		// TODO: add a command to the status bar to cycle through the flaw sorting types
 
 		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
 		this.m_context.subscriptions.push(this.m_diagCollection);
