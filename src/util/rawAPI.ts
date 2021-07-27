@@ -335,7 +335,7 @@ export class RawAPI {
             let n = new BuildNode(NodeType.Flaw, 
                     '[Flaw ID] ' + flaw.issueid,
                     flaw.issueid,
-                    nodeParent,true /* effecting policy */ , buildID,flaw.mitigation_status);
+                    nodeParent,'SANDBOX_GUID',true /* effecting policy */);// , buildID,flaw.mitigation_status);
 
             flawArray.push(n);
 

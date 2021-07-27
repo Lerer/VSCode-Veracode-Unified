@@ -9,6 +9,7 @@ import log from 'loglevel';
 
 const API_HOST:string = 'api.veracode.com';
 const API_BASE_PATH:string = '/appsec/v1/applications'
+export const POLICY_CONTAINER_NAME = 'POLICY';
 
 
 const applicationRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string|null,appName:string|null) => {
@@ -179,8 +180,9 @@ const handleSandboxList = (sandboxes: any) : BuildNode[] => {
 
     if (typeof sandboxes==='object' && sandboxes.length) {
         sandboxArray = sandboxes.map((sandbox:any) => {
-            const name = sandbox.name === 'POLICY' ? sandbox.name : `Sandbox - ${sandbox.name}`;
-            return new BuildNode(NodeType.Sandbox, name, sandbox.guid, sandbox.application_guid);
+            const name = sandbox.name === POLICY_CONTAINER_NAME ? POLICY_CONTAINER_NAME : `Sandbox - ${sandbox.name}`;
+            const nodeType = sandbox.name === POLICY_CONTAINER_NAME ? NodeType.Policy : NodeType.Sandbox;
+            return new BuildNode(nodeType, name, sandbox.guid, sandbox.application_guid);
         });
     }
 
@@ -196,7 +198,7 @@ export const getAppChildren = async (appNode: BuildNode,credentialHandler:CredsH
     let sandboxes: any = [
         {
             guid: `${appNode.id}-policy`,
-            name: 'POLICY',
+            name: POLICY_CONTAINER_NAME,
             application_guid: appNode.id
         }
     ];

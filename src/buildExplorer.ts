@@ -9,10 +9,11 @@ import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { BuildNode, NodeType, FlawInfo, sortNumToName,TreeGroupingHierarchy } from "./util/dataTypes";
+import { BuildNode, NodeType, FlawInfo, TreeGroupingHierarchy } from "./util/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
-import { MitigationHandler } from './apiWrappers/mitigation-api-wrapper';
+import { MitigationHandler } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
+import { VeracodeServiceAndData } from './veracodeServiceAndData';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
@@ -22,6 +23,7 @@ export class BuildModel {
 	m_flawSorting: TreeGroupingHierarchy;
 	credsHandler: CredsHandler;
 	projectConfig: ProjectConfigHandler;
+	veracodeService: VeracodeServiceAndData;
 
 	constructor(private m_configSettings: ConfigSettings) {
 		this.credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
@@ -29,6 +31,7 @@ export class BuildModel {
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);	
 		this.m_flawSorting = TreeGroupingHierarchy.Severity;
+		this.veracodeService = new VeracodeServiceAndData();
 	}
 
     // roots are going to be the Apps
@@ -40,18 +43,17 @@ export class BuildModel {
 
 	// will be the scans, sandboxes, flaw categories, and flaws
 	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
-		log.info('getChildren');
 		log.debug('getting children of: '+node);
 
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		proxyHandler.loadProxySettings();
 		// get either app children --> sandboxes and scans
 		if(node.type === NodeType.Application){ // || node.type === NodeType.Sandbox) {
-
 			let sandboxCount = this.m_configSettings.getSandboxCount();
-	
 			// if App or Sandbox, get scans
 			return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
+		} else if (node.type === NodeType.Sandbox || node.type === NodeType.Policy) {
+			return this.veracodeService.getSandboxNextLevel(node,this.credsHandler,proxyHandler.proxySettings);
 		}
 		else if(node.type === NodeType.Scan) {
 			// else if scan, get flaw categories - default to severity
@@ -64,7 +66,7 @@ export class BuildModel {
 	}
  
 	public setFlawSorting(sort:TreeGroupingHierarchy) {
-		this.m_flawSorting = sort;
+		this.veracodeService.sortFindings(sort);
 	}
 
 	getFlawInfo(flawID: string, buildID: string): FlawInfo {
@@ -278,13 +280,7 @@ export class BuildExplorer {
     }
 
 	private setFlawSort(sort:TreeGroupingHierarchy) {
-
-		let sortName = sortNumToName(sort);
-
-		log.debug('Flaw sort : ' + sortName);
 		this.m_buildModel.setFlawSorting(sort);
-
-		this.m_sortBarInfo.text = 'Flaw Sorting: ' + sortName;
 		this.m_treeDataProvider.refresh();
 	}
 

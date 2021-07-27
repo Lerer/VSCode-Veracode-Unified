@@ -42,6 +42,11 @@
                     "default": 15,
                     "description": "Number of scans to show for each application"
                 },
+                "veracode.flawsCount": {
+                    "type": "number",
+                    "default": 200,
+                    "description": "Number of issues to pull from the veracode platform (20-250)"
+                },
                 "veracode.logLevel": {
                     "type": [
                         "string",
