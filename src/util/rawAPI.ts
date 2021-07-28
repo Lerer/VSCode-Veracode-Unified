@@ -6,7 +6,7 @@ import log = require('loglevel');
 import request = require('request');
 import xml2js = require('xml2js');
 
-import { NodeType, BuildNode,FlawInfo, TreeGroupingHierarchy } from "./dataTypes";
+import { NodeType, BuildNode,FlawInfo, TreeGroupingHierarchy } from "../models/dataTypes";
 import { CredsHandler } from "./credsHandler";
 import { ProxyHandler, ProxySettings } from "./proxyHandler"
 import veracodehmac = require('./veracode-hmac');

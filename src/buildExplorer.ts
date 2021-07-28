@@ -9,7 +9,7 @@ import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
-import { BuildNode, NodeType, FlawInfo, TreeGroupingHierarchy } from "./util/dataTypes";
+import { BuildNode, NodeType, FlawInfo, TreeGroupingHierarchy } from "./models/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
@@ -17,7 +17,7 @@ import { VeracodeServiceAndData } from './veracodeServiceAndData';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
-export class BuildModel {
+export class VeracodeExtensionModel {
 
 	m_apiHandler: RawAPI;
 	m_flawSorting: TreeGroupingHierarchy;
@@ -48,20 +48,24 @@ export class BuildModel {
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		proxyHandler.loadProxySettings();
 		// get either app children --> sandboxes and scans
-		if(node.type === NodeType.Application){ // || node.type === NodeType.Sandbox) {
-			let sandboxCount = this.m_configSettings.getSandboxCount();
-			// if App or Sandbox, get scans
-			return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
-		} else if (node.type === NodeType.Sandbox || node.type === NodeType.Policy) {
-			return this.veracodeService.getSandboxNextLevel(node,this.credsHandler,proxyHandler.proxySettings);
-		}
-		else if(node.type === NodeType.Scan) {
-			// else if scan, get flaw categories - default to severity
-			return this.m_apiHandler.getBuildInfo(node, this.m_flawSorting);
-		}
-		else {	// node type == flaw category
-			// get the flaws for this category
-			return this.m_apiHandler.getFlaws(node);
+		switch (node.type) {
+			case (NodeType.Application):  // || node.type === NodeType.Sandbox) {
+				let sandboxCount = this.m_configSettings.getSandboxCount();
+				// if App or Sandbox, get scans
+				return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
+			// Handle the result of a specific context		
+			case (NodeType.Sandbox):
+			case (NodeType.Policy): 
+				return this.veracodeService.getSandboxNextLevel(node,this.credsHandler,proxyHandler.proxySettings,this.m_configSettings);
+			case (NodeType.Severity):
+				return this.veracodeService.getFlawsOfSeverityNode(node);
+			case (NodeType.Scan):
+				// else if scan, get flaw categories - default to severity
+				return this.m_apiHandler.getBuildInfo(node, this.m_flawSorting);
+			default: 
+				// node type == flaw category
+				// get the flaws for this category
+				return this.m_apiHandler.getFlaws(node);
 		}
 	}
  
@@ -75,12 +79,12 @@ export class BuildModel {
 }
 
 
-export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode> {
+export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNode> {
 
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
-    constructor(private readonly m_buildModel: BuildModel) { }
+    constructor(private readonly veracodeModel: VeracodeExtensionModel) { }
 
     // a bit sloppy in that it always refreshes from the root...??
 	public refresh(): any {
@@ -122,29 +126,29 @@ export class BuildTreeDataProvider implements vscode.TreeDataProvider<BuildNode>
 	 * called again to get the flaws in each category
      */
 	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
-		return element ? this.m_buildModel.getChildren(element) : this.m_buildModel.roots;
+		return element ? this.veracodeModel.getChildren(element) : this.veracodeModel.roots;
 	}
 }
 
 /*
  * Handles the build/scan explorer in the VSCode Explorer
  */
-export class BuildExplorer {
+export class VeracodeExplorer {
 
-	private m_buildViewer: vscode.TreeView<BuildNode>;
-	private m_buildModel: BuildModel;
+	private veracodeTreeViewExplorer: vscode.TreeView<BuildNode>;
+	private veracodeModel: VeracodeExtensionModel;
 	private m_diagCollection: vscode.DiagnosticCollection;
 	private m_sortBarInfo: vscode.StatusBarItem;
-	private m_treeDataProvider: BuildTreeDataProvider;
+	private m_treeDataProvider: VeracodeTreeDataProvider;
 
 	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
 
 
-		this.m_buildModel = new BuildModel(this.m_configSettings);
-		this.m_treeDataProvider = new BuildTreeDataProvider(this.m_buildModel);
+		this.veracodeModel = new VeracodeExtensionModel(this.m_configSettings);
+		this.m_treeDataProvider = new VeracodeTreeDataProvider(this.veracodeModel);
 
         // link the TreeDataProvider to the Veracode Explorer view
-		this.m_buildViewer = vscode.window.createTreeView('veracodeStaticExplorer', { treeDataProvider: this.m_treeDataProvider });
+		this.veracodeTreeViewExplorer = vscode.window.createTreeView('veracodeStaticExplorer', { treeDataProvider: this.m_treeDataProvider });
 
 		// link the 'Refresh' command to a method
         let disposable = vscode.commands.registerCommand('veracodeStaticExplorer.refresh', () => {
@@ -205,9 +209,9 @@ export class BuildExplorer {
 
 		// file matching constants
 		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**'], absolute: true,nodir:true};
+		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
 
-		let flaw = this.m_buildModel.getFlawInfo(flawID, buildID);
+		let flaw = this.veracodeModel.getFlawInfo(flawID, buildID);
 
 		// why -1 for range??  Needed, but why?
 		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
@@ -280,7 +284,7 @@ export class BuildExplorer {
     }
 
 	private setFlawSort(sort:TreeGroupingHierarchy) {
-		this.m_buildModel.setFlawSorting(sort);
+		this.veracodeModel.setFlawSorting(sort);
 		this.m_treeDataProvider.refresh();
 	}
 

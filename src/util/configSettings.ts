@@ -10,13 +10,13 @@ import { ProxySettings } from './proxyHandler';
 
 export class ConfigSettings {
 
-    m_veracodeConfigSettings: any;
+    veracodeExtensionConfigSettings: any;
 
     constructor(private m_context: vscode.ExtensionContext) { }
 
     loadSettings() {
         // this will always work, since the contribution point is set in package.json
-        this.m_veracodeConfigSettings = vscode.workspace.getConfiguration("veracode");
+        this.veracodeExtensionConfigSettings = vscode.workspace.getConfiguration("veracode");
     }
     
     //saveSettings() { 
@@ -26,7 +26,7 @@ export class ConfigSettings {
     getCredsProfile(): string {
         this.loadSettings();
 
-        let profile:string = this.m_veracodeConfigSettings.get("API profile in credentials configuration file");
+        let profile:string = this.veracodeExtensionConfigSettings.get("API profile in credentials configuration file");
         if (!profile || profile.length===0) {
             console.log('profile setting: '+profile);
             profile = 'default';
@@ -42,7 +42,7 @@ export class ConfigSettings {
             let filename: string;
 
             // get() will return the default value from package.json - 'null' if nothing is actually set
-            filename = this.m_veracodeConfigSettings.get("credsFile");
+            filename = this.veracodeExtensionConfigSettings.get("credsFile");
             if( !filename || filename == "")
             {
                 // default to $HOME/.veracode/credentials
@@ -56,14 +56,14 @@ export class ConfigSettings {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();
 
-        return this.m_veracodeConfigSettings.get("scanCount");
+        return this.veracodeExtensionConfigSettings.get("scanCount");
     }
 
     getSandboxCount(): number {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();
 
-        return this.m_veracodeConfigSettings.get("sandboxCount");
+        return this.veracodeExtensionConfigSettings.get("sandboxCount");
 
     }
 
@@ -72,7 +72,7 @@ export class ConfigSettings {
 
             let level: string;
             // get() will return the default value from package.json - 'info' if nothing is actually set
-            level = this.m_veracodeConfigSettings.get("logLevel");
+            level = this.veracodeExtensionConfigSettings.get("logLevel");
             
             // default to 'info' (redundant due to default setting in package.json)
             if( !level || level == "null"){
@@ -118,20 +118,26 @@ export class ConfigSettings {
             return realLevel;
     }
 
+    getFlawsLoadCount(): number {
+        this.loadSettings();
+
+        return this.veracodeExtensionConfigSettings.get('flawsCount');
+    }
+
     getProxySettings(): ProxySettings|null {
 
         this.loadSettings();
 
-        let addr = this.m_veracodeConfigSettings.get('proxyHost');
+        let addr = this.veracodeExtensionConfigSettings.get('proxyHost');
 
         // if the addr is null, assume no proxy settings
         if(addr === '')
             return null;
 
         // else, get the rest of the settings
-        let port = this.m_veracodeConfigSettings.get('proxyPort');
-        let name = this.m_veracodeConfigSettings.get('proxyName');
-        let pw = this.m_veracodeConfigSettings.get('proxyPassword');
+        let port = this.veracodeExtensionConfigSettings.get('proxyPort');
+        let name = this.veracodeExtensionConfigSettings.get('proxyName');
+        let pw = this.veracodeExtensionConfigSettings.get('proxyPassword');
 
         var proxySettings = new ProxySettings(addr, port, name, pw);
         log.debug('Proxy Settings: ' + proxySettings.toString());

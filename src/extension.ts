@@ -5,8 +5,8 @@
 import * as vscode from 'vscode';
 import log = require('loglevel');
 
-import { BuildExplorer } from "./buildExplorer";
-let m_buildExplorer: BuildExplorer;
+import { VeracodeExplorer } from "./buildExplorer";
+let veracodeExplorer: VeracodeExplorer;
 
 import { ConfigSettings } from "./util/configSettings";
 
@@ -24,8 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
     let logLevel = configSettings.getLogLevel();
     log.setLevel(logLevel);
 
-    // fire up the Build Explorer, which does all the work
-    m_buildExplorer = new BuildExplorer(context, configSettings);
+    // fire up the Veracode Explorer, which does all the work
+    veracodeExplorer = new VeracodeExplorer(context, configSettings);
 }
 
 // this method is called when your extension is deactivated

@@ -3,16 +3,15 @@ import { CredsHandler } from '../util/credsHandler';
 import { ProxySettings } from '../util/proxyHandler';
 
 import log from 'loglevel';
-import { BuildNode, NodeType } from '../util/dataTypes';
+import { BuildNode, NodeType } from '../models/dataTypes';
 
 const API_HOST:string = 'api.veracode.com';
-const API_BASE_PATH:string = '/appsec/v1/applications'
 
-const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null) => {
+const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null,flawPullSize: number) => {
     log.debug('findingsRequest - START');
     let findings:any  = {};
     let path = `/appsec/v2/applications/${appGUID}/findings`;
-    let params:any = { "size": 10};
+    let params:any = { "size": flawPullSize};
     if (sandboxGUID) {
         params.context = sandboxGUID;
     }
@@ -37,9 +36,9 @@ const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: Pr
     return findings;
 }
 
-export const getSandboxFindings = async (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null, scanType?: any): Promise<BuildNode[]> => {
+export const getSandboxFindings = async (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number, scanType?: any): Promise<BuildNode[]> => {
     const sandboxGUID = sandboxNode.type === NodeType.Sandbox ? sandboxNode.id : null;
-    const findings: any = await findingsRequest(credentialHandler,proxySettings,sandboxNode.parent,sandboxGUID);
+    const findings: any = await findingsRequest(credentialHandler,proxySettings,sandboxNode.parent,sandboxGUID,flawPullSize);
     return findings.data || {};
 }
 

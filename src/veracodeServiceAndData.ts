@@ -1,9 +1,10 @@
 import { CredsHandler } from "./util/credsHandler";
-import { BuildNode, NodeType, TreeGroupingHierarchy, SeverityNames } from "./util/dataTypes";
+import { BuildNode, NodeType, TreeGroupingHierarchy, SeverityNames } from "./models/dataTypes";
 import { ProxySettings } from "./util/proxyHandler";
 import { getSandboxFindings } from "./apiWrappers/findingsAPIWrapper"; 
 import { getNested } from "./util/jsonUtil";
 import * as log from "loglevel";
+import { ConfigSettings } from "./util/configSettings";
 
 
 export const EMPTY_RESULT_NODE_NAME: string = "(Empty Results)";
@@ -18,18 +19,18 @@ export class VeracodeServiceAndData {
         this.grouping = TreeGroupingHierarchy.Severity;
     }
 
-    private async fetchFindingsForCache (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null) {
-        const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings);
+    private async fetchFindingsForCache (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
+        const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize);
         const findings = getNested(findingsData,'_embedded','findings');
         if (findings) { 
             this.cache[sandboxNode.id] = findings;
         }
     }
 
-    public async getSandboxNextLevel (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null): Promise<BuildNode[]> {
+    public async getSandboxNextLevel (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,configSettings:ConfigSettings): Promise<BuildNode[]> {
         let nodes: BuildNode[] = [];
         if (!this.cache[sandboxNode.id]) {
-            await this.fetchFindingsForCache(sandboxNode,credentialHandler,proxySettings);
+            await this.fetchFindingsForCache(sandboxNode,credentialHandler,proxySettings,configSettings.getFlawsLoadCount());
             if (!this.cache[sandboxNode.id]) {
                 log.debug('No results for that specific sandbox');
                 nodes.push(new BuildNode(NodeType.Empty,EMPTY_RESULT_NODE_NAME,`${sandboxNode.id}-${EMPTY_RESULT_NODE_NAME}`,sandboxNode.id));
@@ -67,7 +68,7 @@ export class VeracodeServiceAndData {
     
     }
 
-    public getStatusNodes(sandboxId:string): BuildNode[] {
+    private getStatusNodes(sandboxId:string): BuildNode[] {
         const statuses: Array<number>  = [0,0,0,0,0,0];
         const scanResults: [] = this.cache[sandboxId];
         if (scanResults) {
@@ -90,5 +91,31 @@ export class VeracodeServiceAndData {
     public sortFindings (groupType: TreeGroupingHierarchy) {
         console.log(`Change grouping to: ${groupType}`);
         this.grouping = groupType;
+    }
+
+    public getFlawsOfSeverityNode(severityNode:BuildNode): Promise<BuildNode[]> {
+        //^[\w-]*-sev-(.*)$
+        const statusMatch = severityNode.id.match(/^[\w-]*-sev-(.*)$/);
+        const scanResults: [] = this.cache[severityNode.parent];
+        return new Promise((resolve, reject) => {
+            if (statusMatch && statusMatch[1]) {
+                const status = parseInt(statusMatch[1]);
+                resolve(scanResults.filter((item) => {
+                    return getNested(item,'finding_details','severity') === status }
+                ).map((item) => {
+                    const flawId = getNested(item,'issue_id');
+                    const flawCWE = getNested(item,'finding_details','cwe','id');
+                    const flawFile = getNested(item,'finding_details','file_path');
+                    const flawLine = getNested(item,'finding_details','file_line_number');
+                    return new BuildNode(NodeType.Flaw,
+                        `#${flawId} - CWE-${flawCWE} - ${flawFile}:${flawLine}`,
+                        `${severityNode.parent}-flaw-${flawId}`,
+                        severityNode.id,
+                        severityNode.parent,getNested(item,'violates_policy'));
+                })
+                );
+            }
+            reject([]); 
+        }); 
     }
 }

@@ -1,6 +1,6 @@
 import {APIHandler} from '../util/apiQueryHandler';
 import { CredsHandler } from '../util/credsHandler';
-import { BuildNode, NodeType } from '../util/dataTypes';
+import { BuildNode, NodeType } from '../models/dataTypes';
 import { ProxySettings } from '../util/proxyHandler';
 import { ProjectConfigHandler } from '../util/projectConfigHandler';
 import {getNested} from '../util/jsonUtil';
