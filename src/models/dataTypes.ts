@@ -24,9 +24,9 @@ export enum NodeType {
 // }
 
 export enum TreeGroupingHierarchy {
-    Severity =1,
-    CWE = 2,
-    FlawCategory=3,
+    Severity = 'Severity',
+    CWE = 'CWE',
+    FlawCategory= 'Flaw Category',
 }
 
 export enum FilterMitigation {
@@ -45,7 +45,7 @@ export const SeverityNames: Array<string> = ['Informational','Very Low','Low','M
  
 
 // for mapping the sort-type (a number) to a displayable string
-export function sortNumToName(sortNum:number) {
+export function sortNumToName(sortNum:string) {
 
     let sortName:string;
 

@@ -173,7 +173,7 @@ export class VeracodeExplorer {
 		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.sortFlawCategory', () => this.setFlawSort(TreeGroupingHierarchy.FlawCategory));
 		m_context.subscriptions.push(disposable);	
 																			// arbitrary number, relative to other items I create?
-		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 1);	
+		this.m_sortBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);	
 		this.setFlawSort(TreeGroupingHierarchy.Severity);		// default to sorting flaws by severity
 		this.m_sortBarInfo.show();
 
@@ -284,9 +284,34 @@ export class VeracodeExplorer {
 		});
     }
 
+	private findFilePath(fileName:string): string|undefined {
+		// file matching constants
+		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
+		let fullFilePath;
+		glob('**/' + fileName, options, (err, matches) => {
+			if(err) {
+				log.debug('Glob file match error ' + err.message);
+				return;
+			}
+			
+			log.info('Glob file match ' + matches.length);
+
+			// take the first, log info if thre are multiple matches
+			if(matches.length > 1) {
+				log.info("Multiple matches found for source file " + fileName +
+					": " + matches);
+			}
+			log.info(matches);
+			fullFilePath = matches[0];
+		});
+		return fullFilePath;
+	}
+
 	private setFlawSort(sort:TreeGroupingHierarchy) {
 		this.veracodeModel.setFlawSorting(sort);
 		this.m_treeDataProvider.refresh();
+		this.m_sortBarInfo.text = `Veracode - Group By ${sort}`;
 	}
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
