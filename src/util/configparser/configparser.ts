@@ -1,6 +1,5 @@
 import util = require('util');
 import fs = require('fs');
-//import path = require('path');
 import errors = require('./errors');
 import log = require('loglevel');
 
@@ -212,7 +211,7 @@ export class ConfigParser{
      * @param {string} key - Key Name
      * @returns {boolean}
      */
-    removeKey (section:string, key:string) {
+    removeKey (section:string, key:string): boolean {
         // delete operator returns true if the property doesn't not exist
         if(this._sections.hasOwnProperty(section) &&
             this._sections[section].hasOwnProperty(key)){
@@ -233,33 +232,6 @@ export class ConfigParser{
         }
         return false;
     }
-
-
-    /**
-     * Writes the representation of the config file to the
-     * specified file. Comments are not preserved.
-     * @param {string|Buffer|int} file - Filename or File Descriptor
-     * @param {boolean} [createMissingDirs=false] - Whether to create the directories in the path if they don't exist
-     */
-    // write (file:string, createMissingDirs: boolean = false) {
-    //     if (createMissingDirs) {
-    //         this.ensureDirectoriesExist(file);
-    //     }
-
-    /**
-     * Writes the representation of the config file to the
-     * specified file asynchronously. Comments are not preserved.
-     * @param {string|Buffer|int} file - Filename or File Descriptor
-     * @param {bool} [createMissingDirs=false] - Whether to create the directories in the path if they don't exist
-     * @returns {Promise}
-     */
-    // async writeAsync (file:string, createMissingDirs:boolean = false) {
-    //     if (createMissingDirs) {
-    //         await this.ensureDirectoriesExistAsync(file);
-    //     }
-
-    //     await writeFileAsync(file, this.getSectionsAsString.call(this));
-    // }
 
 
     parseLines (file:string,lines:Array<string>) {
@@ -308,33 +280,5 @@ export class ConfigParser{
         }
         return out;
     }
-
-
-    // ensureDirectoriesExist (filePath:string) {
-    //     const dir = path.dirname(filePath);
-    //     try {
-    //         fs.statSync(dir);
-    //     } catch (err) {
-    //         if (err.code === 'ENOENT') {
-    //             mkdirp.sync(dir);
-    //         } else {
-    //             throw err;
-    //         }
-    //     }
-    // }
-
-
-    // async ensureDirectoriesExistAsync (filePath:string) {
-    //     const dir = path.dirname(filePath);
-    //     try {
-    //         await statAsync(dir);
-    //     } catch (err) {
-    //         if (err.code === 'ENOENT') {
-    //             await mkdirAsync(dir);
-    //         } else {
-    //             throw err;
-    //         }
-    //     }
-    // }
 }
 

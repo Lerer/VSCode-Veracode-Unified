@@ -200,6 +200,7 @@ export class VeracodeExplorer {
 	 */
 	private clearFlawsInfo (): void {
 		this.m_diagCollection.clear();
+		this.veracodeModel.veracodeService.clearCache();
 	}
 
 	// get the info for a flaw and display it in the Problems view

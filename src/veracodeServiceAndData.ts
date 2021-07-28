@@ -19,6 +19,18 @@ export class VeracodeServiceAndData {
         this.grouping = TreeGroupingHierarchy.Severity;
     }
 
+    public clearCache(sandboxId?:string) {
+        if (sandboxId) {
+            if (this.cache[sandboxId]) {
+                delete this.cache[sandboxId];
+            } else {
+                log.warn(`No cache found for sandbox ID: ${sandboxId}`);
+            }
+        } else {
+            this.cache = {};
+        }
+    }
+
     private async fetchFindingsForCache (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
         const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize);
         const findings = getNested(findingsData,'_embedded','findings');
