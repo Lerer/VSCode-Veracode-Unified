@@ -2,7 +2,7 @@ import {ProxySettings} from '../util/proxyHandler';
 import {generateHeader} from  './veracode-hmac';
 import log = require('loglevel');
 import {CredsHandler} from '../util/credsHandler';
-import Axios from 'axios';
+import Axios, { AxiosProxyConfig } from 'axios';
 
 export class APIHandler {
 
@@ -11,8 +11,8 @@ export class APIHandler {
     static DEFAULT_METHOD: 'get'|'post' = 'get';
 
     // generic API caller
-    static request(host:string,path: string, params: any,credHandler:CredsHandler ,proxySettings: ProxySettings|null): Thenable<string> {
-        let method : 'get'|'post' = this.DEFAULT_METHOD; 
+    static request(host:string,path: string, params: any,reqMethod:'get'|'post'|undefined,body:any|undefined,credHandler:CredsHandler ,proxySettings: ProxySettings|null): Thenable<string> {
+        let method : 'get'|'post' = reqMethod || this.DEFAULT_METHOD; 
         // funky for the Veracode HMAC generation
         let queryString = '';
         if(params !== null && Object.keys(params).length>0) {
@@ -29,46 +29,29 @@ export class APIHandler {
         }
 
         // Set up proxy settings
-        let proxyString = null;
+        let axiosProxy: AxiosProxyConfig | false = false; 
         if(proxySettings !== null) {
-            if(proxySettings.proxyUserName !== '') {
             // split the proxy ip addr after the dbl-slash
             let n = proxySettings.proxyHost.indexOf('://');
             let preamble = proxySettings.proxyHost.substring(0, n+3);
             let postamble = proxySettings.proxyHost.substring(n+3);
-
-            proxyString = preamble + proxySettings.proxyUserName + ':' +
-                            proxySettings.proxyPassword + '@' +
-                            postamble + ':' +
-                            proxySettings.proxyPort;
-            }
-            else{
-                proxyString = proxySettings.proxyHost + ':' + proxySettings.proxyPort
+            axiosProxy = {
+                host: postamble,
+                port: parseInt(proxySettings.proxyPort),
+                protocol: preamble
+            };
+            // if an Auth is required
+            if(proxySettings.proxyUserName !== '') {
+                axiosProxy.auth = {
+                    username: proxySettings.proxyUserName,
+                    password: proxySettings.proxyPassword
+                }
             }
         }
 
-        // set up options for the request call
-        // var options = {
-        //     url: this.m_protocol + host + path,
-        //     proxy: proxyString,
-        //     strictSSL: false,       // needed for testing, self-signed cert in Burp proxy
-        //     qs: params,
-        //     headers: {
-        //         'User-Agent': this.m_userAgent,
-        //         'Authorization': generateHeader(
-        //                             credHandler.getApiId()||'', 
-        //                             credHandler.getApiKey()||'', 
-        //                             host, path,
-        //                             queryString,
-        //                             'GET')
-        //     },
-        //     json: false
-        // };
-       
-        log.debug("Veracode proxy settings: " + proxyString);
-
         return Axios.request({
             method,
+            proxy:axiosProxy,
             headers:{
                 'User-Agent': this.m_userAgent,
                 'Authorization': generateHeader(
@@ -76,10 +59,11 @@ export class APIHandler {
                                     credHandler.getApiKey()||'', 
                                     host, path,
                                     queryString,
-                                    'GET')
+                                    method.toUpperCase())
             },
             params,
-            url: this.m_protocol + host + path
+            url: this.m_protocol + host + path,
+            data: body
         });
     }
 }

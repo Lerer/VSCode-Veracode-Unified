@@ -5,8 +5,40 @@ import {APIHandler} from '../util/apiQueryHandler';
 import { window } from 'vscode';
 import { MitigationObj } from '../util/mitigationHandler';
 
-export class MitigationHandler {
+const API_HOST:string = 'api.veracode.com';
 
+export const postAnnotation = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,flowId:string,annotation:MitigationObj,comment:string) => {
+    log.debug('postAnnotation - START');
+    let annotationRes:any  = {};
+    let path = `appsec/v2/applications/${appGUID}/annotations`;
+    let body = {
+        "action": annotation.value,
+        comment,
+        "issue_list":`${flowId}`
+    }
+
+    try {
+        annotationRes = await APIHandler.request(
+            API_HOST,
+            path,
+            {},
+            'post',
+            body,
+            credentialHandler,  
+            proxySettings  
+        );
+        console.log("Finished Annotation API request");
+        console.log(annotationRes.data);
+        
+    } catch (error) {
+        console.log(error.response);
+        annotationRes = {};
+    }
+    log.debug('postAnnotation - END');
+    return annotationRes;
+}
+
+export class MitigationHandler {
 
     //  https://api.veracode.com/appsec/v2/applications/{application_guid}/annotations
     /*
@@ -49,6 +81,8 @@ export class MitigationHandler {
                     comment,
                     flaw_id_list:`${flowId}`
                 },
+                'get',
+                undefined,
                 this.credentialHandler,
                 this.proxySettings
             );
@@ -59,6 +93,7 @@ export class MitigationHandler {
             window.showErrorMessage(`Annotation submittion failed. Please make sure no special charcters are included in the comment`);
         }
     }
+
 
 
 }

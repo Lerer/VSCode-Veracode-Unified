@@ -76,17 +76,15 @@ export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
     constructor(private m_type: NodeType, private m_name: string, 
-        private m_id: string, private m_parent: string,private sandboxGUID?: string,private isEffectPolicy?:boolean) /** ,private vBuildId?:string)**/ { }
+        private m_id: string, private m_parent: string,private sandboxGUID?: string,private isEffectPolicy?:boolean) /** ,private vBuildId?:string)**/ { 
+            this.m_mitigationStatus = 'na';
+        }
 
     public get type(): NodeType { return this.m_type; }
     public get name(): string { return this.m_name;}
     public get id(): string { return this.m_id; }
-    public get buildId(): string|undefined {
-        //return this.vBuildId;
-        return;
-    }
     public get parent(): string { return this.m_parent; }
-    public get mitigationStatus() : string {return this.mitigationStatus || 'na';}
+    public get mitigationStatus() : string {return this.m_mitigationStatus || 'na';}
     public get effectPolicy(): boolean {return this.isEffectPolicy || false;}
 
 

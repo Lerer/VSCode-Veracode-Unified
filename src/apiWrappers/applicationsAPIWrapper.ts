@@ -27,6 +27,8 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
             API_HOST,
             path,
             params,
+            'get',
+            undefined,
             credentialHandler,  
             proxySettings  
         );
@@ -52,6 +54,8 @@ const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: Pro
             API_HOST,
             path,
             {},
+            'get',
+            undefined,
             credentialHandler,  
             proxySettings  
         );

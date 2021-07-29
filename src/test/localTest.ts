@@ -51,12 +51,12 @@ const matchTest = () => {
 
 
 const testSet = async () => {
-    //await testGetApplications();
+    await testGetApplications();
     //await testGetApplicationByName();
-    //await testSandboxList();
+    await testSandboxList();
     //await testGetSandboxByName();
-    //await testGetSandboxFindings();
-    matchTest()
+    await testGetSandboxFindings();
+    //matchTest()
 }
 
 testSet();

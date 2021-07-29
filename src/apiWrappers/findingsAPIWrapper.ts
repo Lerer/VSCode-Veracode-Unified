@@ -21,6 +21,8 @@ const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: Pr
             API_HOST,
             path,
             params,
+            'get',
+            undefined,
             credentialHandler,  
             proxySettings  
         );

@@ -11,7 +11,7 @@ import { ProxyHandler } from "./util/proxyHandler";
 import { RawAPI } from "./util/rawAPI";
 import { BuildNode, NodeType, FlawInfo, TreeGroupingHierarchy } from "./models/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
-import { MitigationHandler } from './apiWrappers/mitigationAPIWrapper';
+import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
 import { VeracodeServiceAndData } from './veracodeServiceAndData';
 import { getNested } from './util/jsonUtil';
@@ -113,8 +113,6 @@ export class VeracodeExtensionModel {
 			const mitigationReviewStatus = findingStatus.mitigation_review_status;
 
 			var diagArray: Array<vscode.Diagnostic> = [];
-			console.log('Got to here');
-			// why -1 for range??  Needed, but why?
 			var range = new vscode.Range(flawLineNumber-1, 0, flawLineNumber-1, 0);
 
 			let mitigationPrefix :string= '';
@@ -230,7 +228,7 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNo
 
 			command = {
 				command: 'veracodeStaticExplorer.getFlawInfo',
-				arguments: [element.id, element.buildId],
+				arguments: [element.id],//, element.buildId],
 				title: 'Get Flaw Info'
 			};
 			retItem.command = command;
@@ -305,9 +303,14 @@ export class VeracodeExplorer {
 			console.log(flawBuildNode);
 			const input = await proposeMitigationCommandHandler(flawBuildNode.mitigationStatus);
 			if (input) {
+				console.log('back from questions');
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-				const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
-				await handler.postMitigationInfo(flawBuildNode.buildId,flawBuildNode.id,input.reason,input.comment);
+				const annotationResponse = await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawBuildNode.parent,flawBuildNode.id,input.reason,input.comment);
+				log.info('Annotation sent');
+				log.info(annotationResponse);
+				log.info('==================  Reseting Tree ===================');
+				//const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
+				//await handler.postMitigationInfo(flawBuildNode.buildId,flawBuildNode.id,input.reason,input.comment);
 				this.veracodeModel.clearFlawsInfo();
 				await this.m_treeDataProvider.refresh();
 			}
