@@ -31,6 +31,10 @@ export class VeracodeServiceAndData {
         }
     }
 
+    public getRawCacheData(sandboxId: string):any {
+        return this.cache[sandboxId];
+    }
+
     private async fetchFindingsForCache (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
         const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize);
         const findings = getNested(findingsData,'_embedded','findings');
@@ -39,7 +43,11 @@ export class VeracodeServiceAndData {
         }
     }
 
-    public async getSandboxNextLevel (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,configSettings:ConfigSettings): Promise<BuildNode[]> {
+    public async getSandboxNextLevel (
+        sandboxNode: BuildNode,
+        credentialHandler:CredsHandler, 
+        proxySettings: ProxySettings|null,
+        configSettings:ConfigSettings ): Promise<BuildNode[]> {
         let nodes: BuildNode[] = [];
         if (!this.cache[sandboxNode.id]) {
             await this.fetchFindingsForCache(sandboxNode,credentialHandler,proxySettings,configSettings.getFlawsLoadCount());
@@ -69,14 +77,15 @@ export class VeracodeServiceAndData {
                 
             }
         }
+        return nodes;
+        // return new Promise((resolve, reject) => {
+        //     if (nodes.length>0) {
 
-        return new Promise((resolve, reject) => {
-            if (nodes.length>0) {
-                resolve(nodes);
-            } else { 
-                reject([]);
-            }
-        }); 
+        //         resolve(nodes);
+        //     } else { 
+        //         reject([]);
+        //     }
+        // }); 
     
     }
 

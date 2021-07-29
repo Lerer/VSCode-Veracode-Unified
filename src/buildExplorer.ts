@@ -14,6 +14,7 @@ import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { MitigationHandler } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
 import { VeracodeServiceAndData } from './veracodeServiceAndData';
+import { getNested } from './util/jsonUtil';
 
 const flawDiagnosticsPrefix: string = 'FlawID: ';
 
@@ -24,6 +25,7 @@ export class VeracodeExtensionModel {
 	credsHandler: CredsHandler;
 	projectConfig: ProjectConfigHandler;
 	veracodeService: VeracodeServiceAndData;
+	private extensionDiagCollection: vscode.DiagnosticCollection;
 
 	constructor(private m_configSettings: ConfigSettings) {
 		this.credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
@@ -32,6 +34,7 @@ export class VeracodeExtensionModel {
 		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);	
 		this.m_flawSorting = TreeGroupingHierarchy.Severity;
 		this.veracodeService = new VeracodeServiceAndData();
+		this.extensionDiagCollection = vscode.languages.createDiagnosticCollection('Veracode');
 	}
 
     // roots are going to be the Apps
@@ -42,7 +45,7 @@ export class VeracodeExtensionModel {
 	}
 
 	// will be the scans, sandboxes, flaw categories, and flaws
-	public getChildren(node: BuildNode): Thenable<BuildNode[]> | BuildNode[] {
+	public async getChildren(node: BuildNode): Promise<BuildNode[]> {
 		log.debug('getting children of: '+node);
 
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
@@ -55,8 +58,10 @@ export class VeracodeExtensionModel {
 				return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
 			// Handle the result of a specific context		
 			case (NodeType.Sandbox):
-			case (NodeType.Policy): 
-				return this.veracodeService.getSandboxNextLevel(node,this.credsHandler,proxyHandler.proxySettings,this.m_configSettings);
+			case (NodeType.Policy):
+				const sandboxNodes = await this.veracodeService.getSandboxNextLevel(node,this.credsHandler,proxyHandler.proxySettings,this.m_configSettings);
+				this.addDiagnosticsForSandbox(node.id);
+				return sandboxNodes;
 			case (NodeType.Severity):
 				return this.veracodeService.getFlawsOfSeverityNode(node);
 			case (NodeType.Scan):
@@ -75,6 +80,123 @@ export class VeracodeExtensionModel {
 
 	getFlawInfo(flawID: string, buildID: string): FlawInfo {
 		return this.m_apiHandler.getFlawInfo(flawID, buildID);
+	}
+
+	public clearFlawsInfo (): void {
+		this.extensionDiagCollection.clear();
+		this.veracodeService.clearCache();
+	}
+
+	private addDiagnosticsForSandbox(sandboxNodeId:string) {
+		const findings = this.veracodeService.getRawCacheData(sandboxNodeId);
+		console.log(findings);
+		console.log('got Raw scan data for scan');
+		findings.forEach((rawFlaw: any) => {
+			const findingDetails = getNested(rawFlaw,'finding_details');
+			const findingStatus = getNested(rawFlaw,'finding_status');
+			console.log(findingDetails);
+			this.addDiagnosticItem(rawFlaw.issue_id+'',findingDetails,rawFlaw.description,findingStatus);
+
+		});
+	}
+
+	private addDiagnosticItem(flawId:string,findingDetails:any,flawDesc:string,findingStatus:any){
+		const vscodeFileName = this.findFilePath(findingDetails.file_name);
+		console.log(`back from file finding ${vscodeFileName}`);
+		if (vscodeFileName) {
+
+			const flawSeverity = findingDetails.severity;
+			const flawCategory = findingDetails.finding_category.name;
+			const flawLineNumber = findingDetails.file_line_number;
+
+			const mitigationStatus = findingStatus.resolution;
+			const mitigationReviewStatus = findingStatus.mitigation_review_status;
+
+			var diagArray: Array<vscode.Diagnostic> = [];
+			console.log('Got to here');
+			// why -1 for range??  Needed, but why?
+			var range = new vscode.Range(flawLineNumber-1, 0, flawLineNumber-1, 0);
+
+			let mitigationPrefix :string= '';
+			if (mitigationStatus!=='none') {
+				mitigationPrefix = `[${mitigationReviewStatus}] `;
+			}
+			var diag = new vscode.Diagnostic(
+				range, 
+				mitigationPrefix +flawDiagnosticsPrefix + flawId + ' (' + flawCategory + ')',
+				this.mapSeverityToVSCodeSeverity(flawSeverity)
+			);
+			
+			let uri = vscode.Uri.file(vscodeFileName);
+			console.log(uri.toString());
+
+			diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
+				new vscode.Location(uri, range), flawDesc)];
+
+			// can't add to diag arrays for a URI, need to (re-)set instead?!?
+			//diagArray = Array.clone(this.m_diagCollection.get(uri));
+			diagArray = Object.assign([], this.extensionDiagCollection.get(uri));
+			if( diagArray===undefined )
+			{
+				diagArray = [];
+				diagArray.push(diag);
+			
+				this.extensionDiagCollection.set(uri, diagArray);
+			}
+			else {
+				let newDiagArr:Array<vscode.Diagnostic> = diagArray;
+				log.debug(newDiagArr);
+				const existing = newDiagArr.filter((existingDiagnostic: vscode.Diagnostic) => {
+					return (existingDiagnostic.message.indexOf(flawDiagnosticsPrefix+flawId) > -1);
+				})
+				if (existing.length===0){
+					log.debug('issue not showing. adding to set');
+					newDiagArr.push(diag);
+					this.extensionDiagCollection.set(uri, newDiagArr);
+				} else {
+					log.debug('issue already showing');
+				}
+			}
+		
+		}
+    }
+
+	private findFilePath(fileName:string|undefined): string | undefined {
+		if (!fileName) {
+			log.warn('No file name provided for search');
+			return;
+		}
+		// file matching constants
+		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+		let options: glob.IOptions = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
+
+		const matches = glob.sync('**/' + fileName, options);//, (err, matches) => {
+			// if(err) {
+			// 	log.debug('Glob file match error ' + err.message);
+			// 	return;
+			// }
+			
+		log.info('Glob file match ' + matches.length);
+
+		// take the first, log info if thre are multiple matches
+		if(matches.length > 1) {
+			log.info("Multiple matches found for source file " + fileName +
+				": " + matches);
+		}
+		log.info(matches);
+		
+		return matches[0];
+	}
+
+	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
+	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
+		switch(sev) {
+			case '5':													// Veracode Very-High
+			case '4': return vscode.DiagnosticSeverity.Error;			// Veracode High
+			case '3': return vscode.DiagnosticSeverity.Warning;			// Veracode Medium
+			default: return vscode.DiagnosticSeverity.Information;
+			// ignore VSCode's 'Hints'
+		}
 	}
 }
 
@@ -135,9 +257,9 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNo
  */
 export class VeracodeExplorer {
 
-	private veracodeTreeViewExplorer: vscode.TreeView<BuildNode>;
+	//private veracodeTreeViewExplorer: vscode.TreeView<BuildNode>;
 	private veracodeModel: VeracodeExtensionModel;
-	private m_diagCollection: vscode.DiagnosticCollection;
+	//private m_diagCollection: vscode.DiagnosticCollection;
 	private m_sortBarInfo: vscode.StatusBarItem;
 	private m_treeDataProvider: VeracodeTreeDataProvider;
 
@@ -148,21 +270,22 @@ export class VeracodeExplorer {
 		this.m_treeDataProvider = new VeracodeTreeDataProvider(this.veracodeModel);
 
         // link the TreeDataProvider to the Veracode Explorer view
-		this.veracodeTreeViewExplorer = vscode.window.createTreeView('veracodeStaticExplorer', { treeDataProvider: this.m_treeDataProvider });
+		//this.veracodeTreeViewExplorer = 
+		vscode.window.createTreeView('veracodeStaticExplorer', { treeDataProvider: this.m_treeDataProvider });
 
 		// link the 'Refresh' command to a method
         let disposable = vscode.commands.registerCommand('veracodeStaticExplorer.refresh', () => {
-			this.clearFlawsInfo();
+			this.veracodeModel.clearFlawsInfo();
 			this.m_treeDataProvider.refresh()
 		});
         m_context.subscriptions.push(disposable);
 
 		// create the 'getFlawInfo' command - called when the user clicks on a flaw
-		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.getFlawInfo', (flawID, buildID) => this.getFlawInfo(flawID, buildID));
-		m_context.subscriptions.push(disposable);
+		// disposable = vscode.commands.registerCommand('veracodeStaticExplorer.getFlawInfo', (flawID, buildID) => this.getFlawInfo(flawID, buildID));
+		// m_context.subscriptions.push(disposable);
 
 		// clean the diagnostics data due to a new application, sandbox or scan is selected
-		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.diagnosticsRefresh', () => this.clearFlawsInfo());
+		disposable = vscode.commands.registerCommand('veracodeStaticExplorer.diagnosticsRefresh', () => this.veracodeModel.clearFlawsInfo());
 		m_context.subscriptions.push(disposable);
 
 		// Flaw sorting commands
@@ -185,127 +308,10 @@ export class VeracodeExplorer {
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 				const handler = new MitigationHandler(credsHandler,this.m_configSettings.getProxySettings());
 				await handler.postMitigationInfo(flawBuildNode.buildId,flawBuildNode.id,input.reason,input.comment);
-				this.clearFlawsInfo();
+				this.veracodeModel.clearFlawsInfo();
 				await this.m_treeDataProvider.refresh();
 			}
 		});
-
-		this.m_diagCollection = vscode.languages.createDiagnosticCollection("Veracode");
-		this.m_context.subscriptions.push(this.m_diagCollection);
-	}
-	
-	/**
-	 * This function clear the diagnostics data.
-	 * It should be use as a refresh mechanism when switching between scans 
-	 */
-	private clearFlawsInfo (): void {
-		this.m_diagCollection.clear();
-		this.veracodeModel.veracodeService.clearCache();
-	}
-
-	// get the info for a flaw and display it in the Problems view
-	private getFlawInfo(flawID: string, buildID: string) {
-		log.debug('getFlawInfo');
-		var diagArray: Array<vscode.Diagnostic> | undefined = [];
-
-		// file matching constants
-		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
-
-		let flaw = this.veracodeModel.getFlawInfo(flawID, buildID);
-
-		// why -1 for range??  Needed, but why?
-		var range = new vscode.Range(parseInt(flaw.line, 10)-1, 0, parseInt(flaw.line,10)-1, 0);
-
-		let mitigationPrefix :string= '';
-		if (flaw.mitigated!=='none') {
-			mitigationPrefix = `[${flaw.mitigationStatus}] `;
-		}
-		var diag = new vscode.Diagnostic(
-			range, 
-			mitigationPrefix +flawDiagnosticsPrefix + flaw.id + ' (' + flaw.cweDesc + ')',
-			this.mapSeverityToVSCodeSeverity(flaw.severity)
-		);
-		
-		/* 
-		* VSCode's workspace.findFiles() is case-sensative (even on Windows)
-		* so I need to do my own file matching
-		*/
-							
-		// note on the glob library - need to convert Windows '\' to '/'
-		// (the backslash will look like an esacpe char)
-		log.debug('buildExplorer:getFlawInfo:flaw file: '+flaw.file);
-		
-		glob('**/' + flaw.file, options, (err, matches) => {
-			if(err) {
-				log.debug('Glob file match error ' + err.message);
-				return;
-			}
-			
-			log.info('Glob file match ' + matches.length);
-
-			// take the first, log info if thre are multiple matches
-			if(matches.length > 1) {
-				log.info("Multiple matches found for source file " + flaw.file +
-					": " + matches);
-			}
-			log.info(matches);
-			let uri = vscode.Uri.file(matches[0]);
-			console.log(uri.toString());
-
-			diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-				new vscode.Location(uri, range), flaw.desc)];
-
-			// can't add to diag arrays for a URI, need to (re-)set instead?!?
-			//diagArray = Array.clone(this.m_diagCollection.get(uri));
-			diagArray = Object.assign([], this.m_diagCollection.get(uri));
-			if( diagArray===undefined )
-			{
-				diagArray = [];
-				diagArray.push(diag);
-			
-				this.m_diagCollection.set(uri, diagArray);
-			}
-			else {
-				let newDiagArr:Array<vscode.Diagnostic> = diagArray;
-				log.debug(newDiagArr);
-				const existing = newDiagArr.filter((existingDiagnostic: vscode.Diagnostic) => {
-					return (existingDiagnostic.message.indexOf(flawDiagnosticsPrefix+flaw.id) > -1);
-				})
-				if (existing.length===0){
-					log.debug('issue not showing. adding to set');
-					newDiagArr.push(diag);
-					this.m_diagCollection.set(uri, newDiagArr);
-				} else {
-					log.debug('issue already showing');
-				}
-			}
-		
-		});
-    }
-
-	private findFilePath(fileName:string): string|undefined {
-		// file matching constants
-		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-		let options = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
-		let fullFilePath;
-		glob('**/' + fileName, options, (err, matches) => {
-			if(err) {
-				log.debug('Glob file match error ' + err.message);
-				return;
-			}
-			
-			log.info('Glob file match ' + matches.length);
-
-			// take the first, log info if thre are multiple matches
-			if(matches.length > 1) {
-				log.info("Multiple matches found for source file " + fileName +
-					": " + matches);
-			}
-			log.info(matches);
-			fullFilePath = matches[0];
-		});
-		return fullFilePath;
 	}
 
 	private setFlawSort(sort:TreeGroupingHierarchy) {
@@ -313,17 +319,5 @@ export class VeracodeExplorer {
 		this.m_treeDataProvider.refresh();
 		this.m_sortBarInfo.text = `Veracode - Group By ${sort}`;
 	}
-
-	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
-	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
-		switch(sev) {
-			case '5':													// Veracode Very-High
-			case '4': return vscode.DiagnosticSeverity.Error;			// Veracode High
-			case '3': return vscode.DiagnosticSeverity.Warning;			// Veracode Medium
-			default: return vscode.DiagnosticSeverity.Information;
-			// ignore VSCode's 'Hints'
-		}
-	}
-
-
 }
+
