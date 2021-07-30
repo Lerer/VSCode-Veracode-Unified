@@ -55,7 +55,7 @@ const testSet = async () => {
     //await testGetApplicationByName();
     await testSandboxList();
     //await testGetSandboxByName();
-    await testGetSandboxFindings();
+     await testGetSandboxFindings();
     //matchTest()
 }
 
