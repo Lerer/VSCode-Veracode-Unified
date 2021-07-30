@@ -61,7 +61,7 @@ export class VeracodeServiceAndData {
             switch (this.grouping) {// TODO - work on CWE and Category
                 case TreeGroupingHierarchy.Severity: {
                     // Calculate the number of issues in each Severity
-                    nodes = this.getStatusNodes(sandboxNode.id);
+                    nodes = this.getStatusNodes(sandboxNode.id,sandboxNode.parent);
                     break;
                 }
 
@@ -89,7 +89,7 @@ export class VeracodeServiceAndData {
     
     }
 
-    private getStatusNodes(sandboxId:string): BuildNode[] {
+    private getStatusNodes(sandboxId:string,appGUID: string): BuildNode[] {
         const statuses: Array<number>  = [0,0,0,0,0,0];
         const scanResults: [] = this.cache[sandboxId];
         if (scanResults) {
@@ -100,7 +100,7 @@ export class VeracodeServiceAndData {
         }
 
         const statusNodes = statuses.map((status,i) => {
-            return new BuildNode(NodeType.Severity,`${SeverityNames[5-i]} (${status})`,`${sandboxId}-sev-${5-i}`,sandboxId);
+            return new BuildNode(NodeType.Severity,`${SeverityNames[5-i]} (${status})`,`${sandboxId}-sev-${5-i}`,sandboxId,'',appGUID);
         });
 
         console.log(statusNodes.map((bnode) => bnode.name));
@@ -132,7 +132,7 @@ export class VeracodeServiceAndData {
                         `#${flawId} - CWE-${flawCWE} - ${flawFile}:${flawLine}`,
                         `${severityNode.parent}-flaw-${flawId}`,
                         severityNode.id,
-                        severityNode.parent,getNested(item,'violates_policy'));
+                        severityNode.parent,severityNode.appGUID,getNested(item,'violates_policy'));
                 })
                 );
             }

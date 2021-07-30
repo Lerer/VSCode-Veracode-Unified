@@ -305,7 +305,7 @@ export class VeracodeExplorer {
 			if (input) {
 				console.log('back from questions');
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-				const annotationResponse = await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawBuildNode.parent,flawBuildNode.id,input.reason,input.comment);
+				const annotationResponse = await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawBuildNode.appGUID,flawBuildNode.id,input.reason,input.comment);
 				log.info('Annotation sent');
 				log.info(annotationResponse);
 				log.info('==================  Reseting Tree ===================');

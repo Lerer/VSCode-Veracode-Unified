@@ -76,7 +76,7 @@ export class BuildNode {
 
     // parent is the appID for sandboxes, set to 0 for apps
     constructor(private m_type: NodeType, private m_name: string, 
-        private m_id: string, private m_parent: string,private sandboxGUID?: string,private isEffectPolicy?:boolean) /** ,private vBuildId?:string)**/ { 
+        private m_id: string, private m_parent: string,private m_sandboxGUID?: string,private m_appGUID?:string,private m_isEffectPolicy?:boolean) /** ,private vBuildId?:string)**/ { 
             this.m_mitigationStatus = 'na';
         }
 
@@ -85,8 +85,9 @@ export class BuildNode {
     public get id(): string { return this.m_id; }
     public get parent(): string { return this.m_parent; }
     public get mitigationStatus() : string {return this.m_mitigationStatus || 'na';}
-    public get effectPolicy(): boolean {return this.isEffectPolicy || false;}
-
+    public get effectPolicy(): boolean {return this.m_isEffectPolicy || false;}
+    public get sandboxGUID(): string { return this.m_sandboxGUID || ''}
+    public get appGUID(): string { return this.m_appGUID || ''}
 
     public toString(): string {
         return("Node Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
@@ -94,7 +95,10 @@ export class BuildNode {
 
     public setMitigationData(newMitigationStatus: 'na'|'none'|'accepted'|'rejected'|'proposed') {
         this.m_mitigationStatus = newMitigationStatus; 
+    }
 
+    public set isEffectPolicy(effecting: boolean) {
+        this.m_isEffectPolicy = effecting;
     }
 }
 

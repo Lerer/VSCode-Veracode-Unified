@@ -1,34 +1,45 @@
 import { window } from 'vscode';
+/**
+COMMENT
+APPDESIGN states that custom business logic within the body of the application has addressed the finding. An automated process may not be able to fully identify this business logic.
+NETENV states that the network in which the application is running has provided an environmental control that has addressed the finding.
+OSENV states that the operating system on which the application is running has provided an environmental control that has addressed the finding.
+FP, which stands for false positive, states that Veracode has incorrectly identified a finding in your application. If you identify a finding as a potential false positive, Veracode does not exclude the potential false positive from your published report. Your organization can approve a potential false positive to exclude it from the published report. If your organization approves a finding as a false positive, your organization is accepting the risk that the finding might be valid.
+LIBRARY states that the current team does not maintain the library containing the finding. You referred the vulnerability to the library maintainer.
+ACCEPTRISK states that your business is willing to accept the risk associated with a finding. Your organization evaluated the potential risk and effort required to address the finding.
+ACCEPTED
+REJECTED
+*/
 
 export interface MitigationObj  {
     label: string;
-    value: 'fp'|'osenv'|'netenv'|'appdesign'|'acceptrisk'|'comment';
+    value: 'FP'|'OSENV'|'NETENV'|'APPDESIGN'|'ACCEPTRISK'|'COMMENT';
 }
 
 const mitigations: MitigationObj[] = [
     {
         label: 'Comment',
-        value: 'comment'
+        value: 'COMMENT'
     },
     {
         label: 'Mitigate by OS Environment',
-        value: 'osenv'
+        value: 'OSENV'
     },
     {
         label: 'Mitigate by Network Environment',
-        value: 'netenv'
+        value: 'NETENV'
     },
     {
         label: 'Mitigate by Design',
-        value: 'appdesign'
+        value: 'APPDESIGN'
     },
     {
         label: 'Potential False Positive',
-        value: 'fp'
+        value: 'FP'
     },
     {
         label: 'Accept the Risk',
-        value: 'acceptrisk'
+        value: 'ACCEPTRISK'
     }
 ]
 
@@ -50,7 +61,7 @@ const itemsList = (mitigationStatus:string) => {
     if (mitigationStatus === 'none' || mitigationStatus==='rejected') {
         return mitigations.map((item) => item.label);
     } else {
-        return mitigations.filter((item) => item.value=='comment').map((item) => item.label);
+        return mitigations.filter((item) => item.value=='COMMENT').map((item) => item.label);
     }
 }
 
