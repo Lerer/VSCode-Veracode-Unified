@@ -3,7 +3,7 @@ import { CredsHandler } from '../util/credsHandler';
 import { ProxySettings } from '../util/proxyHandler';
 
 import log from 'loglevel';
-import { BuildNode, NodeType } from '../models/dataTypes';
+import { VeracodeNode, NodeType } from '../models/dataTypes';
 
 const API_HOST:string = 'api.veracode.com';
 
@@ -38,7 +38,7 @@ const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: Pr
     return findings;
 }
 
-export const getSandboxFindings = async (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number, scanType?: any): Promise<BuildNode[]> => {
+export const getSandboxFindings = async (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number, scanType?: any): Promise<VeracodeNode[]> => {
     const sandboxGUID = sandboxNode.type === NodeType.Sandbox ? sandboxNode.id : null;
     const findings: any = await findingsRequest(credentialHandler,proxySettings,sandboxNode.parent,sandboxGUID,flawPullSize);
     return findings.data || {};

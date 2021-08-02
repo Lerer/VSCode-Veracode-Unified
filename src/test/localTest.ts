@@ -1,7 +1,7 @@
 import { getApplicationByName,getSandboxList,getApplications, getSandboxByName } from "../apiWrappers/applicationsAPIWrapper";
 import { getSandboxFindings } from "../apiWrappers/findingsAPIWrapper";
 import { CredsHandler } from "../util/credsHandler";
-import { BuildNode, NodeType } from "../models/dataTypes";
+import { VeracodeNode, NodeType } from "../models/dataTypes";
 
 
 const credHandler = new CredsHandler('/Users/ylerer/.veracode/credentials','default');
@@ -35,7 +35,7 @@ const testGetSandboxByName = async () => {
 
 const testGetSandboxFindings = async () => {
     await credHandler.loadCredsFromFile();
-    const sandboxNode: BuildNode = new BuildNode(NodeType.Sandbox,'test1','272d28d4-45f7-4c50-b123-ed9c1c6b383b','24ca9d18-8988-4859-a66c-2f329ed17dcd');
+    const sandboxNode: VeracodeNode = new VeracodeNode(NodeType.Sandbox,'test1','272d28d4-45f7-4c50-b123-ed9c1c6b383b','24ca9d18-8988-4859-a66c-2f329ed17dcd');
     const findings = await getSandboxFindings(sandboxNode,credHandler,null,20);
 
     console.log(findings);

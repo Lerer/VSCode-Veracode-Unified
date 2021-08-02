@@ -70,9 +70,10 @@ export function sortNumToName(sortNum:string) {
  * a node in the Explorer view
  * can represent an App, a Sandbox, a Scan(Build), a flaw sorting category, or a flaw
  */
-export class BuildNode {
+export class VeracodeNode {
 
     private m_mitigationStatus: 'na'|'none'|'accepted'|'rejected'|'proposed' = 'na';
+    private m_raw: any;
 
     // parent is the appID for sandboxes, set to 0 for apps
     constructor(private m_type: NodeType, private m_name: string, 
@@ -88,6 +89,7 @@ export class BuildNode {
     public get effectPolicy(): boolean {return this.m_isEffectPolicy || false;}
     public get sandboxGUID(): string { return this.m_sandboxGUID || ''}
     public get appGUID(): string { return this.m_appGUID || ''}
+    public get raw(): any { return this.m_raw;}
 
     public toString(): string {
         return("Node Type: "+this.m_type+", Name: " + this.m_name + ", ID: " + this.m_id + ", parent ID: " + this.m_parent);
@@ -99,6 +101,10 @@ export class BuildNode {
 
     public set isEffectPolicy(effecting: boolean) {
         this.m_isEffectPolicy = effecting;
+    }
+
+    public set raw(data:any) {
+        this.m_raw = data;
     }
 }
 

@@ -1,6 +1,6 @@
 import {APIHandler} from '../util/apiQueryHandler';
 import { CredsHandler } from '../util/credsHandler';
-import { BuildNode, NodeType } from '../models/dataTypes';
+import { VeracodeNode, NodeType } from '../models/dataTypes';
 import { ProxySettings } from '../util/proxyHandler';
 import { ProjectConfigHandler } from '../util/projectConfigHandler';
 import {getNested} from '../util/jsonUtil';
@@ -100,7 +100,7 @@ export const getApplicationByName = async (credentialHandler:CredsHandler, proxy
 }
 
     // get the app list via API call
-export const getAppList = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,projectConfig:ProjectConfigHandler): Promise<BuildNode[]> => {
+export const getAppList = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,projectConfig:ProjectConfigHandler): Promise<VeracodeNode[]> => {
     log.debug('getAppList');
     /* (re-)loading the creds and proxy info here should be sufficient to pick up 
         * any changes by the user, as once they get the App List working they should 
@@ -137,14 +137,14 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
 }
 
     // parse the app list from raw XML into an array of BuildNodes
-const handleAppList = (applications: any) /*(rawXML: string)*/: BuildNode[] => {
+const handleAppList = (applications: any) /*(rawXML: string)*/: VeracodeNode[] => {
     log.debug("handling app List: " + JSON.stringify(applications));
 
-    let appArray : BuildNode[] = [];
+    let appArray : VeracodeNode[] = [];
 
     if (typeof applications==='object' && applications.length) {
         appArray = applications.map((app:any) => {
-            return new BuildNode(NodeType.Application, app.profile.name, app.guid, '0');
+            return new VeracodeNode(NodeType.Application, app.profile.name, app.guid, '0');
         });
     }
 
@@ -177,16 +177,16 @@ export const getSandboxByName = async (credentialHandler:CredsHandler, proxySett
     });
 }
 
-const handleSandboxList = (sandboxes: any) : BuildNode[] => {
+const handleSandboxList = (sandboxes: any) : VeracodeNode[] => {
     log.debug("handling sandbox List: " + JSON.stringify(sandboxes));
 
-    let sandboxArray : BuildNode[] = [];
+    let sandboxArray : VeracodeNode[] = [];
 
     if (typeof sandboxes==='object' && sandboxes.length) {
         sandboxArray = sandboxes.map((sandbox:any) => {
             const name = sandbox.name === POLICY_CONTAINER_NAME ? POLICY_CONTAINER_NAME : `Sandbox - ${sandbox.name}`;
             const nodeType = sandbox.name === POLICY_CONTAINER_NAME ? NodeType.Policy : NodeType.Sandbox;
-            return new BuildNode(nodeType, name, sandbox.guid, sandbox.application_guid);
+            return new VeracodeNode(nodeType, name, sandbox.guid, sandbox.application_guid);
         });
     }
 
@@ -195,7 +195,11 @@ const handleSandboxList = (sandboxes: any) : BuildNode[] => {
 }
 
  // get the children of the App (aka sandboxes and scans)
-export const getAppChildren = async (appNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,projectConfig:ProjectConfigHandler, sandboxCount: number): Promise<BuildNode[]> => {
+export const getAppChildren = async (appNode: VeracodeNode,
+                                    credentialHandler:CredsHandler, 
+                                    proxySettings: ProxySettings|null,
+                                    projectConfig:ProjectConfigHandler, 
+                                    sandboxCount: number): Promise<VeracodeNode[]> => {
     log.debug('getAppChildren');
     await projectConfig.loadProjectConfigFromFile();
 

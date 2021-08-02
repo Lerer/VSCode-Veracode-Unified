@@ -1,5 +1,5 @@
 import { CredsHandler } from "./util/credsHandler";
-import { BuildNode, NodeType, TreeGroupingHierarchy, SeverityNames, FilterMitigation } from "./models/dataTypes";
+import { VeracodeNode, NodeType, TreeGroupingHierarchy, SeverityNames, FilterMitigation } from "./models/dataTypes";
 import { ProxySettings } from "./util/proxyHandler";
 import { getSandboxFindings } from "./apiWrappers/findingsAPIWrapper"; 
 import { getNested } from "./util/jsonUtil";
@@ -37,7 +37,7 @@ export class VeracodeServiceAndData {
         return this.cache[sandboxId].filter((flaw:any) => this.filterForMitigation(flaw));
     }
 
-    private async fetchFindingsForCache (sandboxNode: BuildNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
+    private async fetchFindingsForCache (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
         const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize);
         const findings = getNested(findingsData,'_embedded','findings');
         if (findings) { 
@@ -55,16 +55,16 @@ export class VeracodeServiceAndData {
     }
 
     public async getSandboxNextLevel (
-        sandboxNode: BuildNode,
+        sandboxNode: VeracodeNode,
         credentialHandler:CredsHandler, 
         proxySettings: ProxySettings|null,
-        configSettings:ConfigSettings ): Promise<BuildNode[]> {
-        let nodes: BuildNode[] = [];
+        configSettings:ConfigSettings ): Promise<VeracodeNode[]> {
+        let nodes: VeracodeNode[] = [];
         if (!this.cache[sandboxNode.id]) {
             await this.fetchFindingsForCache(sandboxNode,credentialHandler,proxySettings,configSettings.getFlawsLoadCount());
             if (!this.cache[sandboxNode.id]) {
                 log.debug('No results for that specific sandbox');
-                nodes.push(new BuildNode(NodeType.Empty,EMPTY_RESULT_NODE_NAME,`${sandboxNode.id}-${EMPTY_RESULT_NODE_NAME}`,sandboxNode.id));
+                nodes.push(new VeracodeNode(NodeType.Empty,EMPTY_RESULT_NODE_NAME,`${sandboxNode.id}-${EMPTY_RESULT_NODE_NAME}`,sandboxNode.id));
             }
         }
 
@@ -92,7 +92,7 @@ export class VeracodeServiceAndData {
         return nodes;    
     }
 
-    private getStatusNodes(sandboxId:string,appGUID: string): BuildNode[] {
+    private getStatusNodes(sandboxId:string,appGUID: string): VeracodeNode[] {
         const statuses: Array<number>  = [0,0,0,0,0,0];
         const scanResults: [] = this.cache[sandboxId];
         if (scanResults) {
@@ -105,11 +105,11 @@ export class VeracodeServiceAndData {
         }
 
         return statuses.map((status,i) => {
-            return new BuildNode(NodeType.Severity,`${SeverityNames[5-i]} (${status})`,`${sandboxId}-sev-${5-i}`,sandboxId,'',appGUID);
+            return new VeracodeNode(NodeType.Severity,`${SeverityNames[5-i]} (${status})`,`${sandboxId}-sev-${5-i}`,sandboxId,'',appGUID);
         });
     }
 
-    private getCWENodes(sandboxId:string,sandboxGUID: string,appGUID: string): BuildNode[] {
+    private getCWENodes(sandboxId:string,sandboxGUID: string,appGUID: string): VeracodeNode[] {
         const scanResults: [] = this.cache[sandboxId];
 
         const CWEs: Map<number,number> = new Map();
@@ -130,7 +130,7 @@ export class VeracodeServiceAndData {
         }
         const cweArr = [...CWEs.keys()].sort((a,b) => a-b);
         return cweArr.map((cwe) => {
-            return new BuildNode(NodeType.CWE,`CWE-${cwe} - ${CWENames.get(cwe)}`,`${sandboxId}-cwe-${cwe}`,sandboxId,sandboxGUID,appGUID);
+            return new VeracodeNode(NodeType.CWE,`CWE-${cwe} - ${CWENames.get(cwe)}`,`${sandboxId}-cwe-${cwe}`,sandboxId,sandboxGUID,appGUID);
         });
     }
 
@@ -144,12 +144,12 @@ export class VeracodeServiceAndData {
         this.filterMitigation = mitigationFilter;
     }
 
-    public getFlawsOfSeverityNode(severityNode:BuildNode): Promise<BuildNode[]> {
+    public getFlawsOfSeverityNode(severityNode:VeracodeNode): Promise<VeracodeNode[]> {
         //^[\w-]*-sev-(.*)$
         const statusMatch = severityNode.id.match(/^[\w-]*-sev-(.*)$/);
         const scanResults: [] = this.cache[severityNode.parent];
         return new Promise((resolve, reject) => {
-            if (statusMatch && statusMatch[1]) {
+            if (scanResults && statusMatch && statusMatch[1]) {
                 const status = parseInt(statusMatch[1]);
                 resolve(scanResults.filter((itemPreFilter) => {
                     return (this.filterForMitigation(itemPreFilter)) && getNested(itemPreFilter,'finding_details','severity') === status }
@@ -158,11 +158,13 @@ export class VeracodeServiceAndData {
                     const flawCWE = getNested(itemForMap,'finding_details','cwe','id');
                     const flawFile = getNested(itemForMap,'finding_details','file_name');
                     const flawLine = getNested(itemForMap,'finding_details','file_line_number');
-                    return new BuildNode(NodeType.Flaw,
+                    const flaw = new VeracodeNode(NodeType.Flaw,
                         `#${flawId} - CWE-${flawCWE} - ${flawFile}:${flawLine}`,
                         `${severityNode.parent}-flaw-${flawId}`,
                         severityNode.id,
                         severityNode.parent,severityNode.appGUID,getNested(itemForMap,'violates_policy'));
+                    flaw.raw = itemForMap;
+                    return flaw;    
                 })
                 );
             }
@@ -170,7 +172,7 @@ export class VeracodeServiceAndData {
         }); 
     }
 
-    public getFlawsOfCWENode(cweNode:BuildNode): Promise<BuildNode[]> {
+    public getFlawsOfCWENode(cweNode:VeracodeNode): Promise<VeracodeNode[]> {
         //^[\w-]*-cwe-(.*)$
         const cweMatch = cweNode.id.match(/^[\w-]*-cwe-(.*)$/);
         const scanResults: [] = this.cache[cweNode.parent];
@@ -183,11 +185,13 @@ export class VeracodeServiceAndData {
                     const flawId = getNested(itemForMap,'issue_id');
                     const flawFile = getNested(itemForMap,'finding_details','file_name');
                     const flawLine = getNested(itemForMap,'finding_details','file_line_number');
-                    return new BuildNode(NodeType.Flaw,
+                    const flaw = new VeracodeNode(NodeType.Flaw,
                         `#${flawId} - ${flawFile}:${flawLine}`,
                         `${cweNode.parent}-flaw-${flawId}`,
                         cweNode.id,
                         cweNode.sandboxGUID,cweNode.appGUID,getNested(itemForMap,'violates_policy'));
+                    flaw.raw = itemForMap;
+                    return flaw;  
                 })
                 );
             }

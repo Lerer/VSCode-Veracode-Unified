@@ -9,7 +9,7 @@ import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
-import { BuildNode, FilterMitigation, NodeType, TreeGroupingHierarchy } from "./models/dataTypes";
+import { VeracodeNode, FilterMitigation, NodeType, TreeGroupingHierarchy } from "./models/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
@@ -37,14 +37,14 @@ export class VeracodeExtensionModel {
 	}
 
     // roots are going to be the Apps
-	public get roots(): Thenable<BuildNode[]> {
+	public get roots(): Thenable<VeracodeNode[]> {
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		proxyHandler.loadProxySettings();
 		return getAppList(this.credsHandler,proxyHandler.proxySettings,this.projectConfig);
 	}
 
 	// will be the scans, sandboxes, flaw categories, and flaws
-	public async getChildren(node: BuildNode): Promise<BuildNode[]> {
+	public async getChildren(node: VeracodeNode): Promise<VeracodeNode[]> {
 		log.debug('getting children of: '+node);
 
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
@@ -107,7 +107,7 @@ export class VeracodeExtensionModel {
 	}
 
 	private addDiagnosticItem(flawId:string,findingDetails:any,flawDesc:string,findingStatus:any){
-		const vscodeFileName = this.findFilePath(findingDetails.file_name);
+		const vscodeFileName = findVSCodeFilePath(findingDetails.file_name);
 		console.log(`back from file finding ${vscodeFileName}`);
 		if (vscodeFileName) {
 
@@ -173,26 +173,6 @@ export class VeracodeExtensionModel {
 		}
     }
 
-	private findFilePath(fileName:string|undefined): string | undefined {
-		if (!fileName) {
-			log.warn('No file name provided for search');
-			return;
-		}
-		// file matching constants
-		let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
-		let options: glob.IOptions = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
-
-		const matches = glob.sync('**/' + fileName, options);//, (err, matches) => {
-
-		// take the first, log info if thre are multiple matches
-		if(matches.length > 1) {
-			log.info("Multiple matches found for source file " + fileName +
-				": " + matches);
-		}
-		
-		return matches[0];
-	}
-
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
 	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
 		switch(sev) {
@@ -206,7 +186,7 @@ export class VeracodeExtensionModel {
 }
 
 
-export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNode> {
+export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<VeracodeNode> {
 
 	private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
 	readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
@@ -218,27 +198,38 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNo
         this._onDidChangeTreeData.fire(undefined);
 	}
 
-	public getTreeItem(element: BuildNode): vscode.TreeItem {
+	public getTreeItem(element: VeracodeNode): vscode.TreeItem {
 		let nodeType : NodeType = element.type;
 		let command: vscode.Command | undefined = undefined;
 		let retItem: vscode.TreeItem = {
 			label: element.name,
 			collapsibleState: element.type === NodeType.Flaw ? void 0: vscode.TreeItemCollapsibleState.Collapsed,
 		}
-		if (nodeType===NodeType.Scan || nodeType===NodeType.Application || nodeType===NodeType.Sandbox) {
+		if (nodeType===NodeType.Application || nodeType===NodeType.Sandbox) {
 			command = {
 				title: nodeType+ 'selected',
 				command: 'veracodeUnifiedExplorer.diagnosticsRefresh'
 			};
 			retItem.command = command;
 		} else if (nodeType===NodeType.Flaw) {
-
-			command = {
-				command: 'veracodeUnifiedExplorer.getFlawInfo',
-				arguments: [element.id],//, element.buildId],
-				title: 'Get Flaw Info'
-			};
-			retItem.command = command;
+			const rawFlaw = element.raw;
+			const filePath = findVSCodeFilePath(getNested(rawFlaw,'finding_details','file_name'));
+			const flawLineNumber = getNested(rawFlaw,'finding_details', 'file_line_number') || 1;
+			if (filePath) {
+				retItem.resourceUri = vscode.Uri.file(filePath);
+				retItem.command = {
+					command: 'vscode.open',
+					title: 'Open Flaw Location',
+					arguments: [
+						retItem.resourceUri,
+						<vscode.TextDocumentShowOptions>{
+							selection: new vscode.Range(flawLineNumber-1, 0, flawLineNumber-1, 0),
+							preserveFocus: true
+						}
+					]
+				}
+			}
+			
 			retItem.contextValue = 'flaw';
 		}
 		
@@ -252,7 +243,7 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<BuildNo
 	 * called again for each build to get the categories
 	 * called again to get the flaws in each category
      */
-	public getChildren(element?: BuildNode): BuildNode[] | Thenable <BuildNode[]> {
+	public getChildren(element?: VeracodeNode): VeracodeNode[] | Thenable <VeracodeNode[]> {
 		return element ? this.veracodeModel.getChildren(element) : this.veracodeModel.roots;
 	}
 }
@@ -306,7 +297,7 @@ export class VeracodeExplorer {
 
 
 		// mitigation command
-		vscode.commands.registerCommand("veracodeUnifiedExplorer.proposeMitigation",async (flawBuildNode: BuildNode) => {
+		vscode.commands.registerCommand("veracodeUnifiedExplorer.proposeMitigation",async (flawBuildNode: VeracodeNode) => {
 			console.log(flawBuildNode);
 			const input = await proposeMitigationCommandHandler(flawBuildNode.mitigationStatus);
 			if (input) {
@@ -340,3 +331,24 @@ export class VeracodeExplorer {
 		this.m_statusBarInfo.text = `Veracode - Group By ${this.veracodeModel.getGrouping()} - ${this.veracodeModel.getMitigationFilter()}`;
 	}
  }
+
+
+ const findVSCodeFilePath = (fileName:string|undefined): string | undefined  => {
+	if (!fileName) {
+		log.warn('No file name provided for search');
+		return;
+	}
+	// file matching constants
+	let root: string|undefined = (vscode.workspace!== undefined && vscode.workspace.workspaceFolders !==undefined) ? vscode.workspace.workspaceFolders[0].uri.fsPath : undefined;
+	let options: glob.IOptions = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
+
+	const matches = glob.sync('**/' + fileName, options);//, (err, matches) => {
+
+	// take the first, log info if thre are multiple matches
+	if(matches.length > 1) {
+		log.info("Multiple matches found for source file " + fileName +
+			": " + matches);
+	}
+	
+	return matches[0];
+}
