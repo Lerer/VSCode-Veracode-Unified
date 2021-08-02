@@ -87,7 +87,7 @@ Please log an issue.  You can get extra info by changing the veracode.logLevel t
 While it's true that I work at [Veracode](https://www.veracode.com/) at the time of writing this plugin - this is not an official supported plugin by Veracode.
 
 # Credit
-The base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode) who started this plugin initiative and effort.
+The initial code base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode).
 
 
 
