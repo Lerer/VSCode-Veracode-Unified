@@ -69,7 +69,7 @@ export class VeracodeServiceAndData {
         }
 
         if (nodes.length===0) { 
-            switch (this.grouping) {// TODO - work on Category
+            switch (this.grouping) {
                 case TreeGroupingHierarchy.Severity: {
                     // Calculate the number of issues in each Severity
                     nodes = this.getStatusNodes(sandboxNode.id,sandboxNode.parent);
@@ -79,6 +79,12 @@ export class VeracodeServiceAndData {
                 case TreeGroupingHierarchy.CWE: {
                     // Calculate the number of issues in each CWE
                     nodes = this.getCWENodes(sandboxNode.id,sandboxNode.sandboxGUID,sandboxNode.parent);
+                    break;
+                }
+
+                case TreeGroupingHierarchy.FlawCategory: {
+                    // Calculate the number of issues in each CWE
+                    nodes = this.getFlawCategoryNodes(sandboxNode.id,sandboxNode.sandboxGUID,sandboxNode.parent);
                     break;
                 }
 
@@ -131,6 +137,31 @@ export class VeracodeServiceAndData {
         const cweArr = [...CWEs.keys()].sort((a,b) => a-b);
         return cweArr.map((cwe) => {
             return new VeracodeNode(NodeType.CWE,`CWE-${cwe} - ${CWENames.get(cwe)}`,`${sandboxId}-cwe-${cwe}`,sandboxId,sandboxGUID,appGUID);
+        });
+    }
+
+    private getFlawCategoryNodes(sandboxId:string,sandboxGUID: string,appGUID: string): VeracodeNode[] {
+        const scanResults: [] = this.cache[sandboxId];
+
+        const flawCategories: Map<number,number> = new Map();
+        const flawCategoryNames : Map<number,string> = new Map();
+        if (scanResults) {
+            scanResults.forEach(element => {
+                if (this.filterForMitigation(element)) {
+                    let flawCategoryId:number = getNested(element,'finding_details','finding_category','id');
+                    if (flawCategories.has(flawCategoryId)) {
+                        flawCategories.set(flawCategoryId,(flawCategories.get(flawCategoryId)!+1));
+                    } else {
+                        flawCategories.set(flawCategoryId,1);
+                        const flawCategoryName = `${getNested(element,'finding_details','finding_category','name')}`;
+                        flawCategoryNames.set(flawCategoryId,flawCategoryName);
+                    }
+                }
+            });
+        }
+        const flawCategoryArr = [...flawCategories.keys()].sort((a,b) => a-b);
+        return flawCategoryArr.map((flawCategoryId) => {
+            return new VeracodeNode(NodeType.FlawCategory,`${flawCategoryNames.get(flawCategoryId)} (${flawCategories.get(flawCategoryId)})`,`${sandboxId}-flawcat-${flawCategoryId}`,sandboxId,sandboxGUID,appGUID);
         });
     }
 
@@ -190,6 +221,35 @@ export class VeracodeServiceAndData {
                         `${cweNode.parent}-flaw-${flawId}`,
                         cweNode.id,
                         cweNode.sandboxGUID,cweNode.appGUID,getNested(itemForMap,'violates_policy'));
+                    flaw.raw = itemForMap;
+                    return flaw;  
+                })
+                );
+            }
+            reject([]); 
+        }); 
+    }
+
+    public getFlawsOfFlawCategoryNode(flawCatNode:VeracodeNode): Promise<VeracodeNode[]> {
+        //^[\w-]*-cwe-(.*)$
+        const flawCatMatch = flawCatNode.id.match(/^[\w-]*-flawcat-(.*)$/);
+        const scanResults: [] = this.cache[flawCatNode.parent];
+        return new Promise((resolve, reject) => {
+            if (flawCatMatch && flawCatMatch[1]) {
+                const flawCategoryId = parseInt(flawCatMatch[1]);
+                resolve(scanResults.filter((itemPreFilter) => {
+                    return this.filterForMitigation(itemPreFilter) && getNested(itemPreFilter,'finding_details','finding_category','id') === flawCategoryId }
+                ).map((itemForMap) => {
+                    const flawId = getNested(itemForMap,'issue_id');
+                    const flawFile = getNested(itemForMap,'finding_details','file_name');
+                    const flawLine = getNested(itemForMap,'finding_details','file_line_number');
+                    const flawCWE = getNested(itemForMap,'finding_details','cwe','id');
+                    const flawSeverity = SeverityNames[getNested(itemForMap,'finding_details','severity')];
+                    const flaw = new VeracodeNode(NodeType.Flaw,
+                        `#${flawId} - ${flawSeverity} - CWE-${flawCWE} - ${flawFile}:${flawLine}`,
+                        `${flawCatNode.parent}-flaw-${flawId}`,
+                        flawCatNode.id,
+                        flawCatNode.sandboxGUID,flawCatNode.appGUID,getNested(itemForMap,'violates_policy'));
                     flaw.raw = itemForMap;
                     return flaw;  
                 })

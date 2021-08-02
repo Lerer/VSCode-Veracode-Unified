@@ -51,7 +51,7 @@ export class VeracodeExtensionModel {
 		proxyHandler.loadProxySettings();
 		// get either app children --> sandboxes and scans
 		switch (node.type) {
-			case (NodeType.Application):  // || node.type === NodeType.Sandbox) {
+			case (NodeType.Application):  
 				let sandboxCount = this.m_configSettings.getSandboxCount();
 				// if App or Sandbox, get scans
 				return getAppChildren(node, this.credsHandler,proxyHandler.proxySettings,this.projectConfig,sandboxCount);
@@ -65,6 +65,8 @@ export class VeracodeExtensionModel {
 				return this.veracodeService.getFlawsOfSeverityNode(node);
 			case (NodeType.CWE): 
 				return this.veracodeService.getFlawsOfCWENode(node);
+			case (NodeType.FlawCategory):
+				return this.veracodeService.getFlawsOfFlawCategoryNode(node);
 			default: 
 				return [];
 		}
