@@ -58,7 +58,7 @@ export class VeracodeServiceAndData {
         }
 
         if (nodes.length===0) { 
-            switch (this.grouping) {// TODO - work on CWE and Category
+            switch (this.grouping) {// TODO - work on Category
                 case TreeGroupingHierarchy.Severity: {
                     // Calculate the number of issues in each Severity
                     nodes = this.getStatusNodes(sandboxNode.id,sandboxNode.parent);
@@ -67,26 +67,18 @@ export class VeracodeServiceAndData {
 
                 case TreeGroupingHierarchy.CWE: {
                     // Calculate the number of issues in each CWE
+                    nodes = this.getCWENodes(sandboxNode.id,sandboxNode.sandboxGUID,sandboxNode.parent);
                     break;
                 }
 
                 default: { 
-                    //statements; 
+                    nodes = this.getStatusNodes(sandboxNode.id,sandboxNode.parent);
                     break; 
                 } 
                 
             }
         }
-        return nodes;
-        // return new Promise((resolve, reject) => {
-        //     if (nodes.length>0) {
-
-        //         resolve(nodes);
-        //     } else { 
-        //         reject([]);
-        //     }
-        // }); 
-    
+        return nodes;    
     }
 
     private getStatusNodes(sandboxId:string,appGUID: string): BuildNode[] {
@@ -107,6 +99,33 @@ export class VeracodeServiceAndData {
 
         return statusNodes;
 
+    }
+
+    private getCWENodes(sandboxId:string,sandboxGUID: string,appGUID: string): BuildNode[] {
+        const scanResults: [] = this.cache[sandboxId];
+
+        const CWEs: Map<number,number> = new Map();
+        const CWENames : Map<number,string> = new Map();
+        if (scanResults) {
+            scanResults.forEach(element => {
+                let cwe:number = element['finding_details']['cwe']['id'];
+                if (CWEs.has(cwe)) {
+                    CWEs.set(cwe,(CWEs.get(cwe)!+1));
+                } else {
+                    CWEs.set(cwe,1);
+                    const cweName = `${SeverityNames[getNested(element,'finding_details','severity')]} - ${getNested(element,'finding_details','cwe','name')} (${getNested(element,'finding_details','finding_category','name')})`;
+                    CWENames.set(cwe,cweName);
+                }
+            });
+        }
+        const cweArr = [...CWEs.keys()].sort((a,b) => a-b);
+        const cweNodes: BuildNode[] = cweArr.map((cwe) => {
+            return new BuildNode(NodeType.CWE,`CWE-${cwe} - ${CWENames.get(cwe)}`,`${sandboxId}-cwe-${cwe}`,sandboxId,sandboxGUID,appGUID);
+        });
+
+        console.log(cweNodes.map((bnode) => bnode.name));
+
+        return cweNodes;
     }
 
     public sortFindings (groupType: TreeGroupingHierarchy) {
