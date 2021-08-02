@@ -61,6 +61,8 @@ export class VeracodeExtensionModel {
 				return sandboxNodes;
 			case (NodeType.Severity):
 				return this.veracodeService.getFlawsOfSeverityNode(node);
+			case (NodeType.CWE): 
+				return this.veracodeService.getFlawsOfCWENode(node);
 			default: 
 				return [];
 		}

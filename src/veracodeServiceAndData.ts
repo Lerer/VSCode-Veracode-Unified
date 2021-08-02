@@ -108,7 +108,7 @@ export class VeracodeServiceAndData {
         const CWENames : Map<number,string> = new Map();
         if (scanResults) {
             scanResults.forEach(element => {
-                let cwe:number = element['finding_details']['cwe']['id'];
+                let cwe:number = getNested(element,'finding_details','cwe','id');
                 if (CWEs.has(cwe)) {
                     CWEs.set(cwe,(CWEs.get(cwe)!+1));
                 } else {
@@ -152,6 +152,31 @@ export class VeracodeServiceAndData {
                         `${severityNode.parent}-flaw-${flawId}`,
                         severityNode.id,
                         severityNode.parent,severityNode.appGUID,getNested(item,'violates_policy'));
+                })
+                );
+            }
+            reject([]); 
+        }); 
+    }
+
+    public getFlawsOfCWENode(cweNode:BuildNode): Promise<BuildNode[]> {
+        //^[\w-]*-cwe-(.*)$
+        const cweMatch = cweNode.id.match(/^[\w-]*-cwe-(.*)$/);
+        const scanResults: [] = this.cache[cweNode.parent];
+        return new Promise((resolve, reject) => {
+            if (cweMatch && cweMatch[1]) {
+                const cweId = parseInt(cweMatch[1]);
+                resolve(scanResults.filter((item) => {
+                    return getNested(item,'finding_details','cwe','id') === cweId }
+                ).map((item) => {
+                    const flawId = getNested(item,'issue_id');
+                    const flawFile = getNested(item,'finding_details','file_name');
+                    const flawLine = getNested(item,'finding_details','file_line_number');
+                    return new BuildNode(NodeType.Flaw,
+                        `#${flawId} - ${flawFile}:${flawLine}`,
+                        `${cweNode.parent}-flaw-${flawId}`,
+                        cweNode.id,
+                        cweNode.sandboxGUID,cweNode.appGUID,getNested(item,'violates_policy'));
                 })
                 );
             }
