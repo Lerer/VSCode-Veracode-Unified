@@ -30,8 +30,8 @@ export enum TreeGroupingHierarchy {
 }
 
 export enum FilterMitigation {
-    IncludeMitigated,
-    ExcludeMitigated
+    IncludeMitigated = "Include Mitigated",
+    ExcludeMitigated = "Exclude Mitigated"
 }
 
 export enum FilterByPolicyImpact {

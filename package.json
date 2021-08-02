@@ -1,23 +1,23 @@
 {
     "name": "veracode",
-    "displayName": "Veracode",
-    "description": "Veracode Scan result viewer",
-    "version": "0.0.6",
-    "publisher": "buzzcode",
+    "displayName": "Veracode VSCode Plugin",
+    "description": "A plugin to incorporate finding of Veracode Scan result",
+    "version": "0.1.0",
+    "publisher": "lerer",
     "engines": {
-        "vscode": "^1.34.0"
+        "vscode": "^1.58.0"
     },
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/buzzcode/VSCode-Veracode.git"
+        "url": "https://github.com/Lerer/VSCode-Veracode-Unified"
     },
     "license": "MIT",
     "categories": [
         "Other"
     ],
     "activationEvents": [
-        "onCommand:veracodeStaticExplorer.refresh",
-        "onView:veracodeStaticExplorer"
+        "onCommand:veracodeUnifiedExplorer.refresh",
+        "onView:veracodeUnifiedExplorer"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -93,14 +93,14 @@
         "views": {
             "explorer": [
                 {
-                    "id": "veracodeStaticExplorer",
+                    "id": "veracodeUnifiedExplorer",
                     "name": "Veracode"
                 }
             ]
         },
         "commands": [
             {
-                "command": "veracodeStaticExplorer.refresh",
+                "command": "veracodeUnifiedExplorer.refresh",
                 "title": "Refresh",
                 "category": "Veracode",
                 "icon": {
@@ -109,22 +109,32 @@
                 }
             },
             {
-                "command": "veracodeStaticExplorer.sortSeverity",
-                "title": "Sort Flaws by Severity",
+                "command": "veracodeUnifiedExplorer.sortSeverity",
+                "title": "Group by Severity",
                 "category": "Veracode"
             },
             {
-                "command": "veracodeStaticExplorer.sortCwe",
-                "title": "Sort Flaws by CWE",
+                "command": "veracodeUnifiedExplorer.sortCwe",
+                "title": "Group by CWE",
                 "category": "Veracode"
             },
             {
-                "command": "veracodeStaticExplorer.sortFlawCategory",
-                "title": "Sort Flaws by Flaw Category",
+                "command": "veracodeUnifiedExplorer.sortFlawCategory",
+                "title": "Group by Flaw Category",
                 "category": "Veracode"
             },
             {
-                "command": "veracodeStaticExplorer.proposeMitigation",
+                "command": "veracodeUnifiedExplorer.filterFlawIncMitigated",
+                "title": "Filter Flaws - include mitigated",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.filterFlawExcMitigated",
+                "title": "Filter Flaws - exclude mitigated",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.proposeMitigation",
                 "title": "Annotations",
                 "category": "Veracode"
             }
@@ -132,30 +142,40 @@
         "menus": {
             "view/title": [
                 {
-                    "command": "veracodeStaticExplorer.refresh",
-                    "when": "view == veracodeStaticExplorer",
+                    "command": "veracodeUnifiedExplorer.refresh",
+                    "when": "view == veracodeUnifiedExplorer",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "veracodeStaticExplorer.sortSeverity",
-                    "when": "view == veracodeStaticExplorer",
+                    "command": "veracodeUnifiedExplorer.sortSeverity",
+                    "when": "view == veracodeUnifiedExplorer",
                     "group": "navigation@1"
                 },
                 {
-                    "command": "veracodeStaticExplorer.sortCwe",
-                    "when": "view == veracodeStaticExplorer",
+                    "command": "veracodeUnifiedExplorer.sortCwe",
+                    "when": "view == veracodeUnifiedExplorer",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "veracodeStaticExplorer.sortFlawCategory",
-                    "when": "view == veracodeStaticExplorer",
+                    "command": "veracodeUnifiedExplorer.sortFlawCategory",
+                    "when": "view == veracodeUnifiedExplorer",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "veracodeStaticExplorer.proposeMitigation",
-                    "when": "view == veracodeStaticExplorer && viewItem == flaw",
+                    "command": "veracodeUnifiedExplorer.filterFlawIncMitigated",
+                    "when": "view == veracodeUnifiedExplorer",
+                    "group": "filter@1"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.filterFlawExcMitigated",
+                    "when": "view == veracodeUnifiedExplorer",
+                    "group": "filter@2"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.proposeMitigation",
+                    "when": "view == veracodeUnifiedExplorer && viewItem == flaw",
                     "group": "mitigations"
                 }
             ]
