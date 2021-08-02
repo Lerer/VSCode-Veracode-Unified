@@ -126,7 +126,7 @@ export class VeracodeServiceAndData {
                 ).map((item) => {
                     const flawId = getNested(item,'issue_id');
                     const flawCWE = getNested(item,'finding_details','cwe','id');
-                    const flawFile = getNested(item,'finding_details','file_path');
+                    const flawFile = getNested(item,'finding_details','file_name');
                     const flawLine = getNested(item,'finding_details','file_line_number');
                     return new BuildNode(NodeType.Flaw,
                         `#${flawId} - CWE-${flawCWE} - ${flawFile}:${flawLine}`,

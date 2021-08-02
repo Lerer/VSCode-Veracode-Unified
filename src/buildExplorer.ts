@@ -3,24 +3,23 @@
 import * as vscode from 'vscode';
 import log = require('loglevel');
 import glob = require('glob');
+import { convert } from 'html-to-text';
 
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
-import { RawAPI } from "./util/rawAPI";
-import { BuildNode, NodeType, FlawInfo, TreeGroupingHierarchy } from "./models/dataTypes";
+import { BuildNode, NodeType, TreeGroupingHierarchy } from "./models/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
 import { VeracodeServiceAndData } from './veracodeServiceAndData';
 import { getNested } from './util/jsonUtil';
 
-const flawDiagnosticsPrefix: string = 'FlawID: ';
+const flawDiagnosticsPrefix: string = '#';
 
 export class VeracodeExtensionModel {
 
-	m_apiHandler: RawAPI;
 	m_flawSorting: TreeGroupingHierarchy;
 	credsHandler: CredsHandler;
 	projectConfig: ProjectConfigHandler;
@@ -30,8 +29,6 @@ export class VeracodeExtensionModel {
 	constructor(private m_configSettings: ConfigSettings) {
 		this.credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 		this.projectConfig = new ProjectConfigHandler();
-		let proxyHandler = new ProxyHandler(this.m_configSettings);
-		this.m_apiHandler = new RawAPI(this.credsHandler, proxyHandler,this.projectConfig);	
 		this.m_flawSorting = TreeGroupingHierarchy.Severity;
 		this.veracodeService = new VeracodeServiceAndData();
 		this.extensionDiagCollection = vscode.languages.createDiagnosticCollection('Veracode');
@@ -64,22 +61,13 @@ export class VeracodeExtensionModel {
 				return sandboxNodes;
 			case (NodeType.Severity):
 				return this.veracodeService.getFlawsOfSeverityNode(node);
-			case (NodeType.Scan):
-				// else if scan, get flaw categories - default to severity
-				return this.m_apiHandler.getBuildInfo(node, this.m_flawSorting);
 			default: 
-				// node type == flaw category
-				// get the flaws for this category
-				return this.m_apiHandler.getFlaws(node);
+				return [];
 		}
 	}
  
 	public setFlawSorting(sort:TreeGroupingHierarchy) {
 		this.veracodeService.sortFindings(sort);
-	}
-
-	getFlawInfo(flawID: string, buildID: string): FlawInfo {
-		return this.m_apiHandler.getFlawInfo(flawID, buildID);
 	}
 
 	public clearFlawsInfo (): void {
@@ -110,7 +98,7 @@ export class VeracodeExtensionModel {
 			const flawLineNumber = findingDetails.file_line_number;
 
 			const mitigationStatus = findingStatus.resolution;
-			const mitigationReviewStatus = findingStatus.mitigation_review_status;
+			const mitigationReviewStatus = findingStatus.resolution_status;
 
 			var diagArray: Array<vscode.Diagnostic> = [];
 			var range = new vscode.Range(flawLineNumber-1, 0, flawLineNumber-1, 0);
@@ -121,15 +109,23 @@ export class VeracodeExtensionModel {
 			}
 			var diag = new vscode.Diagnostic(
 				range, 
-				mitigationPrefix +flawDiagnosticsPrefix + flawId + ' (' + flawCategory + ')',
+				`${mitigationPrefix}${flawDiagnosticsPrefix}${flawId} - CWE-${findingDetails.cwe.id} ${findingDetails.cwe.name} (${flawCategory})`,
 				this.mapSeverityToVSCodeSeverity(flawSeverity)
 			);
-			
-			let uri = vscode.Uri.file(vscodeFileName);
-			console.log(uri.toString());
 
+			let uri = vscode.Uri.file(vscodeFileName);
+			
+			const html2textOptions = {
+				'preserveNewlines':true,
+				selectors: [
+					{ selector: 'span', format: 'paragraph' }
+				]
+			};
+			
 			diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-				new vscode.Location(uri, range), flawDesc)];
+				new vscode.Location(uri, range), convert(flawDesc,html2textOptions))];
+
+			diag.source = 'Veracode Platform';
 
 			// can't add to diag arrays for a URI, need to (re-)set instead?!?
 			//diagArray = Array.clone(this.m_diagCollection.get(uri));
@@ -169,10 +165,7 @@ export class VeracodeExtensionModel {
 		let options: glob.IOptions = {cwd: root, nocase: true, ignore: ['target/**', '**/PrecompiledWeb/**','out/**','dist/**'], absolute: true,nodir:true};
 
 		const matches = glob.sync('**/' + fileName, options);//, (err, matches) => {
-			// if(err) {
-			// 	log.debug('Glob file match error ' + err.message);
-			// 	return;
-			// }
+
 			
 		log.info('Glob file match ' + matches.length);
 
@@ -323,4 +316,3 @@ export class VeracodeExplorer {
 		this.m_sortBarInfo.text = `Veracode - Group By ${sort}`;
 	}
 }
-
