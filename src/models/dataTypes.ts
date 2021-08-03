@@ -35,8 +35,8 @@ export enum FilterMitigation {
 }
 
 export enum FilterByPolicyImpact {
-    AllFlaws,
-    OnlyEffectingPolicy
+    AllFlaws = "",
+    OnlyEffectingPolicy = "Effect Policy"
 }
 
 export type MitigationStatus = 'none' | 'proposed' | 'accepted' | 'rejected';

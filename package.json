@@ -125,12 +125,22 @@
             },
             {
                 "command": "veracodeUnifiedExplorer.filterFlawIncMitigated",
-                "title": "Filter Flaws - include mitigated",
+                "title": "Include mitigated",
                 "category": "Veracode"
             },
             {
                 "command": "veracodeUnifiedExplorer.filterFlawExcMitigated",
-                "title": "Filter Flaws - exclude mitigated",
+                "title": "Exclude mitigated",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.filterFlawIncNoneEffectPolicy",
+                "title": "Include not Effect policy",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.filterFlawOnlyEffectPolicy",
+                "title": "Effect Policy Only",
                 "category": "Veracode"
             },
             {
@@ -164,6 +174,17 @@
                     "group": "navigation@3"
                 },
                 {
+                    "submenu": "filter.submenu",
+                    "group": "filter@0"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.proposeMitigation",
+                    "when": "view == veracodeUnifiedExplorer && viewItem == flaw",
+                    "group": "mitigations"
+                }
+            ],
+            "filter.submenu": [
+                {
                     "command": "veracodeUnifiedExplorer.filterFlawIncMitigated",
                     "when": "view == veracodeUnifiedExplorer",
                     "group": "filter@1"
@@ -174,12 +195,23 @@
                     "group": "filter@2"
                 },
                 {
-                    "command": "veracodeUnifiedExplorer.proposeMitigation",
-                    "when": "view == veracodeUnifiedExplorer && viewItem == flaw",
-                    "group": "mitigations"
+                    "command": "veracodeUnifiedExplorer.filterFlawIncNoneEffectPolicy",
+                    "when": "view == veracodeUnifiedExplorer",
+                    "group": "filter@3"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.filterFlawOnlyEffectPolicy",
+                    "when": "view == veracodeUnifiedExplorer",
+                    "group": "filter@4"
                 }
             ]
-        }
+        },
+        "submenus": [
+            {
+                "id": "filter.submenu",
+                "label": "Filters"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",

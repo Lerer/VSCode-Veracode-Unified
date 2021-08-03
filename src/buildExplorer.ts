@@ -9,7 +9,7 @@ import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
-import { VeracodeNode, FilterMitigation, NodeType, TreeGroupingHierarchy } from "./models/dataTypes";
+import { VeracodeNode, FilterMitigation, NodeType, TreeGroupingHierarchy, FilterByPolicyImpact } from "./models/dataTypes";
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
@@ -22,6 +22,7 @@ export class VeracodeExtensionModel {
 
 	m_flawSorting: TreeGroupingHierarchy;
 	m_mitigationFilter: FilterMitigation;
+	m_impactPolicyFilter: FilterByPolicyImpact;
 	credsHandler: CredsHandler;
 	projectConfig: ProjectConfigHandler;
 	veracodeService: VeracodeServiceAndData;
@@ -32,6 +33,7 @@ export class VeracodeExtensionModel {
 		this.projectConfig = new ProjectConfigHandler();
 		this.m_flawSorting = TreeGroupingHierarchy.Severity;
 		this.m_mitigationFilter = FilterMitigation.IncludeMitigated;
+		this.m_impactPolicyFilter = FilterByPolicyImpact.AllFlaws;
 		this.veracodeService = new VeracodeServiceAndData();
 		this.extensionDiagCollection = vscode.languages.createDiagnosticCollection('Veracode');
 	}
@@ -82,12 +84,21 @@ export class VeracodeExtensionModel {
 		this.veracodeService.updateFilterMitigations(filter);
 	}
 
+	public setImpactPolicyFilter(filter: FilterByPolicyImpact) {
+		this.m_impactPolicyFilter = filter;
+		this.veracodeService.updateFilterImpactPolicy(filter);
+	}
+
 	public getGrouping(): TreeGroupingHierarchy {
 		return this.m_flawSorting;
 	}
 
 	public getMitigationFilter(): FilterMitigation{
 		return this.m_mitigationFilter;
+	}
+
+	public getImpactPolicyFilter():FilterByPolicyImpact{
+		return this.m_impactPolicyFilter;
 	}
 
 	public clearFlawsInfo (): void {
@@ -292,8 +303,11 @@ export class VeracodeExplorer {
 		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawIncMitigated', () => this.setFlawFilterMitigation(FilterMitigation.IncludeMitigated));
 		m_context.subscriptions.push(disposable);
 		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawExcMitigated', () => this.setFlawFilterMitigation(FilterMitigation.ExcludeMitigated));
-		m_context.subscriptions.push(disposable);	
-
+		m_context.subscriptions.push(disposable);
+		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawIncNoneEffectPolicy', () => this.setFlawFilterImpactPolicy(FilterByPolicyImpact.AllFlaws));
+		m_context.subscriptions.push(disposable);
+		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawOnlyEffectPolicy', () => this.setFlawFilterImpactPolicy(FilterByPolicyImpact.OnlyEffectingPolicy));
+		m_context.subscriptions.push(disposable);
 																			
 		this.m_statusBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);	
 		this.setFlawSort(TreeGroupingHierarchy.Severity);		// default to sorting flaws by severity
@@ -332,8 +346,18 @@ export class VeracodeExplorer {
 		}
 	}
 
+	private setFlawFilterImpactPolicy(filter: FilterByPolicyImpact) {
+		if (this.veracodeModel.getImpactPolicyFilter() !== filter) {
+			this.veracodeModel.setImpactPolicyFilter(filter);
+			this.veracodeModel.clearFlawsInfo();
+			this.m_treeDataProvider.refresh();
+			this.updateStatusBar();
+		}	
+	}
+
 	private updateStatusBar() {
-		this.m_statusBarInfo.text = `Veracode - Group By ${this.veracodeModel.getGrouping()} - ${this.veracodeModel.getMitigationFilter()}`;
+		const onlyImpactPolicy = this.veracodeModel.getImpactPolicyFilter() === FilterByPolicyImpact.OnlyEffectingPolicy;
+		this.m_statusBarInfo.text = `Veracode - Group By ${this.veracodeModel.getGrouping()} - ${this.veracodeModel.getMitigationFilter()}${onlyImpactPolicy ? ','+this.veracodeModel.getImpactPolicyFilter(): ''}`;
 	}
  }
 

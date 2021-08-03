@@ -1,5 +1,5 @@
 import { CredsHandler } from "./util/credsHandler";
-import { VeracodeNode, NodeType, TreeGroupingHierarchy, SeverityNames, FilterMitigation } from "./models/dataTypes";
+import { VeracodeNode, NodeType, TreeGroupingHierarchy, SeverityNames, FilterMitigation, FilterByPolicyImpact } from "./models/dataTypes";
 import { ProxySettings } from "./util/proxyHandler";
 import { getSandboxFindings } from "./apiWrappers/findingsAPIWrapper"; 
 import { getNested } from "./util/jsonUtil";
@@ -14,11 +14,13 @@ export class VeracodeServiceAndData {
     private cache: any;
     private grouping: TreeGroupingHierarchy;
     private filterMitigation: FilterMitigation;
+    private filterEffectingPolicy: FilterByPolicyImpact;
 
     constructor() {
         this.cache = {};
         this.grouping = TreeGroupingHierarchy.Severity;
         this.filterMitigation = FilterMitigation.IncludeMitigated;
+        this.filterEffectingPolicy = FilterByPolicyImpact.AllFlaws;
     }
 
     public clearCache(sandboxId?:string) {
@@ -34,7 +36,7 @@ export class VeracodeServiceAndData {
     }
 
     public getRawCacheData(sandboxId: string):any {
-        return this.cache[sandboxId].filter((flaw:any) => this.filterForMitigation(flaw));
+        return this.cache[sandboxId].filter((flaw:any) => this.isPassAllFilters(flaw));
     }
 
     private async fetchFindingsForCache (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
@@ -52,6 +54,19 @@ export class VeracodeServiceAndData {
 
     public filterForMitigation(rawFlaw: any) : boolean {
         return (this.filterMitigation === FilterMitigation.IncludeMitigated || !this.isFlawMitigated(rawFlaw));
+    }
+
+    private isFlawEffectingPolicy(rawFlaw: any) : boolean {
+        const effectingPolicy = getNested(rawFlaw,'violates_policy');
+        return (effectingPolicy || false);
+    }
+
+    public filterForEffectingPolicy(rawFlaw: any): boolean {
+        return (this.filterEffectingPolicy === FilterByPolicyImpact.AllFlaws || this.isFlawEffectingPolicy(rawFlaw));
+    }
+
+    public isPassAllFilters(rawFlaw: any) : boolean {
+        return (this.filterForEffectingPolicy(rawFlaw) && this.filterForMitigation(rawFlaw));
     }
 
     public async getSandboxNextLevel (
@@ -103,7 +118,7 @@ export class VeracodeServiceAndData {
         const scanResults: [] = this.cache[sandboxId];
         if (scanResults) {
             scanResults.forEach(element => {
-                if (this.filterForMitigation(element)) {
+                if (this.isPassAllFilters(element)) {
                     let status = element['finding_details']['severity'];
                     statuses[5-status] = statuses[5-status] + 1;
                 }
@@ -122,7 +137,7 @@ export class VeracodeServiceAndData {
         const CWENames : Map<number,string> = new Map();
         if (scanResults) {
             scanResults.forEach(element => {
-                if (this.filterForMitigation(element)) {
+                if (this.isPassAllFilters(element)) {
                     let cwe:number = getNested(element,'finding_details','cwe','id');
                     if (CWEs.has(cwe)) {
                         CWEs.set(cwe,(CWEs.get(cwe)!+1));
@@ -147,7 +162,7 @@ export class VeracodeServiceAndData {
         const flawCategoryNames : Map<number,string> = new Map();
         if (scanResults) {
             scanResults.forEach(element => {
-                if (this.filterForMitigation(element)) {
+                if (this.isPassAllFilters(element)) {
                     let flawCategoryId:number = getNested(element,'finding_details','finding_category','id');
                     if (flawCategories.has(flawCategoryId)) {
                         flawCategories.set(flawCategoryId,(flawCategories.get(flawCategoryId)!+1));
@@ -171,8 +186,13 @@ export class VeracodeServiceAndData {
     }
     
     public updateFilterMitigations (mitigationFilter: FilterMitigation) {
-        log.debug(`Change filtering to: ${mitigationFilter}`);
+        log.debug(`Change mitigation filtering to: ${mitigationFilter}`);
         this.filterMitigation = mitigationFilter;
+    }
+
+    public updateFilterImpactPolicy(impactPolicyFilter:FilterByPolicyImpact) {
+        log.debug(`change impact policy filtering to: ${impactPolicyFilter}`);
+        this.filterEffectingPolicy = impactPolicyFilter;
     }
 
     public getFlawsOfSeverityNode(severityNode:VeracodeNode): Promise<VeracodeNode[]> {
@@ -183,7 +203,7 @@ export class VeracodeServiceAndData {
             if (scanResults && statusMatch && statusMatch[1]) {
                 const status = parseInt(statusMatch[1]);
                 resolve(scanResults.filter((itemPreFilter) => {
-                    return (this.filterForMitigation(itemPreFilter)) && getNested(itemPreFilter,'finding_details','severity') === status }
+                    return (this.isPassAllFilters(itemPreFilter)) && getNested(itemPreFilter,'finding_details','severity') === status }
                 ).map((itemForMap) => {
                     const flawId = getNested(itemForMap,'issue_id');
                     const flawCWE = getNested(itemForMap,'finding_details','cwe','id');
@@ -211,7 +231,7 @@ export class VeracodeServiceAndData {
             if (cweMatch && cweMatch[1]) {
                 const cweId = parseInt(cweMatch[1]);
                 resolve(scanResults.filter((itemPreFilter) => {
-                    return this.filterForMitigation(itemPreFilter) && getNested(itemPreFilter,'finding_details','cwe','id') === cweId }
+                    return this.isPassAllFilters(itemPreFilter) && getNested(itemPreFilter,'finding_details','cwe','id') === cweId }
                 ).map((itemForMap) => {
                     const flawId = getNested(itemForMap,'issue_id');
                     const flawFile = getNested(itemForMap,'finding_details','file_name');
@@ -238,7 +258,7 @@ export class VeracodeServiceAndData {
             if (flawCatMatch && flawCatMatch[1]) {
                 const flawCategoryId = parseInt(flawCatMatch[1]);
                 resolve(scanResults.filter((itemPreFilter) => {
-                    return this.filterForMitigation(itemPreFilter) && getNested(itemPreFilter,'finding_details','finding_category','id') === flawCategoryId }
+                    return this.isPassAllFilters(itemPreFilter) && getNested(itemPreFilter,'finding_details','finding_category','id') === flawCategoryId }
                 ).map((itemForMap) => {
                     const flawId = getNested(itemForMap,'issue_id');
                     const flawFile = getNested(itemForMap,'finding_details','file_name');
