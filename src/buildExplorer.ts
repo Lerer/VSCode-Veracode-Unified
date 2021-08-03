@@ -141,9 +141,12 @@ export class VeracodeExtensionModel {
 					{ selector: 'span', format: 'paragraph' }
 				]
 			};
+
+			// Fix some formating in the HTML messages
+			const partiallyFormattedDesc = flawDesc.replace(/References: /gi,'References:\n').replace(/<\/a>\s+<a/gi,'<\/a>\n<a');
 			
 			diag.relatedInformation = [new vscode.DiagnosticRelatedInformation(
-				new vscode.Location(uri, range), convert(flawDesc,html2textOptions))];
+				new vscode.Location(uri, range), convert(partiallyFormattedDesc,html2textOptions))];
 
 			diag.source = 'Veracode Platform';
 
@@ -176,11 +179,11 @@ export class VeracodeExtensionModel {
     }
 
 	// VScode only supports 4 levels of Diagnostics (and we'll use only 3), while Veracode has 6
-	private mapSeverityToVSCodeSeverity(sev: string): vscode.DiagnosticSeverity {
+	private mapSeverityToVSCodeSeverity(sev: number): vscode.DiagnosticSeverity {
 		switch(sev) {
-			case '5':													// Veracode Very-High
-			case '4': return vscode.DiagnosticSeverity.Error;			// Veracode High
-			case '3': return vscode.DiagnosticSeverity.Warning;			// Veracode Medium
+			case 5:													// Veracode Very-High
+			case 4: return vscode.DiagnosticSeverity.Error;			// Veracode High
+			case 3: return vscode.DiagnosticSeverity.Warning;			// Veracode Medium
 			default: return vscode.DiagnosticSeverity.Information;
 			// ignore VSCode's 'Hints'
 		}
