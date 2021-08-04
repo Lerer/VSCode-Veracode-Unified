@@ -40,7 +40,7 @@ export class VeracodeServiceAndData {
     }
 
     private async fetchFindingsForCache (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number) {
-        const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize);
+        const findingsData = await getSandboxFindings(sandboxNode,credentialHandler,proxySettings,flawPullSize,undefined);
         const findings = getNested(findingsData,'_embedded','findings');
         if (findings) { 
             this.cache[sandboxNode.id] = findings;

@@ -7,13 +7,16 @@ import { VeracodeNode, NodeType } from '../models/dataTypes';
 
 const API_HOST:string = 'api.veracode.com';
 
-const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null,flawPullSize: number) => {
+const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string|null,flawPullSize: number,scanType: string[]|undefined) => {
     log.debug('findingsRequest - START');
     let findings:any  = {};
     let path = `/appsec/v2/applications/${appGUID}/findings`;
     let params:any = { "size": flawPullSize};
     if (sandboxGUID) {
         params.context = sandboxGUID;
+    }
+    if (scanType) {
+        params.scan_type = scanType.toString();
     }
 
     try {
@@ -38,9 +41,9 @@ const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: Pr
     return findings;
 }
 
-export const getSandboxFindings = async (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number, scanType?: any): Promise<VeracodeNode[]> => {
+export const getSandboxFindings = async (sandboxNode: VeracodeNode,credentialHandler:CredsHandler, proxySettings: ProxySettings|null,flawPullSize:number, scanType: string[]|undefined): Promise<VeracodeNode[]> => {
     const sandboxGUID = sandboxNode.type === NodeType.Sandbox ? sandboxNode.id : null;
-    const findings: any = await findingsRequest(credentialHandler,proxySettings,sandboxNode.parent,sandboxGUID,flawPullSize);
+    const findings: any = await findingsRequest(credentialHandler,proxySettings,sandboxNode.parent,sandboxGUID,flawPullSize,scanType);
     return findings.data || {};
 }
 
