@@ -1,4 +1,4 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lerer_VSCode-Veracode-Unified&metric=alert_status)](https://sonarcloud.io/dashboard?id=Lerer_VSCode-Veracode-Unified) ![GitHub](https://img.shields.io/github/license/lerer/VSCode-Veracode-Unified?style=flat-squere)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lerer_VSCode-Veracode-Unified&metric=alert_status)](https://sonarcloud.io/dashboard?id=Lerer_VSCode-Veracode-Unified) ![GitHub](https://img.shields.io/github/license/lerer/VSCode-Veracode-Unified?style=flat-squere) [![Maintained by Yaakov Lerer](https://img.shields.io/badge/maintained%20by-Lerer-brightgreen)](http://www.github.com/lerer) [![GitHub issues](https://img.shields.io/github/issues/lerer/VSCode-Veracode-Unified/enhancement?color=9cf)](https://github.com/Lerer/VSCode-Veracode-Unified/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement) [![GitHub issues](https://img.shields.io/github/issues/lerer/VSCode-Veracode-Unified/bug?color=red)](https://github.com/Lerer/VSCode-Veracode-Unified/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 # About
 
