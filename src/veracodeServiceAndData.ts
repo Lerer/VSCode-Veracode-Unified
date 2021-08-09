@@ -215,6 +215,7 @@ export class VeracodeServiceAndData {
                         severityNode.id,
                         severityNode.parent,severityNode.appGUID,getNested(itemForMap,'violates_policy'));
                     flaw.raw = itemForMap;
+                    flaw.setMitigationData(getNested(itemForMap,'finding_status','resolution_status'));
                     return flaw;    
                 })
                 );
@@ -242,6 +243,7 @@ export class VeracodeServiceAndData {
                         cweNode.id,
                         cweNode.sandboxGUID,cweNode.appGUID,getNested(itemForMap,'violates_policy'));
                     flaw.raw = itemForMap;
+                    flaw.setMitigationData(getNested(itemForMap,'finding_status','resolution_status'));
                     return flaw;  
                 })
                 );
@@ -271,6 +273,7 @@ export class VeracodeServiceAndData {
                         flawCatNode.id,
                         flawCatNode.sandboxGUID,flawCatNode.appGUID,getNested(itemForMap,'violates_policy'));
                     flaw.raw = itemForMap;
+                    flaw.setMitigationData(getNested(itemForMap,'finding_status','resolution_status'));
                     return flaw;  
                 })
                 );

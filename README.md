@@ -76,6 +76,12 @@ The menu (from the Veracode tree explorer pane) have few sorting and filtering o
 - __Mitigations__ : will allow to include or exclude mitigated findings
 - __Effecting Policy__ : Will enable to remove findings which are not effecting policy associate with the Application Profile 
 
+__Note:__ The selected grouping and the filtering you can view at the IDE status bar
+<p align=center>
+<img src="media/IDE_info_bar_210810_0048.png" width="70%">
+</p>
+
+
 # Software Composition Analysis (SCA)
 The plugin also enable importing of vulnerabilities associate with the application policy or sandbox scan
 

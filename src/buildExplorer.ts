@@ -331,7 +331,7 @@ export class VeracodeExplorer {
 			if (input) {
 				log.debug('back from questions');
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-				await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawNode.appGUID,flawNode.id,input.reason,input.comment);
+				await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawNode.appGUID,flawNode.sandboxGUID,flawNode.id,input.reason,input.comment);
 				this.veracodeModel.clearFlawsInfo();
 				await this.m_treeDataProvider.refresh();
 			}

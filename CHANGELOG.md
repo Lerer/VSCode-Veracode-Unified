@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.1.2]
+- Fix annotation - add all spectrum of options for non-mitigated flaws
+- Updated README to show the extension label
+
 ## [0.1.0]
 - Added links from the flaw in the tree view
 - Rename Tree view items name (flaws)

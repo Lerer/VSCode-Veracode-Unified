@@ -58,7 +58,7 @@ const secondInput = async () => {
 }
 
 const itemsList = (mitigationStatus:string) => {
-    if (mitigationStatus === 'none' || mitigationStatus==='rejected') {
+    if (mitigationStatus === 'NONE' || mitigationStatus==='REJECTED') {
         return mitigations.map((item) => item.label);
     } else {
         return mitigations.filter((item) => item.value=='COMMENT').map((item) => item.label);

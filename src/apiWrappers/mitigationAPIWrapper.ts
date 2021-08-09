@@ -25,7 +25,7 @@ REJECTED
 
 const API_HOST:string = 'api.veracode.com';
 
-export const postAnnotation = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,flowId:string,annotation:MitigationObj,comment:string) => {
+export const postAnnotation = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,appGUID:string,sandboxGUID:string,flowId:string,annotation:MitigationObj,comment:string) => {
     log.debug('postAnnotation - START');
     log.debug(`flaws: ${flowId}, comment: '${comment}', Annotation Type: ${annotation.value}`);
 
@@ -41,13 +41,18 @@ export const postAnnotation = async (credentialHandler:CredsHandler, proxySettin
         "issue_list":`${idMatch[1]}`
     }
 
+    let queryParams: any = {};
+    if (sandboxGUID && sandboxGUID.indexOf('policy')<0) {
+        queryParams['context'] = sandboxGUID;
+    }
+
     await credentialHandler.loadCredsFromFile();
 
     try {
         annotationRes = await APIHandler.request(
             API_HOST,
             path,
-            {},
+            queryParams,
             'post',
             body,
             credentialHandler,  
