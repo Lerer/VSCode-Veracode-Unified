@@ -42,8 +42,8 @@ export enum FilterByPolicyImpact {
 export type MitigationStatus = 'none' | 'proposed' | 'accepted' | 'rejected';
 
 export const SeverityNames: Array<string> = ['Informational','Very Low','Low','Medium','High','Very High'];
+export const SeverityColors: Array<string> = ['0270D3','33ADD2','FFBE00','FF7D00','DD3B35','A90533'];
  
-
 // for mapping the sort-type (a number) to a displayable string
 export function sortNumToName(sortNum:string) {
 

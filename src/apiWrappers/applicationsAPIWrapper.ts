@@ -186,7 +186,8 @@ const handleSandboxList = (sandboxes: any) : VeracodeNode[] => {
         sandboxArray = sandboxes.map((sandbox:any) => {
             const name = sandbox.name === POLICY_CONTAINER_NAME ? POLICY_CONTAINER_NAME : `Sandbox - ${sandbox.name}`;
             const nodeType = sandbox.name === POLICY_CONTAINER_NAME ? NodeType.Policy : NodeType.Sandbox;
-            return new VeracodeNode(nodeType, name, sandbox.guid, sandbox.application_guid);
+            const sandboxGUID = sandbox.name === POLICY_CONTAINER_NAME ?  undefined : sandbox.guid;
+            return new VeracodeNode(nodeType, name, sandbox.guid, sandbox.application_guid,sandboxGUID,sandbox.application_guid);
         });
     }
 
@@ -211,8 +212,6 @@ export const getAppChildren = async (appNode: VeracodeNode,
         }
     ];
 
-    console.log(projectConfig.getSandboxName());
-    console.log(projectConfig.isPolicySandbox());
     if (projectConfig.isPolicySandbox()) {
         // do nothing here
     } else if (projectConfig.getSandboxName()) {

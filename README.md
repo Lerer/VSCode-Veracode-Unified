@@ -1,4 +1,4 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lerer_VSCode-Veracode-Unified&metric=alert_status)](https://sonarcloud.io/dashboard?id=Lerer_VSCode-Veracode-Unified)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Lerer_VSCode-Veracode-Unified&metric=alert_status)](https://sonarcloud.io/dashboard?id=Lerer_VSCode-Veracode-Unified) ![GitHub](https://img.shields.io/github/license/lerer/VSCode-Veracode-Unified?style=flat-squere)
 
 # About
 
@@ -7,12 +7,8 @@ This is a VSCode plugin which integrate with the Veracode platform and enables d
 The plugin does not support upload for scan action. 
 
 <p align=center>
-<img src="media/ScreenShot_2020-09-01.png">
+<img src="media/IDE_View_210809_135013.png">
 </p>
-
-# Upgrading
-
-Nothing yet.
 
 # Installing
 
@@ -55,7 +51,7 @@ To get only the scans in the main policy (not in sandbox), set: `sandbox=__polic
 User can propose mitigations for none mitigated flaws and comments to all flaws. The annotations assosiated with the annotations will be saved to the cloud platform. 
 
 <p align=center>
-<img src="media/ScreenShot_2020-10-12 _010906.png" width="30%">
+<img src="media/Annotation_menu_210809_134916.png" width="30%">
 </p>
 
 <p align=center>
@@ -64,6 +60,10 @@ User can propose mitigations for none mitigated flaws and comments to all flaws.
 
 # Sorting and Filtering
 The menu (from the Veracode tree explorer pane) have few sorting and filtering options.
+
+<p align=center>
+<img src="media/Filters_menu_2021-08-09_124402.png" width="55%">
+</p>
 
 ## Sorting and Grouping
 - __Sort by Severity__: will organize flaws by their severity
@@ -80,8 +80,20 @@ The menu (from the Veracode tree explorer pane) have few sorting and filtering o
 - __Mitigations__ : will allow to include or exclude mitigated findings
 - __Effecting Policy__ : Will enable to remove findings which are not effecting policy associate with the Application Profile 
 
-# Found a problem?
-Please log an issue.  You can get extra info by changing the veracode.logLevel to debug and viewing the debug log in the Developer Tools Console.  Help --> Developer Tools (Console tab)
+# Software Composition Analysis (SCA)
+The plugin also enable importing of vulnerabilities associate with the application policy or sandbox scan
+
+The import menu option is available at the POLICY/sandbox level
+<p align=center>
+<img src="media/SCA_page_menu.png" width="30%">
+</p>
+Clicking on the option will open (with a delay of few seconds) a new page (web view) in the IDE of the SCA findings
+<p align=center>
+<img src="media/SCA_page_view_210809_124333.png" >
+</p>
+
+## Found a problem? Want to request a feature?
+Please log an issue.  
 
 # A note about the author
 While it's true that I work at [Veracode](https://www.veracode.com/) at the time of writing this plugin - this is not an official supported plugin by Veracode.
