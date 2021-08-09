@@ -15,6 +15,7 @@ import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
 import { VeracodeServiceAndData } from './veracodeServiceAndData';
 import { getNested } from './util/jsonUtil';
+import {addSCAView} from './veracodeSCAHandler';
 
 const flawDiagnosticsPrefix: string = '#';
 
@@ -248,6 +249,10 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<Veracod
 			
 			retItem.contextValue = 'flaw';
 		}
+
+		if (nodeType===NodeType.Policy || nodeType ===NodeType.Sandbox) {
+			retItem.contextValue = 'sandbox';
+		}
 		
 		return retItem;
 	}
@@ -314,15 +319,19 @@ export class VeracodeExplorer {
 		this.updateStatusBar();
 		this.m_statusBarInfo.show();
 
+		
+		m_context.subscriptions.push(vscode.commands.registerCommand('sca.start', (sandboxNode: VeracodeNode) => { 
+			let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
+			addSCAView(sandboxNode,credsHandler,this.m_configSettings.getProxySettings(),this.m_configSettings.getFlawsLoadCount()); 
+		}));
 
 		// mitigation command
-		vscode.commands.registerCommand("veracodeUnifiedExplorer.proposeMitigation",async (flawBuildNode: VeracodeNode) => {
-			console.log(flawBuildNode);
-			const input = await proposeMitigationCommandHandler(flawBuildNode.mitigationStatus);
+		vscode.commands.registerCommand("veracodeUnifiedExplorer.proposeMitigation",async (flawNode: VeracodeNode) => {
+			const input = await proposeMitigationCommandHandler(flawNode.mitigationStatus);
 			if (input) {
-				console.log('back from questions');
+				log.debug('back from questions');
 				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-				await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawBuildNode.appGUID,flawBuildNode.id,input.reason,input.comment);
+				await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawNode.appGUID,flawNode.id,input.reason,input.comment);
 				this.veracodeModel.clearFlawsInfo();
 				await this.m_treeDataProvider.refresh();
 			}

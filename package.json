@@ -147,6 +147,11 @@
                 "command": "veracodeUnifiedExplorer.proposeMitigation",
                 "title": "Annotations",
                 "category": "Veracode"
+            },
+            {
+                "command": "sca.start",
+                "title": "Show related SCA findings",
+                "category": "Veracode"
             }
         ],
         "menus": {
@@ -181,6 +186,11 @@
                     "command": "veracodeUnifiedExplorer.proposeMitigation",
                     "when": "view == veracodeUnifiedExplorer && viewItem == flaw",
                     "group": "mitigations"
+                },
+                {
+                    "command": "sca.start",
+                    "when": "view == veracodeUnifiedExplorer && viewItem == sandbox",
+                    "group": "SCA"
                 }
             ],
             "filter.submenu": [
@@ -214,8 +224,7 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
+        "vscode:prepublish": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "test": "npm run compile && node ./out/test/runTest.js"
     },
