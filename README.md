@@ -10,10 +10,6 @@ The plugin does not support upload for scan action.
 <img src="media/IDE_View_210809_135013.png">
 </p>
 
-# Installing
-
-This is not (yet) in the VSCode marketplace so you need to do a manual install. Grab the latest file from the releases directory and do a [manual install](https://stackoverflow.com/questions/42017617/how-to-install-vs-code-extension-manually)
-
 # Plugin Configuration
 
 This extension contributes the following settings (default values are shown in parenthesis):
