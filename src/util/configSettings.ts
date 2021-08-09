@@ -52,13 +52,6 @@ export class ConfigSettings {
             return filename;
     }
 
-    getScanCount(): number {
-        // this needs to be here to pick up when the user changes the settings
-        this.loadSettings();
-
-        return this.veracodeExtensionConfigSettings.get("scanCount");
-    }
-
     getSandboxCount(): number {
         // this needs to be here to pick up when the user changes the settings
         this.loadSettings();

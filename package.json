@@ -1,9 +1,9 @@
 {
     "name": "veracode",
-    "displayName": "Veracode VSCode Plugin",
-    "description": "A plugin to incorporate finding of Veracode Scan result",
+    "displayName": "Veracode Unified Plugin - Unofficial Version",
+    "description": "A plugin to incorporate Static and SCA findings from Veracode Application Profiles",
     "version": "0.1.0",
-    "publisher": "lerer",
+    "publisher": "Yaakov Lerer",
     "engines": {
         "vscode": "^1.58.0"
     },
@@ -11,10 +11,18 @@
         "type": "git",
         "url": "https://github.com/Lerer/VSCode-Veracode-Unified"
     },
+    "bugs": {
+        "url": "https://github.com/Lerer/VSCode-Veracode-Unified/issues",
+        "email": "ylerer@veracode.com"
+    },
     "license": "MIT",
     "categories": [
         "Other"
     ],
+    "galleryBanner": {
+        "color": "#00B4E6",
+        "theme": "dark"
+    },
     "activationEvents": [
         "onCommand:veracodeUnifiedExplorer.refresh",
         "onView:veracodeUnifiedExplorer"
@@ -37,15 +45,10 @@
                     "default": "",
                     "description": "Specifies the absolute filepath for the API Credentials"
                 },
-                "veracode.scanCount": {
-                    "type": "number",
-                    "default": 15,
-                    "description": "Number of scans to show for each application"
-                },
                 "veracode.flawsCount": {
                     "type": "number",
                     "default": 200,
-                    "description": "Number of issues to pull from the veracode platform (20-250)"
+                    "description": "Number of issues to pull from the veracode platform (20-300)"
                 },
                 "veracode.logLevel": {
                     "type": [
@@ -85,8 +88,8 @@
                 },
                 "veracode.sandboxCount": {
                     "type": "number",
-                    "default": 15,
-                    "description": "Specifies the maximum number of sandboxes to show for each application"
+                    "default": 5,
+                    "description": "Specifies the maximum number of sandboxes to show for each application (1-25)"
                 }
             }
         },
@@ -239,16 +242,10 @@
         "@types/glob": "^7.1.3",
         "@types/html-to-text": "^8.0.1",
         "@types/loglevel": "^1.6.3",
-        "@types/request": "^2.48.5",
-        "@types/sjcl": "^1.0.29",
         "@types/vscode": "^1.48.0",
-        "@types/xml2js": "^0.4.5",
         "axios": "^0.21.1",
         "glob": "^7.1.6",
         "html-to-text": "^8.0.0",
-        "loglevel": "^1.6.8",
-        "request": "^2.88.2",
-        "sjcl": "^1.0.8",
-        "xml2js": "^0.4.23"
+        "loglevel": "^1.6.8"
     }
 }

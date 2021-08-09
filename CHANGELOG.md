@@ -1,6 +1,19 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.1.0]
+- Added links from the flaw in the tree view
+- Rename Tree view items name (flaws)
+- Restructure the help
+- Remove old APIs and replace with new REST APIs
+- Remove deprecated libraries
+- Add import SCA features
+- Replace the grouping
+- Added Filter options by Mitigation and Effecting Policy
+- Remove the 'scan' layer in the tree view
+- Configuration File updated
+- Code clean-up (no TODO and no duplications) 
+
 ## [0.0.6]
 - Added Axios for new api calls - request package is no longer supported
 - Added ability to support comments and propose mitigations for flaws
