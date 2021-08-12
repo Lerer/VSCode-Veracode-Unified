@@ -152,8 +152,13 @@
                 "category": "Veracode"
             },
             {
-                "command": "sca.start",
+                "command": "veracodeUnifiedExplorer.SCAReport",
                 "title": "Show related SCA findings",
+                "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.summaryReport",
+                "title": "Show Summary report",
                 "category": "Veracode"
             }
         ],
@@ -191,9 +196,14 @@
                     "group": "mitigations"
                 },
                 {
-                    "command": "sca.start",
+                    "command": "veracodeUnifiedExplorer.SCAReport",
                     "when": "view == veracodeUnifiedExplorer && viewItem == sandbox",
-                    "group": "SCA"
+                    "group": "reports@1"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.summaryReport",
+                    "when": "view == veracodeUnifiedExplorer && viewItem == sandbox",
+                    "group": "reports@10"
                 }
             ],
             "filter.submenu": [

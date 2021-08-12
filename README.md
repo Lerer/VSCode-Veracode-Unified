@@ -81,19 +81,35 @@ __Note:__ The selected grouping and the filtering you can view at the IDE status
 <img src="media/IDE_info_bar_210810_0048.png" width="70%">
 </p>
 
+# Reports
+Few new options for reporting from the Sandbox/Policy level
 
-# Software Composition Analysis (SCA)
-The plugin also enable importing of vulnerabilities associate with the application policy or sandbox scan
+## Software Composition Analysis (SCA)
+Get a view of the vulnerabilities associate with the application policy or sandbox scan
 
 The import menu option is available at the POLICY/sandbox level
 <p align=center>
-<img src="media/SCA_page_menu.png" width="30%">
+<img src="media/menu_report_sca.png" width="30%">
 </p>
 Clicking on the option will open (with a delay of few seconds) a new page (web view) in the IDE of the SCA findings
 <p align=center>
 <img src="media/SCA_page_view_210809_124333.png" >
 </p>
 
+## Summary Report
+Fetch the summary report of the Policy/Sandbox.  
+__Note__ - results includes also mitigated findings
+
+<p align=center>
+<img src="media/menu_report_summary.png" width="30%">
+</p>
+
+<p align=center>
+<img src="media/summary_report.png" width="50%">
+</p>
+
+
+          
 ## Found a problem? Want to request a feature?
 Please log an issue.  
 
