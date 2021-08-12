@@ -4,18 +4,22 @@ import * as vscode from 'vscode';
 import log = require('loglevel');
 import glob = require('glob');
 import { convert } from 'html-to-text';
+import { getNested } from './util/jsonUtil';
 
 import { ConfigSettings } from "./util/configSettings";
 import { CredsHandler } from "./util/credsHandler";
 import { ProjectConfigHandler } from "./util/projectConfigHandler";
 import { ProxyHandler } from "./util/proxyHandler";
 import { VeracodeNode, FilterMitigation, NodeType, TreeGroupingHierarchy, FilterByPolicyImpact } from "./models/dataTypes";
+import { VeracodeServiceAndData } from './veracodeServiceAndData';
+
 import {proposeMitigationCommandHandler} from './util/mitigationHandler';
 import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
-import { VeracodeServiceAndData } from './veracodeServiceAndData';
-import { getNested } from './util/jsonUtil';
-import {addSCAView} from './veracodeSCAHandler';
+import { summaryReportRequest } from './apiWrappers/summaryReportAPIWrapper';
+
+import {addSCAView} from './reports/veracodeSCAHandler';
+import { addSummaryReportView } from './reports/veracodeSummaryReportHandler';
 
 const flawDiagnosticsPrefix: string = '#';
 
@@ -320,9 +324,17 @@ export class VeracodeExplorer {
 		this.m_statusBarInfo.show();
 
 		
-		m_context.subscriptions.push(vscode.commands.registerCommand('sca.start', (sandboxNode: VeracodeNode) => { 
+		m_context.subscriptions.push(vscode.commands.registerCommand('veracodeUnifiedExplorer.SCAReport', (sandboxNode: VeracodeNode) => { 
 			let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
 			addSCAView(sandboxNode,credsHandler,this.m_configSettings.getProxySettings(),this.m_configSettings.getFlawsLoadCount()); 
+		}));
+
+		m_context.subscriptions.push(vscode.commands.registerCommand('veracodeUnifiedExplorer.summaryReport', async (sandboxNode: VeracodeNode) => { 
+			let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
+			await credsHandler.loadCredsFromFile();
+			vscode.window.showInformationMessage('Requesting Summary report from Veracode Platform')
+			let report = await summaryReportRequest(credsHandler,this.m_configSettings.getProxySettings(),sandboxNode.appGUID,sandboxNode.sandboxGUID);//,'24ca9d18-8988-4859-a66c-2f329ed17dcd');
+			addSummaryReportView(report); 
 		}));
 
 		// mitigation command

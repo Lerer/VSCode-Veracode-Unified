@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.1.3]
+- First revision for Summary report from IDE
+- Remove commas the top of the SCA report
+- Code restructure and clean-up
+
 ## [0.1.2]
 - Fix annotation - add all spectrum of options for non-mitigated flaws
 - Updated README to show the extension label

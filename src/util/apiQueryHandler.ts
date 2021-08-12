@@ -1,6 +1,6 @@
 import {ProxySettings} from '../util/proxyHandler'; 
 import {generateHeader} from  './veracode-hmac';
-import log = require('loglevel');
+import log from 'loglevel';
 import {CredsHandler} from '../util/credsHandler';
 import Axios, { AxiosProxyConfig } from 'axios';
 

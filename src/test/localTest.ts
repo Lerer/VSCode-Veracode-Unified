@@ -1,4 +1,5 @@
 import { getApplicationByName,getSandboxList,getApplications, getSandboxByName } from "../apiWrappers/applicationsAPIWrapper";
+import { summaryReportRequest} from '../apiWrappers/summaryReportAPIWrapper';
 import { getSandboxFindings } from "../apiWrappers/findingsAPIWrapper";
 import { CredsHandler } from "../util/credsHandler";
 import { VeracodeNode, NodeType } from "../models/dataTypes";
@@ -51,14 +52,26 @@ const matchTest = () => {
     console.log(match![1]);
 }
 
+const testSummaryReport = async () => {
+    await credHandler.loadCredsFromFile();
+    const report = await summaryReportRequest(credHandler,null,'24ca9d18-8988-4859-a66c-2f329ed17dcd',null);//,'24ca9d18-8988-4859-a66c-2f329ed17dcd');
+    //console.log(report);
+    
+    //console.log(getNested(report,'data'));
+    console.log(getNested(report,'data','static-analysis','modules'));
+    //console.log(getNested(report,'data','software_composition_analysis','vulnerable_components','component_dto'));
+    
+}
+
 
 const testSet = async () => {
     //await testGetApplications();
     //await testGetApplicationByName();
     //await testSandboxList();
     //await testGetSandboxByName();
-    await testGetSandboxFindings();
+    //await testGetSandboxFindings();
     //matchTest()
+    await testSummaryReport();
 }
 
 testSet();
