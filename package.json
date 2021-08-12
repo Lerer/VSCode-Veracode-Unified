@@ -158,7 +158,7 @@
             },
             {
                 "command": "veracodeUnifiedExplorer.summaryReport",
-                "title": "Show Summary report for the Application",
+                "title": "Show Summary report",
                 "category": "Veracode"
             }
         ],
