@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import log = require('loglevel');
 
-import { VeracodeExplorer } from "./buildExplorer";
+import { VeracodeExplorer } from "./veracodeExplorer";
 let veracodeExplorer: VeracodeExplorer;
 
 import { ConfigSettings } from "./util/configSettings";
