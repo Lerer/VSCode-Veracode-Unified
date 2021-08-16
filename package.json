@@ -29,6 +29,12 @@
     ],
     "main": "./out/extension",
     "contributes": {
+        "viewsWelcome": [
+            {
+                "view": "veracodeUnifiedExplorer",
+                "contents": "Welcome to Veracode Extension. [learn more](https://marketplace.visualstudio.com/items?itemName=YaakovLerer.veracode).\nThis welcome message should go away after few seconds. If you still see this message after 20 seconds, please update your `veracode-plugin.conf` file and try to refresh.\n[Refresh](command:veracodeUnifiedExplorer.refresh)\nAlternatively, please check the README for troubleshooting information in the Extension repository [README](https://github.com/Lerer/VSCode-Veracode-Unified/blob/master/README.md) documentation."
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "Veracode",

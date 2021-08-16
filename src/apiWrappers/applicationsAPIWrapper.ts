@@ -32,7 +32,7 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
             credentialHandler,  
             proxySettings  
         );
-        console.log("Finished API request");
+        console.log("Finished applicationRequest API request");
         
     } catch (error) {
         console.log(error.response);
@@ -92,10 +92,10 @@ export const getApplicationByName = async (credentialHandler:CredsHandler, proxy
     console.info(`getApplicationByName - START - ${escape(appName)}`);
     let application:any = await applicationRequest(credentialHandler,proxySettings,null,appName);
     console.info('getApplicationByName - END');
-    if (application.data) {
+    if (getNested(application,'data','_embedded')) {
         return application.data._embedded.applications;
     } else {
-        return application;
+        return [];
     }
 }
 
@@ -123,14 +123,13 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
     } else {
         applications = await getApplications(credentialHandler,proxySettings);
     }
-
     
     return new Promise((resolve,reject) => {
         const appNodes = handleAppList(applications);
         if (appNodes.length>0) {
             resolve(appNodes);
         } else {
-            log.error("Could not get the requested application/s from the Veracode Platform");
+            log.error("Empty results or could not get the requested application/s from the Veracode Platform");
             reject();
         }
     })
@@ -138,7 +137,7 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
 
     // parse the app list from raw XML into an array of BuildNodes
 const handleAppList = (applications: any) /*(rawXML: string)*/: VeracodeNode[] => {
-    log.debug("handling app List: " + JSON.stringify(applications));
+    log.debug(applications);
 
     let appArray : VeracodeNode[] = [];
 

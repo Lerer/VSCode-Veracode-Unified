@@ -242,7 +242,6 @@ export class ConfigParser{
             if(res){
                 const header = res[1];
 
-                log.debug('adding section: '+header+' - '+line);
                 this.addSection(header);
                 currentSectionName = header;
 
@@ -254,7 +253,6 @@ export class ConfigParser{
                     const key = res[1];
 
                     this.set(currentSectionName,key,res[2]);
-                    log.debug(`value added: for ${currentSectionName} on key [${key}]`);
                 } else {
                     throw new errors.ParseError(file, lineNumber, line);
                 }
