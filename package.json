@@ -25,7 +25,8 @@
     },
     "activationEvents": [
         "onCommand:veracodeUnifiedExplorer.refresh",
-        "onView:veracodeUnifiedExplorer"
+        "onView:veracodeUnifiedExplorer",
+        "onCommand:veracodeUnifiedExplorer.scanFileWithPipeline"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -166,7 +167,12 @@
                 "command": "veracodeUnifiedExplorer.summaryReport",
                 "title": "Show Summary report",
                 "category": "Veracode"
-            }
+            },
+            {
+				"command": "veracodeUnifiedExplorer.scanFileWithPipeline",
+				"title": "Scan with Veracode Pipeline Scan",
+				"when": "false"
+			}
         ],
         "menus": {
             "view/title": [
@@ -233,6 +239,13 @@
                     "when": "view == veracodeUnifiedExplorer",
                     "group": "filter@4"
                 }
+            ],
+            "explorer/context": [
+				{
+					"command": "veracodeUnifiedExplorer.scanFileWithPipeline",
+					"group": "8_veracode",
+					"when": "resourceExtname == .jar || resourceExtname == .war || resourceExtname == .ear || resourceExtname == .zip || resourceExtname == .apk"
+				}
             ]
         },
         "submenus": [
