@@ -28,16 +28,15 @@ jobs:
       # Runs a single command using the runners shell
       - name: package for scan
         run: zip -r forscan.zip src package-lock.json
-
       - name: Download the Pipeline Scanner
         uses: wei/curl@master
         with:
           args: -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
       - name: Unzip the Pipeline Scanner
-        run: unzip pipeline-scan-LATEST.zip
+        run: unzip pipeline-scan-LATEST.zip -d pipeline
       - name: Run Pipeline Scanner
         id: pipeline-scan
         continue-on-error: true
-        run: java -jar pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --file "./forscan.zip"
+        run: java -jar ./pipeline/pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --file "./forscan.zip"
       - name: Get result
         run: echo "${{steps.pipeline-scan.outputs.result}}"
