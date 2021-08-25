@@ -38,7 +38,7 @@ jobs:
         id: pipeline-scan
         continue-on-error: true
         run: java -jar ./pipeline/pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --file "./forscan.zip"
-      - name: Get result
-        run: echo "${{steps.pipeline-scan.outputs.result}}"
-      - name: CSA
+      - name: SCA
+        env: 
+          SRCCLR_API_TOKEN: ${{ secrets.SRCCLR_API_TOKEN }}
         run: curl -sSL https://download.sourceclear.com/ci.sh | sh -s scan --quick
