@@ -8,6 +8,8 @@ on:
   push:    
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: "0 5 * * SUN"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,6 +33,11 @@ jobs:
         uses: wei/curl@master
         with:
           args: -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+      - name: Echo Branch name
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch 
+      - name: Print Branch name
+        run: echo "Running on branch ${{ steps.extract_branch.outputs.branch }}"
       - name: Unzip the Pipeline Scanner
         run: unzip pipeline-scan-LATEST.zip -d pipeline
       - name: Run Pipeline Scanner
