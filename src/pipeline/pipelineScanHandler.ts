@@ -2,10 +2,19 @@ import * as path from 'path';
 import {URL,pathToFileURL} from 'url';
 import * as vscode from 'vscode';
 import {readFileSync,writeFileSync} from 'fs';
+import log = require('loglevel');
+import * as crypto from 'crypto';
 
-import { Scan, ScansApi, ScanUpdateScanStatusEnum, ScanResourceScanStatusEnum, SegmentsApi, FindingsApi, ScanFindingsResource } from '../apiWrappers/pipelineAPIWrapper';
+import { ScanUpdateScanStatusEnum, ScanResourceScanStatusEnum, SegmentsApi, FindingsApi, ScanFindingsResource, addInterceptor, removeGlobalInterceptor, updateScanStatus, ScanResource, getScanStatus, Scan, createNewScan } from '../apiWrappers/pipelineAPIWrapper';
+import { ConfigSettings } from '../util/configSettings';
+import { CredsHandler } from '../util/credsHandler';
+import { AxiosResponse } from 'axios';
 
-let extensionConfig: vscode.WorkspaceConfiguration;
+
+function getTimeStamp(): string {
+    const now = new Date();
+    return `${now.getHours()}:${('0'+now.getMinutes()).slice(-2)}:${('0'+now.getSeconds()).slice(-2)}_${('00'+now.getMilliseconds()).slice(-3)}`;
+}
 
 export class VeracodePipelineScanHandler {
 
@@ -22,44 +31,40 @@ export class VeracodePipelineScanHandler {
 	    this.outputChannel.show();
     }
 
-    private getTimeStamp() {
-        const now = new Date();
-        return `${now.getHours()}:${('0'+now.getMinutes()).slice(-2)}:${('0'+now.getSeconds()).slice(-2)}_${now.getMilliseconds()}`;
-    }
 
     public logMessage(message: string) {
-        this.clear();
-        this.outputChannel.appendLine(`${this.getTimeStamp()} - ${message}`);
+        this.outputChannel.appendLine(`${getTimeStamp()} - ${message}`);
     }
 
-    public async scanFileWithPipeline (target: vscode.Uri) {
-        //loadConfig();
+    public async scanFileWithPipeline (target: vscode.Uri,configSettings:ConfigSettings) {
+        configSettings.loadSettings();
         this.clear();
         //pipelineScanDiagnosticCollection.clear();
 
+        let credsHandler = new CredsHandler(configSettings.getCredsFile(),configSettings.getCredsProfile());
+        await credsHandler.loadCredsFromFile();
         
-        if (!target && vscode.workspace.workspaceFolders) {
-            if (extensionConfig['pipelineScanFilepath'] === '') {
-                this.logMessage('No default Pipeline Scan filepath set, see extension help for configuration settings');
-                return;
-            }
-            target = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, extensionConfig['pipelineScanFilepath']);
-        }
-        
+        // if (!target && vscode.workspace.workspaceFolders) {
+        //     if (extensionConfig['pipelineScanFilepath'] === '') {
+        //         this.logMessage('No default Pipeline Scan filepath set, see extension help for configuration settings');
+        //         return;
+        //     }
+        //     target = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, extensionConfig['pipelineScanFilepath']);
+        // }      
+
         let filename = target.fsPath.substring(target.fsPath.lastIndexOf(path.sep) + 1);
         this.pipelineStatusBarItem.text = `Scanning ${filename}`;
         this.pipelineStatusBarItem.show();
         
+        const pipelineScanResultsFilename = configSettings.getPipelineResultFilename();
         
         try {
             let fileUrl = pathToFileURL(target.fsPath);
-            if (vscode.workspace.workspaceFolders) {
-                //let outputFile = url.pathToFileURL(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pipelineScanResultsFilename));
-                
-                let pipelineShell: vscode.ShellExecution = new vscode.ShellExecution('pwd');
-                this.logMessage(pipelineShell.command.toString());
-
-                //await runPipelineScan(fileUrl, outputFile, this.logMessage);
+            if (vscode.workspace.workspaceFolders && pipelineScanResultsFilename) {
+                let outputFile = pathToFileURL(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pipelineScanResultsFilename));
+                this.logMessage(`Beginning scanning of '${filename}'`)
+                await runPipelineScan(credsHandler,fileUrl, outputFile, (messgae:string) => {this.outputChannel.appendLine(`${getTimeStamp()} - ${messgae}`)});
+                this.logMessage(`Analysis Complete.`); 
                 this.pipelineStatusBarItem.text = `Scan complete ${filename}`;
                 setTimeout(() => {
                     this.pipelineStatusBarItem.hide();
@@ -71,66 +76,36 @@ export class VeracodePipelineScanHandler {
     }
 }
 
-
-
-
-import * as crypto from 'crypto';
-
-const usage = 'Usage: unofficial-veracode-pipeline-scan <file-to-scan> [<output-file>]';
-const defaultOutputFileName = 'unofficial-veracode-pipeline-scan-results.json';
-
-const scansApi = new ScansApi();
-const segmentsApi = new SegmentsApi();
-const findingsApi = new FindingsApi();
-
-let runningScanId = '';
-let messageFunction = sendLogMessage;
-
-if (require.main === module) {
-	process.on('SIGINT', async () => {
-		await cancelScan();
-		process.exit();
-	});
+export async function runPipelineScan(credsHandler:CredsHandler, target: URL, outputFile: URL, messageFunction: (message: string) => void = ((m:string) => log.debug(m))) {
+    log.debug('runPipelineScan - START');
 	
-	if (process.argv.length === 3 || process.argv.length === 4) {
-		try {
-			let fileUrl = pathToFileURL(process.argv[2]);
-			let outputFileUrl = pathToFileURL(process.argv[3] || defaultOutputFileName);
-			runPipelineScan(fileUrl, outputFileUrl);
-		} catch(error){
-			console.log(usage);
-			console.log(error.message);
-		}
-	} else {
-		console.log(usage);
-	}
-}
+    const findingsApi = new FindingsApi();
 
-export async function runPipelineScan(target: URL, outputFile: URL, messageCallback?: (message: string) => void) {
-	if (messageCallback) {
-		messageFunction = messageCallback;
-	}
+    let runningScanId = '';
+
     let fileUrlString = target.toString();
     let fileName = fileUrlString.substring(fileUrlString.lastIndexOf(path.sep) + 1);
 	messageFunction(`Scanning ${fileName}`);
 
     let file = readFileSync(target);
 
+    const interceptor: number = addInterceptor(credsHandler);
     try {
-        let scansPostResponse = await createScan(file, fileName);
+        // Add interceptor
+        // Create a scan ID
+        const scanHash: Scan = createScanFileHash(file,fileName);
+        let scansPostResponse = await createNewScan(scanHash);//await scansApi.scansPost(scanHash);
         if (scansPostResponse.data.scan_id && scansPostResponse.data.binary_segments_expected) {
             runningScanId = scansPostResponse.data.scan_id;
             messageFunction(`Scan ID ${runningScanId}`);
-            await uploadFile(runningScanId, file, scansPostResponse.data.binary_segments_expected);
+            await uploadFile(runningScanId, file, scansPostResponse.data.binary_segments_expected,messageFunction);
             try {
-                let scansScanIdPutResponse = await scansApi.scansScanIdPut(runningScanId, {
-                    scan_status: ScanUpdateScanStatusEnum.STARTED
-                });
-                messageFunction(`Scan status ${scansScanIdPutResponse.data.scan_status}`);
+                let startScanPutResponse = await updateScanStatus(runningScanId,ScanUpdateScanStatusEnum.STARTED);
+                messageFunction(`Scan status ${startScanPutResponse.data.scan_status}`);
             } catch(error) {
                 messageFunction(error.message);
             }
-            await pollScanStatus(runningScanId);
+            await pollScanStatus(runningScanId,messageFunction);
             let scansScanIdFindingsGetResponse = await findingsApi.scansScanIdFindingsGet(runningScanId);
             if (scansScanIdFindingsGetResponse.data.findings) {
                 messageFunction(`Number of findings is ${scansScanIdFindingsGetResponse.data.findings.length}`);
@@ -140,31 +115,35 @@ export async function runPipelineScan(target: URL, outputFile: URL, messageCallb
     } catch(error) {
         messageFunction(error.message);
     }
+    removeGlobalInterceptor(interceptor);
 }
 
-export async function cancelScan(scanId?: string) {
-	let scanToCancel = scanId || runningScanId;
-    messageFunction(`Cancelling scan ${scanToCancel}`);
+async function cancelScan(scanId: string,messageCallback?: (message: string) => void) {
+    if (messageCallback) {
+        messageCallback(`Cancelling scan ${scanId}`);
+    }
 	try {
-        let scansScanIdPutResponse = await scansApi.scansScanIdPut(scanToCancel, {
-            scan_status: ScanUpdateScanStatusEnum.CANCELLED
-        });
-        messageFunction(`Scan status ${scansScanIdPutResponse.data.scan_status}`);
+        let scansScanIdPutResponse:AxiosResponse<ScanResource> = await updateScanStatus(scanId, ScanUpdateScanStatusEnum.CANCELLED);
+        if (messageCallback){
+            messageCallback(`Scan status ${scansScanIdPutResponse.data.scan_status}`);
+        }
     } catch(error) {
-        messageFunction(error.message);
+        if (messageCallback) {
+            messageCallback(error.message);
+        }
     }
 }
 
-function createScan(file: Buffer, fileName: string) {
-	let scan: Scan = {
+function createScanFileHash(file: Buffer, fileName: string): Scan {
+	return {
 		binary_hash: crypto.createHash('sha256').update(file).digest('hex'),
 		binary_name: fileName,
 		binary_size: file.byteLength
 	};
-	return scansApi.scansPost(scan);
 }
 
-async function uploadFile(scanId: string, file: Buffer, segmentCount: number) {
+async function uploadFile(scanId: string, file: Buffer, segmentCount: number,messageFunction: (message: string) => void = ((m:string) => {return;})) {
+    const segmentsApi = new SegmentsApi();
 	for (let i = 0; i < segmentCount; i++) {
 		let segmentBegin = i * (file.byteLength/segmentCount);
 		let segmentEnd = 0;
@@ -176,18 +155,19 @@ async function uploadFile(scanId: string, file: Buffer, segmentCount: number) {
 		let fileSegment = file.slice(segmentBegin, segmentEnd);
 		try {
 			let scansScanIdSegmentsSegmentIdPutResponse = await segmentsApi.scansScanIdSegmentsSegmentIdPut(scanId, i, fileSegment);
-			messageFunction(`Uploaded segment of size ${scansScanIdSegmentsSegmentIdPutResponse.data.segment_size} bytes`);
+			messageFunction(`Uploaded segment ${i+1} out of ${segmentCount} of total upload size: ${scansScanIdSegmentsSegmentIdPutResponse.data.segment_size} bytes`);
 		} catch(error) {
 			messageFunction(error.message);
 		}
 	}
 }
 
-async function pollScanStatus(scanId: string) {
+async function pollScanStatus(scanId: string,messageFunction: (message: string) => void = ((m:string) => {return;})) {
 	let scanComplete = false;
+    let scansScanIdGetResponse;
 	while (!scanComplete) {
-		await sleep(3000);
-		let scansScanIdGetResponse = await scansApi.scansScanIdGet(scanId);
+		await sleep(4000);
+        scansScanIdGetResponse = await getScanStatus(scanId);
 		switch(scansScanIdGetResponse.data.scan_status) {
 			case ScanResourceScanStatusEnum.PENDING:
 			case ScanResourceScanStatusEnum.STARTED:
@@ -202,7 +182,7 @@ async function pollScanStatus(scanId: string) {
 	}
 }
 
-function processScanFindingsResource(scanFindingsResource: ScanFindingsResource, outputFile: URL) {
+function processScanFindingsResource(scanFindingsResource: ScanFindingsResource, outputFile: URL,messageFunction: (message: string) => void = ((m:string) => {return;})) {
     messageFunction(`Saving results to ${outputFile.toString()}`);
     let data = JSON.stringify(scanFindingsResource, null, 4);
     writeFileSync(outputFile, data);
@@ -216,11 +196,4 @@ function sleep(ms: number) {
 	});
 }
 
-function makeTimestamp(): string {
-	let now = new Date();
-	return `[${now.toISOString()}]`;
-}
 
-function sendLogMessage(message: string) {
-	console.log(`${makeTimestamp()} ${message}`);
-}

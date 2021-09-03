@@ -1,46 +1,28 @@
-import {APIHandler} from '../util/apiQueryHandler';
-import { CredsHandler } from '../util/credsHandler';
-import { ProxySettings } from '../util/proxyHandler';
-
 import log from 'loglevel';
 import { URL, URLSearchParams } from 'url';
 import globalAxios,{ AxiosInstance, AxiosPromise } from 'axios';
 import * as FormData from "form-data";
+import { CredsHandler } from '../util/credsHandler';
+import { generateHeader } from '../util/veracode-hmac';
 
-const API_HOST:string = 'api.veracode.com';
 const BASE_PATH: string = 'https://api.veracode.com/pipeline_scan/v1'.replace(/\/+$/, "");
 
-const pipelineScanRequest = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,scanGUID:string) => {
-    log.debug('pipelineScanRequest - START');
-    let findings:any  = {};
-    let path = `/pipeline_scan/scans/${scanGUID}`;
-
-    try {
-        findings = await APIHandler.request(
-            API_HOST,
-            path,
-            {},
-            'get',
-            undefined,
-            credentialHandler,  
-            proxySettings  
-        );
-        console.log("Finished pipelineScan API request");
-        console.log(findings.data);
-        
-    } catch (error) {
-        console.log(error.response);
-        findings = {};
-    }
-    console.log('end pipelineScanRequest');
-    log.debug('findingsRequest - END');
-    return findings;
+export function addInterceptor(credsHandler:CredsHandler,):number {
+    return globalAxios.interceptors.request.use(function (config) {
+        if (config.url && config.method && credsHandler.getApiId()) {
+            let url = new URL(config.url);
+            config.headers.Authorization = generateHeader(credsHandler.getApiId()!,credsHandler.getApiKey()!, url.host, url.pathname, url.search, config.method.toUpperCase());
+        }
+        return config;
+      }, function (error) {
+        return Promise.reject(error);
+      });
 }
 
-export const getSandboxFindings = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,scanGUID:string): Promise<any> => {
-    const scan: any = await pipelineScanRequest(credentialHandler,proxySettings,scanGUID);
-    return scan.data || {};
+export function removeGlobalInterceptor(interceptor:number){
+    globalAxios.interceptors.request.eject(interceptor);
 }
+
 
 export interface ConfigurationParameters {
     apiKey?: string | Promise<string> | ((name: string) => string) | ((name: string) => Promise<string>);
@@ -1564,4 +1546,17 @@ export class SegmentsApi extends BaseAPI {
     public scansScanIdSegmentsSegmentIdPut(scanId: string, segmentId: number, file: any, options?: any) {
         return SegmentsApiFp(this.configuration).scansScanIdSegmentsSegmentIdPut(scanId, segmentId, file, options).then((request) => request(this.axios, this.basePath));
     }
+}
+
+
+export async function updateScanStatus(scanId: string,scan_status: ScanUpdateScanStatusEnum) {
+    return new ScansApi().scansScanIdPut(scanId, {   scan_status });
+}
+
+export async function getScanStatus(scanId:string) {
+    return new ScansApi().scansScanIdGet(scanId);
+}
+
+export async function createNewScan(scanTargetDetails:Scan) {
+    return new ScansApi().scansPost(scanTargetDetails);
 }

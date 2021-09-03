@@ -7,6 +7,8 @@ import log = require('loglevel');
 
 import { ProxySettings } from './proxyHandler';
 
+const PIPELINE_SCAN_RESULTS_FILENAME = 'pipelineScanResultsFilename';
+
 
 export class ConfigSettings {
 
@@ -19,9 +21,10 @@ export class ConfigSettings {
         this.veracodeExtensionConfigSettings = vscode.workspace.getConfiguration("veracode");
     }
     
-    //saveSettings() { 
-    //   This is intentional
-    //}
+    getNewConfigParam(paramName: string) : string | undefined {
+        this.loadSettings();
+        return this.veracodeExtensionConfigSettings.get(paramName); 
+    }
 
     getCredsProfile(): string {
         this.loadSettings();
@@ -135,5 +138,9 @@ export class ConfigSettings {
         var proxySettings = new ProxySettings(addr, port, name, pw);
         log.debug('Proxy Settings: ' + proxySettings.toString());
         return proxySettings;
+    }
+
+    getPipelineResultFilename(): string|undefined {
+        return this.getNewConfigParam(PIPELINE_SCAN_RESULTS_FILENAME);
     }
 }

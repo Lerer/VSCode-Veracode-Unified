@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand("veracodeUnifiedExplorer.scanFileWithPipeline", async (uri: vscode.Uri) => {
         pipelineHandler.logMessage(uri.toString());
-        pipelineHandler.scanFileWithPipeline(uri);
+        pipelineHandler.scanFileWithPipeline(uri,configSettings);
     });
 	
 }

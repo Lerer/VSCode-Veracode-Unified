@@ -102,6 +102,11 @@
                     "type": "string",
                     "default": "",
                     "description": "The command to execute the pipeline scan - either pipeline 'java jar' or 'docker run' command"
+                },
+                "veracode.pipelineScanResultsFilename": {
+                    "type": "string",
+                    "default": "veracode-pipeline-scan-results.json",
+                    "description": "Veracode Pipeline Scan results file name"
                 }
             }
         },
