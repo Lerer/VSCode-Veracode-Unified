@@ -4,6 +4,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import log = require('loglevel');
+import { pathToFileURL } from 'url';
 
 import { VeracodeExtensionModel, VeracodeTreeDataProvider } from "./veracodeExplorer";
 
@@ -16,6 +17,7 @@ import { proposeMitigationCommandHandler } from './util/mitigationHandler';
 import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import { CredsHandler } from './util/credsHandler';
 import { VeracodePipelineScanHandler } from './pipeline/pipelineScanHandler';
+import { jsonToVisualOutput } from './reports/pipelineScanJsonHandler';
 
 let veracodeModel: VeracodeExtensionModel;
 let statusBarInfo: vscode.StatusBarItem;
@@ -25,7 +27,6 @@ let pipelineHandler: VeracodePipelineScanHandler;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
     // adjust the logging level for the rest of the plugin
     let configSettings = new ConfigSettings(context);
     let logLevel = configSettings.getLogLevel();
@@ -101,6 +102,16 @@ export function activate(context: vscode.ExtensionContext) {
         pipelineHandler.logMessage(uri.toString());
         pipelineHandler.scanFileWithPipeline(uri,configSettings);
     });
+
+    vscode.commands.registerCommand("veracodeUnifiedExplorer.visualizePipelineScanFromJson", async (uri:vscode.Uri) => {
+        jsonToVisualOutput(pathToFileURL(uri.fsPath));
+    })
+
+    log.info(`adding file [${configSettings.getPipelineResultFilename()}] to menu context`);
+    vscode.commands.executeCommand('setContext', 'veracode.pipelineScanResultsFilenameMenu', [
+        configSettings.getPipelineResultFilename()
+      ]);
+
 	
 }
 

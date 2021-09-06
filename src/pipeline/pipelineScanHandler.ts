@@ -9,6 +9,7 @@ import { ScanUpdateScanStatusEnum, ScanResourceScanStatusEnum, SegmentsApi, Find
 import { ConfigSettings } from '../util/configSettings';
 import { CredsHandler } from '../util/credsHandler';
 import { AxiosResponse } from 'axios';
+import { jsonToVisualOutput } from '../reports/pipelineScanJsonHandler';
 
 
 function getTimeStamp(): string {
@@ -39,18 +40,9 @@ export class VeracodePipelineScanHandler {
     public async scanFileWithPipeline (target: vscode.Uri,configSettings:ConfigSettings) {
         configSettings.loadSettings();
         this.clear();
-        //pipelineScanDiagnosticCollection.clear();
 
         let credsHandler = new CredsHandler(configSettings.getCredsFile(),configSettings.getCredsProfile());
         await credsHandler.loadCredsFromFile();
-        
-        // if (!target && vscode.workspace.workspaceFolders) {
-        //     if (extensionConfig['pipelineScanFilepath'] === '') {
-        //         this.logMessage('No default Pipeline Scan filepath set, see extension help for configuration settings');
-        //         return;
-        //     }
-        //     target = vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, extensionConfig['pipelineScanFilepath']);
-        // }      
 
         let filename = target.fsPath.substring(target.fsPath.lastIndexOf(path.sep) + 1);
         this.pipelineStatusBarItem.text = `Scanning ${filename}`;
@@ -70,7 +62,7 @@ export class VeracodePipelineScanHandler {
                     this.pipelineStatusBarItem.hide();
                 }, 10000);
             }
-        } catch(error) {
+        } catch(error:any) {
             this.logMessage(error.message);
         }
     }
@@ -102,7 +94,7 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
             try {
                 let startScanPutResponse = await updateScanStatus(runningScanId,ScanUpdateScanStatusEnum.STARTED);
                 messageFunction(`Scan status ${startScanPutResponse.data.scan_status}`);
-            } catch(error) {
+            } catch(error:any) {
                 messageFunction(error.message);
             }
             await pollScanStatus(runningScanId,messageFunction);
@@ -110,9 +102,11 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
             if (scansScanIdFindingsGetResponse.data.findings) {
                 messageFunction(`Number of findings is ${scansScanIdFindingsGetResponse.data.findings.length}`);
                 processScanFindingsResource(scansScanIdFindingsGetResponse.data, outputFile);
+                // Add display for the pipeline findings
+                await jsonToVisualOutput(outputFile);
             }
         }
-    } catch(error) {
+    } catch(error:any) {
         messageFunction(error.message);
     }
     removeGlobalInterceptor(interceptor);
@@ -127,7 +121,7 @@ async function cancelScan(scanId: string,messageCallback?: (message: string) => 
         if (messageCallback){
             messageCallback(`Scan status ${scansScanIdPutResponse.data.scan_status}`);
         }
-    } catch(error) {
+    } catch(error:any) {
         if (messageCallback) {
             messageCallback(error.message);
         }
@@ -156,7 +150,7 @@ async function uploadFile(scanId: string, file: Buffer, segmentCount: number,mes
 		try {
 			let scansScanIdSegmentsSegmentIdPutResponse = await segmentsApi.scansScanIdSegmentsSegmentIdPut(scanId, i, fileSegment);
 			messageFunction(`Uploaded segment ${i+1} out of ${segmentCount} of total upload size: ${scansScanIdSegmentsSegmentIdPutResponse.data.segment_size} bytes`);
-		} catch(error) {
+		} catch(error:any) {
 			messageFunction(error.message);
 		}
 	}
@@ -195,5 +189,6 @@ function sleep(ms: number) {
 	  	setTimeout(resolve, ms);
 	});
 }
+
 
 

@@ -182,6 +182,11 @@
                 "command": "veracodeUnifiedExplorer.scanFileWithPipeline",
                 "title": "Scan with Veracode Pipeline Scan",
                 "when": "false"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
+                "title": "Veracode Pipeline Scan results to text",
+                "category": "Veracode"
             }
         ],
         "menus": {
@@ -255,6 +260,11 @@
                     "command": "veracodeUnifiedExplorer.scanFileWithPipeline",
                     "group": "8_veracode",
                     "when": "resourceExtname == .jar || resourceExtname == .war || resourceExtname == .ear || resourceExtname == .zip || resourceExtname == .apk"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
+                    "group": "8_veracode",
+                    "when": "resourceFilename in veracode.pipelineScanResultsFilenameMenu"
                 }
             ]
         },
