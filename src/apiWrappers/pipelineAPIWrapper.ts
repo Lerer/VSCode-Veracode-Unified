@@ -887,22 +887,6 @@ export interface RequestArgs {
 /**
  *
  * @export
- * @class BaseAPI
- */
-// export class BaseAPI {
-//     protected configuration: Configuration | undefined;
-
-//     constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected axios: AxiosInstance = globalAxios) {
-//         if (configuration) {
-//             this.configuration = configuration;
-//             this.basePath = configuration.basePath || this.basePath;
-//         }
-//     }
-// };
-
-/**
- *
- * @export
  * @class RequiredError
  * @extends {Error}
  */
@@ -926,39 +910,7 @@ export const FindingsApiAxiosParamCreator = function (configuration?: Configurat
          * @throws {RequiredError}
          */
         scansScanIdFindingsGet: async (scanId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'scanId' is not null or undefined
-            if (scanId === null || scanId === undefined) {
-                throw new RequiredError('scanId','Required parameter scanId was null or undefined when calling scansScanIdFindingsGet.');
-            }
-            const localVarPath = `/scans/{scan_id}/findings`
-                .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.query) {
-                query.set(key, options.query[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
+            return genericRequestParameterCreator('GET','/scans/{scan_id}/findings',scanId,options,configuration);
         },
     }
 };
@@ -1062,8 +1014,6 @@ export const RootApiAxiosParamCreator = function (configuration?: Configuration)
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-
-    
             const query = new URLSearchParams(localVarUrlObj.search);
             for (const key in localVarQueryParameter) {
                 query.set(key, localVarQueryParameter[key]);
@@ -1153,30 +1103,8 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         scansPost: async (scan: Scan, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'scan' is not null or undefined
-            if (scan === null || scan === undefined) {
-                throw new RequiredError('scan','Required parameter scan was null or undefined when calling scansPost.');
-            }
-            const localVarPath = `/scans`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.search = '';
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = scan || "";
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
+            options.data = scan || "";
+            return genericRequestParameterCreator('POST','/scans','',options,configuration);
         },
         /**
          * This endpoint returns scan details.
@@ -1185,39 +1113,7 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         scansScanIdGet: async (scanId: string, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'scanId' is not null or undefined
-            if (scanId === null || scanId === undefined) {
-                throw new RequiredError('scanId','Required parameter scanId was null or undefined when calling scansScanIdGet.');
-            }
-            const localVarPath = `/scans/{scan_id}`
-                .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.query) {
-                query.set(key, options.query[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
+            return genericRequestParameterCreator('GET','/scans/{scan_id}',scanId,options,configuration);
         },
         /**
          * This endpoint allows to start / to cancel the scanning. User must submit an object having only the scan_status property with certain value.
@@ -1227,37 +1123,8 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         scansScanIdPut: async (scanId: string, scan: ScanUpdate, options: any = {}): Promise<RequestArgs> => {
-            // verify required parameter 'scanId' is not null or undefined
-            if (scanId === null || scanId === undefined) {
-                throw new RequiredError('scanId','Required parameter scanId was null or undefined when calling scansScanIdPut.');
-            }
-            // verify required parameter 'scan' is not null or undefined
-            if (scan === null || scan === undefined) {
-                throw new RequiredError('scan','Required parameter scan was null or undefined when calling scansScanIdPut.');
-            }
-            const localVarPath = `/scans/{scan_id}`
-                .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            localVarUrlObj.search = '';
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data =  (scan || "");
-
-            return {
-                url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
-                options: localVarRequestOptions,
-            };
-
+            options.data = scan;
+            return genericRequestParameterCreator('PUT','/scans/{scan_id}',scanId,options,configuration);
         },
     }
 };
@@ -1402,9 +1269,6 @@ export const SegmentsApiAxiosParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter['Content-Type'] = localVarFormParams.getHeaders()['content-type'];
             }
     
-    
-            
-    
             const query = new URLSearchParams(localVarUrlObj.search);
             for (const key in localVarQueryParameter) {
                 query.set(key, localVarQueryParameter[key]);
@@ -1488,6 +1352,32 @@ export class SegmentsApi extends BaseAPI {
     public scansScanIdSegmentsSegmentIdPut(scanId: string, segmentId: number, file: any, options?: any) {
         return SegmentsApiFp(this.configuration).scansScanIdSegmentsSegmentIdPut(scanId, segmentId, file, options).then((request) => request(this.axios, this.basePath));
     }
+}
+
+function genericRequestParameterCreator(method:'GET'|'PUT'|'POST',path:string,scanId:string, options: any = {},configuration?: Configuration): {url:string,options:any} {
+    // verify required parameter 'scanId' is not null or undefined
+    if (scanId === null || scanId === undefined) {
+        throw new RequiredError('scanId',`Required parameter scanId was null or undefined when calling ${method} ${path}.`);
+    }
+    const localVarPath = path
+        .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
+    // use dummy base URL string because the URL constructor only accepts absolute URLs.
+    const localVarUrlObj = new URL(localVarPath,BASE_PATH);
+    let baseOptions;
+    if (configuration) {
+        baseOptions = configuration.baseOptions;
+    }
+    const localVarRequestOptions = { method, ...baseOptions, ...options};
+    const localVarHeaderParameter = {} as any;
+
+    localVarUrlObj.search = '';
+    let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+    localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+    return {
+        url: localVarUrlObj.pathname,
+        options: localVarRequestOptions,
+    };
 }
 
 
