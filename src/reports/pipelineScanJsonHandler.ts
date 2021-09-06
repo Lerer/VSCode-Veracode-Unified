@@ -62,7 +62,7 @@ body {
     <h1>Pipeline Results:</h1>
     <br/>
     <p>
-        ${getFindingsAsText(data.severity)}
+        ${getFindingsAsText(data)}
     </p>
       <br/>
   </body>
@@ -78,21 +78,15 @@ const getFindingsAsText = (findings: Array<any>):string => {
     });
 
     const totalIssueTitleStr = `Analyzed ${findings.length} issues.` 
-    log.info('='.repeat(totalIssueTitleStr.length));
-    log.info(totalIssueTitleStr);
-    log.info('='.repeat(totalIssueTitleStr.length));
     const start = `${'='.repeat(totalIssueTitleStr.length)}\n</br>${totalIssueTitleStr}\n</br>${'='.repeat(totalIssueTitleStr.length)}\n</br>`;
 
     const main = statuses.map((status,index) => {
         const sevTitleStr = `Found ${statuses[index].length} issues of ${SeverityNames[5-index]} severity.`;
-        log.info('-'.repeat(sevTitleStr.length));
-        log.info(sevTitleStr);
-        log.info('-'.repeat(sevTitleStr.length));
-        const statusInfo = `${'='.repeat(sevTitleStr.length)}\n</br>${sevTitleStr}\n</br>${'='.repeat(sevTitleStr.length)}`;
+        const statusInfo = `${'-'.repeat(sevTitleStr.length)}\n</br>${sevTitleStr}\n</br>${'-'.repeat(sevTitleStr.length)}\n</br>`;
         const statusBody = status.map((flaw) => {                
             const sourceFile = flaw.files.source_file;
-            return `CWE-${flaw.cwe_id}: ${flaw.issue_type}: ${sourceFile.file}:${sourceFile.line}`;
-        }).join('\n</br>');
+            return `CWE-${flaw.cwe_id}: ${flaw.issue_type}: ${sourceFile.file}:${sourceFile.line}\n</br>`;
+        }).join('');
         return `${statusInfo}${statusBody}`;
     }).join('');
 

@@ -1,4 +1,3 @@
-import log from 'loglevel';
 import { URL, URLSearchParams } from 'url';
 import globalAxios,{ AxiosInstance, AxiosPromise } from 'axios';
 import * as FormData from "form-data";
@@ -13,6 +12,8 @@ export function addInterceptor(credsHandler:CredsHandler,):number {
             let url = new URL(config.url);
             config.headers.Authorization = generateHeader(credsHandler.getApiId()!,credsHandler.getApiKey()!, url.host, url.pathname, url.search, config.method.toUpperCase());
         }
+        config.headers.Accept ='application/json';
+        config.headers['User-Agent']='Veracode-VSCode-Unified';
         return config;
       }, function (error) {
         return Promise.reject(error);
@@ -932,7 +933,7 @@ export const FindingsApiAxiosParamCreator = function (configuration?: Configurat
             const localVarPath = `/scans/{scan_id}/findings`
                 .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;
@@ -1052,7 +1053,7 @@ export const RootApiAxiosParamCreator = function (configuration?: Configuration)
         rootGet: async (options: any = {}): Promise<RequestArgs> => {
             const localVarPath = `/`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;
@@ -1158,32 +1159,20 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/scans`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;
             }
             const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
 
-
-    
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.query) {
-                query.set(key, options.query[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            localVarUrlObj.search = '';
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            const needsSerialization = (typeof scan !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(scan !== undefined ? scan : {}) : (scan || "");
-
+            localVarRequestOptions.data = scan || "";
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
                 options: localVarRequestOptions,
@@ -1203,7 +1192,7 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
             const localVarPath = `/scans/{scan_id}`
                 .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;
@@ -1249,36 +1238,26 @@ export const ScansApiAxiosParamCreator = function (configuration?: Configuration
             const localVarPath = `/scans/{scan_id}`
                 .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;
             }
             const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
             const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
 
-
-    
             localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            const query = new URLSearchParams(localVarUrlObj.search);
-            for (const key in localVarQueryParameter) {
-                query.set(key, localVarQueryParameter[key]);
-            }
-            for (const key in options.query) {
-                query.set(key, options.query[key]);
-            }
-            localVarUrlObj.search = (new URLSearchParams(query)).toString();
+            
+            localVarUrlObj.search = '';
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            const needsSerialization = (typeof scan !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.data =  needsSerialization ? JSON.stringify(scan !== undefined ? scan : {}) : (scan || "");
+            localVarRequestOptions.data =  (scan || "");
 
             return {
                 url: localVarUrlObj.pathname + localVarUrlObj.search + localVarUrlObj.hash,
                 options: localVarRequestOptions,
             };
+
         },
     }
 };
@@ -1330,43 +1309,6 @@ export const ScansApiFp = function(configuration?: Configuration) {
             };
         },
     }
-};
-
-/**
- * ScansApi - factory interface
- * @export
- */
-export const ScansApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    return {
-        /**
-         * This endpoint is the first step in scanning a project with Veracode Pipeline Scan, where you submit details of the file to be scanned.
-         * @param {Scan} scan Details of the file to be scanned.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        scansPost(scan: Scan, options?: any): AxiosPromise<ScanResource> {
-            return ScansApiFp(configuration).scansPost(scan, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * This endpoint returns scan details.
-         * @param {string} scanId Scan identifier (UUID v4).
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        scansScanIdGet(scanId: string, options?: any): AxiosPromise<ScanResource> {
-            return ScansApiFp(configuration).scansScanIdGet(scanId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * This endpoint allows to start / to cancel the scanning. User must submit an object having only the scan_status property with certain value.
-         * @param {string} scanId Scan identifier (UUID v4).
-         * @param {ScanUpdate} scan An object containing the property that determines the expected scan status.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        scansScanIdPut(scanId: string, scan: ScanUpdate, options?: any): AxiosPromise<ScanResource> {
-            return ScansApiFp(configuration).scansScanIdPut(scanId, scan, options).then((request) => request(axios, basePath));
-        },
-    };
 };
 
 /**
@@ -1443,7 +1385,7 @@ export const SegmentsApiAxiosParamCreator = function (configuration?: Configurat
                 .replace(`{${"scan_id"}}`, encodeURIComponent(String(scanId)))
                 .replace(`{${"segment_id"}}`, encodeURIComponent(String(segmentId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, 'https://example.com');
+            const localVarUrlObj = new URL(localVarPath,BASE_PATH);
             let baseOptions;
             if (configuration) {
                 baseOptions = configuration.baseOptions;

@@ -87,6 +87,7 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
         // Create a scan ID
         const scanHash: Scan = createScanFileHash(file,fileName);
         let scansPostResponse = await createNewScan(scanHash);//await scansApi.scansPost(scanHash);
+        log.info(scansPostResponse);
         if (scansPostResponse.data.scan_id && scansPostResponse.data.binary_segments_expected) {
             runningScanId = scansPostResponse.data.scan_id;
             messageFunction(`Scan ID ${runningScanId}`);
