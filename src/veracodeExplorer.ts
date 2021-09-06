@@ -13,13 +13,7 @@ import { ProxyHandler } from "./util/proxyHandler";
 import { VeracodeNode, FilterMitigation, NodeType, TreeGroupingHierarchy, FilterByPolicyImpact } from "./models/dataTypes";
 import { VeracodeServiceAndData } from './veracodeServiceAndData';
 
-import {proposeMitigationCommandHandler} from './util/mitigationHandler';
-import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import {getAppList,getAppChildren} from './apiWrappers/applicationsAPIWrapper';
-import { summaryReportRequest } from './apiWrappers/summaryReportAPIWrapper';
-
-import {addSCAView} from './reports/veracodeSCAHandler';
-import { addSummaryReportView } from './reports/veracodeSummaryReportHandler';
 
 const flawDiagnosticsPrefix: string = '#';
 
@@ -45,6 +39,7 @@ export class VeracodeExtensionModel {
 
     // roots are going to be the Apps
 	public get roots(): Thenable<VeracodeNode[]> {
+		console.log('roots');
 		let proxyHandler = new ProxyHandler(this.m_configSettings);
 		proxyHandler.loadProxySettings();
 		return getAppList(this.credsHandler,proxyHandler.proxySettings,this.projectConfig);
@@ -216,6 +211,7 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<Veracod
 
     // a bit sloppy in that it always refreshes from the root...??
 	public refresh(): any {
+		console.log('Refreshing');
         this._onDidChangeTreeData.fire(undefined);
 	}
 
@@ -272,115 +268,6 @@ export class VeracodeTreeDataProvider implements vscode.TreeDataProvider<Veracod
 		return element ? this.veracodeModel.getChildren(element) : this.veracodeModel.roots;
 	}
 }
-
-/*
- * Handles the build/scan explorer in the VSCode Explorer
- */
-export class VeracodeExplorer {
-
-	private veracodeModel: VeracodeExtensionModel;
-	private m_statusBarInfo: vscode.StatusBarItem;
-	private m_treeDataProvider: VeracodeTreeDataProvider;
-
-	constructor(private m_context: vscode.ExtensionContext, private m_configSettings: ConfigSettings) {
-
-
-		this.veracodeModel = new VeracodeExtensionModel(this.m_configSettings);
-		this.m_treeDataProvider = new VeracodeTreeDataProvider(this.veracodeModel);
-
-        // link the TreeDataProvider to the Veracode Explorer view
-		vscode.window.createTreeView('veracodeUnifiedExplorer', { treeDataProvider: this.m_treeDataProvider });
-
-		// link the 'Refresh' command to a method
-        let disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.refresh', () => {
-			this.veracodeModel.clearFlawsInfo();
-			this.m_treeDataProvider.refresh()
-		});
-        m_context.subscriptions.push(disposable);
-
-		// clean the diagnostics data due to a new application, sandbox or scan is selected
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.diagnosticsRefresh', () => this.veracodeModel.clearFlawsInfo());
-		m_context.subscriptions.push(disposable);
-
-		// Flaw sorting commands
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.sortSeverity', () => this.setFlawSort(TreeGroupingHierarchy.Severity));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.sortCwe', () => this.setFlawSort(TreeGroupingHierarchy.CWE));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.sortFlawCategory', () => this.setFlawSort(TreeGroupingHierarchy.FlawCategory));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawIncMitigated', () => this.setFlawFilterMitigation(FilterMitigation.IncludeMitigated));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawExcMitigated', () => this.setFlawFilterMitigation(FilterMitigation.ExcludeMitigated));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawIncNoneEffectPolicy', () => this.setFlawFilterImpactPolicy(FilterByPolicyImpact.AllFlaws));
-		m_context.subscriptions.push(disposable);
-		disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawOnlyEffectPolicy', () => this.setFlawFilterImpactPolicy(FilterByPolicyImpact.OnlyEffectingPolicy));
-		m_context.subscriptions.push(disposable);
-																			
-		this.m_statusBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);	
-		this.setFlawSort(TreeGroupingHierarchy.Severity);		// default to sorting flaws by severity
-		this.updateStatusBar();
-		this.m_statusBarInfo.show();
-
-		
-		m_context.subscriptions.push(vscode.commands.registerCommand('veracodeUnifiedExplorer.SCAReport', (sandboxNode: VeracodeNode) => { 
-			let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-			addSCAView(sandboxNode,credsHandler,this.m_configSettings.getProxySettings(),this.m_configSettings.getFlawsLoadCount()); 
-		}));
-
-		m_context.subscriptions.push(vscode.commands.registerCommand('veracodeUnifiedExplorer.summaryReport', async (sandboxNode: VeracodeNode) => { 
-			let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-			await credsHandler.loadCredsFromFile();
-			vscode.window.showInformationMessage('Requesting Summary report from Veracode Platform')
-			let report = await summaryReportRequest(credsHandler,this.m_configSettings.getProxySettings(),sandboxNode.appGUID,sandboxNode.sandboxGUID);//,'24ca9d18-8988-4859-a66c-2f329ed17dcd');
-			addSummaryReportView(report); 
-		}));
-
-		// mitigation command
-		vscode.commands.registerCommand("veracodeUnifiedExplorer.proposeMitigation",async (flawNode: VeracodeNode) => {
-			const input = await proposeMitigationCommandHandler(flawNode.mitigationStatus);
-			if (input) {
-				log.debug('back from questions');
-				let credsHandler = new CredsHandler(this.m_configSettings.getCredsFile(),this.m_configSettings.getCredsProfile());
-				await postAnnotation(credsHandler,this.m_configSettings.getProxySettings(),flawNode.appGUID,flawNode.sandboxGUID,flawNode.id,input.reason,input.comment);
-				this.veracodeModel.clearFlawsInfo();
-				await this.m_treeDataProvider.refresh();
-			}
-		});
-	}
-
-	private setFlawSort(sort:TreeGroupingHierarchy) {
-		if (this.veracodeModel.getGrouping() !== sort) {
-			this.veracodeModel.setFlawSorting(sort);
-			this.m_treeDataProvider.refresh();
-			this.updateStatusBar();
-		}
-	}
-
-	private setFlawFilterMitigation(filter:FilterMitigation) {
-		if (this.veracodeModel.getMitigationFilter() !== filter) {
-			this.veracodeModel.setMitigationFilter(filter);
-			this.veracodeModel.clearFlawsInfo();
-			this.m_treeDataProvider.refresh();
-			this.updateStatusBar();
-		}
-	}
-
-	private setFlawFilterImpactPolicy(filter: FilterByPolicyImpact) {
-		if (this.veracodeModel.getImpactPolicyFilter() !== filter) {
-			this.veracodeModel.setImpactPolicyFilter(filter);
-			this.veracodeModel.clearFlawsInfo();
-			this.m_treeDataProvider.refresh();
-			this.updateStatusBar();
-		}	
-	}
-
-	private updateStatusBar() {
-		const onlyImpactPolicy = this.veracodeModel.getImpactPolicyFilter() === FilterByPolicyImpact.OnlyEffectingPolicy;
-		this.m_statusBarInfo.text = `Veracode - Group By ${this.veracodeModel.getGrouping()} - ${this.veracodeModel.getMitigationFilter()}${onlyImpactPolicy ? ','+this.veracodeModel.getImpactPolicyFilter(): ''}`;
-	}
- }
 
 
  const findVSCodeFilePath = (fileName:string|undefined): string | undefined  => {

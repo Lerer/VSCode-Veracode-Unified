@@ -2,7 +2,7 @@
     "name": "veracode",
     "displayName": "Veracode Unified Plugin - Unofficial Version",
     "description": "A plugin to incorporate Static and SCA findings from Veracode Application Profiles",
-    "version": "0.1.3",
+    "version": "0.2.0",
     "publisher": "yaakovlerer",
     "engines": {
         "vscode": "^1.58.0"
@@ -25,7 +25,8 @@
     },
     "activationEvents": [
         "onCommand:veracodeUnifiedExplorer.refresh",
-        "onView:veracodeUnifiedExplorer"
+        "onView:veracodeUnifiedExplorer",
+        "onCommand:veracodeUnifiedExplorer.scanFileWithPipeline"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -96,6 +97,11 @@
                     "type": "number",
                     "default": 5,
                     "description": "Specifies the maximum number of sandboxes to show for each application (1-25)"
+                },
+                "veracode.pipelineScanResultsFilename": {
+                    "type": "string",
+                    "default": "veracode-pipeline-scan-results.json",
+                    "description": "Veracode Pipeline Scan results file name"
                 }
             }
         },
@@ -166,6 +172,16 @@
                 "command": "veracodeUnifiedExplorer.summaryReport",
                 "title": "Show Summary report",
                 "category": "Veracode"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.scanFileWithPipeline",
+                "title": "Scan with Veracode Pipeline Scan",
+                "when": "false"
+            },
+            {
+                "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
+                "title": "Veracode Pipeline Scan results to text",
+                "category": "Veracode"
             }
         ],
         "menus": {
@@ -233,6 +249,18 @@
                     "when": "view == veracodeUnifiedExplorer",
                     "group": "filter@4"
                 }
+            ],
+            "explorer/context": [
+                {
+                    "command": "veracodeUnifiedExplorer.scanFileWithPipeline",
+                    "group": "8_veracode",
+                    "when": "resourceExtname == .jar || resourceExtname == .war || resourceExtname == .ear || resourceExtname == .zip || resourceExtname == .apk"
+                },
+                {
+                    "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
+                    "group": "8_veracode",
+                    "when": "resourceFilename in veracode.pipelineScanResultsFilenameMenu"
+                }
             ]
         },
         "submenus": [
@@ -248,18 +276,16 @@
         "test": "npm run compile && node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/mocha": "^8.0.3",
         "@types/node": "^14.6.0",
-        "mocha": "^8.1.2",
-        "typescript": "^4.0.2",
-        "vscode-test": "^1.4.0"
+        "typescript": "^4.3.5",
+        "vscode-test": "^1.6.1"
     },
     "dependencies": {
-        "@types/glob": "^7.1.3",
+        "@types/glob": "^7.1.4",
         "@types/html-to-text": "^8.0.1",
-        "@types/loglevel": "^1.6.3",
-        "@types/vscode": "^1.48.0",
-        "axios": "^0.21.1",
+        "@types/vscode": "^1.60.0",
+        "axios": "^0.21.3",
+        "form-data": "^4.0.0",
         "glob": "^7.1.6",
         "html-to-text": "^8.0.0",
         "loglevel": "^1.6.8"

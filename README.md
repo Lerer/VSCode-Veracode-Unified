@@ -81,6 +81,19 @@ __Note:__ The selected grouping and the filtering you can view at the IDE status
 <img src="media/IDE_info_bar_210810_0048.png" width="70%">
 </p>
 
+# Pipeline Scan 
+Additional menu option was added for files with the following extensions to run pipeline scan: JAR, WAR, EAR, ZIP, APK
+<p align=center>
+<img src="media/pipeline_scan_menu_item.png" width="40%">
+</p>
+
+The scan progress will get open in its own dedicated output
+<p align=center>
+<img src="media/pipeline_scan_process.png" width="70%">
+</p>
+
+At the end of the scan, a text output report of the scan will open in the editor. 
+
 # Reports
 Few new options for reporting from the Sandbox/Policy level
 
@@ -108,7 +121,19 @@ __Note__ - results includes also mitigated findings
 <img src="media/summary_report.png" width="50%">
 </p>
 
+## Pipeline Scan Text Report
+In addition of automatically open up at the end of the scan, you can also use the right-click menu option of the JSON out result file
 
+The file name is default to: `veracode-pipeline-scan-results.json`
+- You can configure the filename in the Veracode VSCode extention setting name: `Pipeline Scan Results Filename`
+
+<p align=center>
+<img src="media/pipeline_scan_report_menu_item.png" width="40%">
+</p>
+
+<p align=center>
+<img src="media/pipeline_scan_result_as_text.png" width="75%">
+</p>
           
 ## Found a problem? Want to request a feature?
 Please log an issue.  
@@ -118,6 +143,7 @@ While it's true that I work at [Veracode](https://www.veracode.com/) at the time
 
 # Credit
 The initial code base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode).
+Few features added using code written by another colleague - [Chris Campbell](https://github.com/ctcampbell)
 
 
 
