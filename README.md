@@ -142,7 +142,7 @@ Please log an issue.
 While it's true that I work at [Veracode](https://www.veracode.com/) at the time of writing this plugin - this is not an official supported plugin by Veracode.
 
 # Credit
-The initial code base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode).
+The initial code base of this plugin was created by a colleague of mine - [Kevin Rise](https://gitlab.com/buzzcode).      
 Few features added using code written by another colleague - [Chris Campbell](https://github.com/ctcampbell)
 
 
