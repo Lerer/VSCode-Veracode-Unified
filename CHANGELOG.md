@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.2.0]
+- First addition of Pipeline scan from file explorer
+- Added reporting of pipeline scan result as text
+
 ## [0.1.3]
 - First revision for Summary report from IDE
 - Remove commas the top of the SCA report
