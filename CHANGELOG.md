@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.2.1]
+- Code optimization
+- Update vulnerable component version
+
 ## [0.2.0]
 - First addition of Pipeline scan from file explorer
 - Added reporting of pipeline scan result as text

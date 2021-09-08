@@ -2,7 +2,7 @@
     "name": "veracode",
     "displayName": "Veracode Unified Plugin - Unofficial Version",
     "description": "A plugin to incorporate Static and SCA findings from Veracode Application Profiles",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "publisher": "yaakovlerer",
     "engines": {
         "vscode": "^1.58.0"
@@ -284,7 +284,7 @@
         "@types/glob": "^7.1.4",
         "@types/html-to-text": "^8.0.1",
         "@types/vscode": "^1.60.0",
-        "axios": "^0.21.3",
+        "axios": "^0.21.4",
         "form-data": "^4.0.0",
         "glob": "^7.1.6",
         "html-to-text": "^8.0.0",
