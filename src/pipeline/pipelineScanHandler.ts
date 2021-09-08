@@ -10,6 +10,7 @@ import { ConfigSettings } from '../util/configSettings';
 import { CredsHandler } from '../util/credsHandler';
 import { AxiosResponse } from 'axios';
 import { jsonToVisualOutput } from '../reports/pipelineScanJsonHandler';
+import { getNested } from '../util/jsonUtil';
 
 
 function getTimeStamp(): string {
@@ -62,8 +63,8 @@ export class VeracodePipelineScanHandler {
                     this.pipelineStatusBarItem.hide();
                 }, 10000);
             }
-        } catch(error:any) {
-            this.logMessage(error.message);
+        } catch(error) {
+            this.logMessage(getNested(error,'message'));
         }
     }
 }
@@ -95,8 +96,8 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
             try {
                 let startScanPutResponse = await updateScanStatus(runningScanId,ScanUpdateScanStatusEnum.STARTED);
                 messageFunction(`Scan status ${startScanPutResponse.data.scan_status}`);
-            } catch(error:any) {
-                messageFunction(error.message);
+            } catch(error) {
+                messageFunction(getNested(error,'message'));
             }
             await pollScanStatus(runningScanId,messageFunction);
             let scansScanIdFindingsGetResponse = await findingsApi.scansScanIdFindingsGet(runningScanId);
@@ -107,8 +108,8 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
                 await jsonToVisualOutput(outputFile);
             }
         }
-    } catch(error:any) {
-        messageFunction(error.message);
+    } catch(error) {
+        messageFunction(getNested(error,'message'));
     }
     removeGlobalInterceptor(interceptor);
 }
@@ -122,9 +123,9 @@ async function cancelScan(scanId: string,messageCallback?: (message: string) => 
         if (messageCallback){
             messageCallback(`Scan status ${scansScanIdPutResponse.data.scan_status}`);
         }
-    } catch(error:any) {
+    } catch(error) {
         if (messageCallback) {
-            messageCallback(error.message);
+            messageCallback(getNested(error,'message'));
         }
     }
 }
@@ -151,8 +152,8 @@ async function uploadFile(scanId: string, file: Buffer, segmentCount: number,mes
 		try {
 			let scansScanIdSegmentsSegmentIdPutResponse = await segmentsApi.scansScanIdSegmentsSegmentIdPut(scanId, i, fileSegment);
 			messageFunction(`Uploaded segment ${i+1} out of ${segmentCount} of total upload size: ${scansScanIdSegmentsSegmentIdPutResponse.data.segment_size} bytes`);
-		} catch(error:any) {
-			messageFunction(error.message);
+		} catch(error) {
+			messageFunction(getNested(error,'message'));
 		}
 	}
 }
