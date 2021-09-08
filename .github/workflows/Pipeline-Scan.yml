@@ -49,5 +49,23 @@ jobs:
       - name: Run Pipeline Scanner
         id: pipeline-scan
         continue-on-error: true
-        run: java -jar ./pipeline/pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --file "./forscan.zip"
+        run: java -jar ./pipeline/pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --file "./forscan.zip" -so true
+      - name: Comment result
+        id: get-comment-body
+        if: ${{ always() }}
+        run: 
+          body=$(cat results.txt)
+          body="${body//$'====================\n--------------------------'/'====================<details>'}"
+          body="${body//$'--------------------------\nF'/'</details><details><summary>F'}"
+          body="${body//$'.\n--------------------------'/'.</summary>'}"                             
+          body="${body//$'==========================\nFA'/'</details>==========================<br>FA'}"
+          body="${body//$'\n'/'<br>'}"
+          echo ::set-output name=body::$body
+      - name: Add comment to PR
+        if: ${{ github.head_ref != '' && github.event_name == 'pull_request'}}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.get-comment-body.outputs.body }}
+          reactions: rocket
 
