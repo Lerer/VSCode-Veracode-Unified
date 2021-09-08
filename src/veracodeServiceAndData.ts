@@ -112,7 +112,7 @@ export class VeracodeServiceAndData {
         }
         return nodes;    
     }
-
+ 
     private getStatusNodes(sandboxId:string,appGUID: string): VeracodeNode[] {
         const statuses: Array<number>  = [0,0,0,0,0,0];
         const scanResults: [] = this.cache[sandboxId];
