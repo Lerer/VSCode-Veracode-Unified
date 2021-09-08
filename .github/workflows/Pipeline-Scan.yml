@@ -7,11 +7,13 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:  
     paths: 
-      - src
+      - 'src/**'
+      - '!src/test/**'
   pull_request:
     branches: [ master ]
     paths: 
-      - src
+      - 'src/**'
+      - '!src/test/**'
   schedule:
     - cron: "0 5 * * SUN"
 
