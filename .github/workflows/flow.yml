@@ -71,9 +71,9 @@ jobs:
           # version
           version: ${{ github.event.inputs.scanName }}
           # vid
-          vid: ${{ secrets.VERACODE_ID }}
+          vid: ${{ secrets.VERACODE_APP_ID }}
           # vkey
-          vkey: ${{ secrets.VERACODE_KEY }}
+          vkey: ${{ secrets.VERACODE_APP_KEY }}
           # wait X minutes for the scan to complete
           scantimeout: 0
           # business criticality - policy selection
