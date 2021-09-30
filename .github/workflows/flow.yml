@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Upload-and-Scan
 
 # Controls when the workflow will run
 on:
@@ -12,11 +12,18 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      scanName:
+        description: 'Name of the Scan'     
+        required: true
+      sandbox:
+        description: 'Sandbox Name'
+        required: false  
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  package:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -25,15 +32,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: zip -r artifact.zip . -x ".git/*" ".github/*" "src/test" ".vscode/*" "releases/*"
+      # zip the code
+      - name: package
+        run: zip -r artifact.zip . -x ".git/*" ".github/*" "src/test" ".vscode/*" ".vscode-test/*" "releases/*" "media/*" "out/*" "node_modules/*"
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      - uses: actions/upload-artifact@v2 
+        with:
+          path: artifact.zip # See: https://github.com/actions/upload-artifact
+          name: package-zip
           
       - name: Echo Branch name
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -41,3 +47,33 @@ jobs:
         
       - name: Print Branch name
         run: echo "${{ steps.extract_branch.outputs.branch }}"
+
+  # This workflow contains a single job called "build"
+  Static-Scan:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: [package]
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: package-zip
+
+      - name: Veracode Upload And Scan
+        uses: veracode/veracode-uploadandscan-action@0.2.1
+        with:
+          # appname
+          appname: "VSCode-unified"
+          # createprofile
+          createprofile: false
+          # filepath
+          filepath: result.zip #Path to dlls/src/jars/wars....
+          # version
+          version: ${{ github.event.inputs.scanName }}
+          # vid
+          vid: ${{ secrets.VERACODE_ID }}
+          # vkey
+          vkey: ${{ secrets.VERACODE_KEY }}
+          # wait X minutes for the scan to complete
+          scantimeout: 0
+          # business criticality - policy selection
