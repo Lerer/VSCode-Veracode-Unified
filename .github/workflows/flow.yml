@@ -67,7 +67,7 @@ jobs:
           # createprofile
           createprofile: false
           # filepath
-          filepath: result.zip #Path to dlls/src/jars/wars....
+          filepath: artifact.zip 
           # version
           version: ${{ github.event.inputs.scanName }}
           # vid
