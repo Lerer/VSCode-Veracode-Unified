@@ -19,6 +19,7 @@
     "categories": [
         "Other"
     ],
+    "icon": "media/01-carpet.png",
     "galleryBanner": {
         "color": "#00B4E6",
         "theme": "dark"

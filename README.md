@@ -82,7 +82,7 @@ __Note:__ The selected grouping and the filtering you can view at the IDE status
 </p>
 
 # Pipeline Scan 
-Additional menu option was added for files with the following extensions to run pipeline scan: JAR, WAR, EAR, ZIP, APK
+Additional menu option was added in VSCode project (files) explorer for files with the following extensions to run pipeline scan: JAR, WAR, EAR, ZIP, APK
 <p align=center>
 <img src="media/pipeline_scan_menu_item.png" width="40%">
 </p>
@@ -95,7 +95,7 @@ The scan progress will get open in its own dedicated output
 At the end of the scan, a text output report of the scan will open in the editor. 
 
 # Reports
-Few new options for reporting from the Sandbox/Policy level
+Few new options for reporting from the Sandbox/Policy right-click menu within the Heirarchy __at the Veracode view__ which was added by this extension. (see first screenshot image above) 
 
 ## Software Composition Analysis (SCA)
 Get a view of the vulnerabilities associate with the application policy or sandbox scan
@@ -110,7 +110,7 @@ Clicking on the option will open (with a delay of few seconds) a new page (web v
 </p>
 
 ## Summary Report
-Fetch the summary report of the Policy/Sandbox.  
+Fetch the summary report of the Policy/Sandbox as a menu option - from the right click menu of the __POLICY__ or the __Sandbox Name__.  
 __Note__ - results includes also mitigated findings
 
 <p align=center>
