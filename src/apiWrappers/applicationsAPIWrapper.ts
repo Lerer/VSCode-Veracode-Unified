@@ -34,7 +34,7 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
         );
         console.log("Finished applicationRequest API request");
         
-    } catch (error) {
+    } catch (error: any) {
         console.log(error.response);
         return {};
     }
@@ -61,7 +61,7 @@ const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: Pro
         );
         console.log("Finished API request");
         
-    } catch (error) {
+    } catch (error:any) {
         console.log(error.response);
         return {};
     }
@@ -112,7 +112,7 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
         await credentialHandler.loadCredsFromFile();
         await projectConfig.loadProjectConfigFromFile();
     }
-    catch (error) {
+    catch (error:any) {
         log.error(error.message);
         return Promise.resolve([]);
     }

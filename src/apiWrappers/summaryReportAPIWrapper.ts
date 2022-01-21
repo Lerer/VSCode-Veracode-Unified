@@ -30,7 +30,7 @@ export const summaryReportRequest = async (credentialHandler:CredsHandler, proxy
         );
         log.debug("Finished API request");
         
-    } catch (error) {
+    } catch (error:any) {
         log.error(error.response);
         return {};
     }

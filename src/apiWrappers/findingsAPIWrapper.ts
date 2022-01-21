@@ -32,7 +32,7 @@ const findingsRequest = async (credentialHandler:CredsHandler, proxySettings: Pr
         console.log("Finished Findings API request");
         console.log(findings.data);
         
-    } catch (error) {
+    } catch (error:any) {
         console.log(error.response);
         findings = {};
     }

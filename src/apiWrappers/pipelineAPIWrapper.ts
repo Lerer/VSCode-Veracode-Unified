@@ -10,10 +10,10 @@ export function addInterceptor(credsHandler:CredsHandler,):number {
     return globalAxios.interceptors.request.use(function (config) {
         if (config.url && config.method && credsHandler.getApiId()) {
             let url = new URL(config.url);
-            config.headers.Authorization = generateHeader(credsHandler.getApiId()!,credsHandler.getApiKey()!, url.host, url.pathname, url.search, config.method.toUpperCase());
+            config.headers!.Authorization = generateHeader(credsHandler.getApiId()!,credsHandler.getApiKey()!, url.host, url.pathname, url.search, config.method.toUpperCase());
         }
-        config.headers.Accept ='application/json';
-        config.headers['User-Agent']='Veracode-VSCode-Unified';
+        config.headers!.Accept ='application/json';
+        config.headers!['User-Agent']='Veracode-VSCode-Unified';
         return config;
       }, function (error) {
         return Promise.reject(error);
