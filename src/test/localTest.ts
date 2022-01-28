@@ -44,6 +44,16 @@ const testGetSandboxFindings = async () => {
     console.log(getNested(findings,'_embedded','findings'));
 }
 
+const testGetSCAFindings = async () => {
+    //GET /appsec/v2/applications/d53e0a17-bd1a-4231-b030-b2a11fb26813/findings?size=200&scan_type=SCA
+    await credHandler.loadCredsFromFile();
+    const sandboxNode: VeracodeNode = new VeracodeNode(NodeType.Sandbox,'test1','','d53e0a17-bd1a-4231-b030-b2a11fb26813');
+    const SCAfindings = await getSandboxFindings(sandboxNode,credHandler, null,50, ['SCA']);
+    console.log(JSON.stringify(SCAfindings));
+    //const scaEmbeddedFindings = getNested(SCAfindings,'_embedded','findings');
+    
+}
+
 const matchTest = () => {
     const id = '24ca9d18-8988-4859-a66c-2f329ed17dcd-sev-7';
     const match = id.match(/^[\w-]*-sev-(.*)$/);
@@ -66,7 +76,8 @@ const testSet = async () => {
     //await testGetSandboxByName();
     //await testGetSandboxFindings();
     //matchTest()
-    await testSummaryReport();
+    //await testSummaryReport();
+    await testGetSCAFindings();
 }
 
 testSet();
