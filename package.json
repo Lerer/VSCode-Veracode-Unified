@@ -274,7 +274,8 @@
     "scripts": {
         "vscode:prepublish": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "test": "npm run compile && node ./out/test/runTest.js"
+        "test": "npm run compile && node ./out/test/runTest.js",
+        "test-dast-api": "tsc && node ./out/test/dastApiTest.js"
     },
     "devDependencies": {
         "@types/node": "^14.6.0",
@@ -286,6 +287,7 @@
         "@types/html-to-text": "^8.0.1",
         "@types/vscode": "^1.60.0",
         "axios": "^0.25.0",
+        "dotenv": "^14.3.2",
         "form-data": "^4.0.0",
         "glob": "^7.1.6",
         "html-to-text": "^8.0.0",

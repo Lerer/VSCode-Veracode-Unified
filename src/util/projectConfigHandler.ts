@@ -37,9 +37,11 @@ export class ProjectConfigHandler {
             this.configHolder = new ConfigParser();
             await this.configHolder.readAsync(pluginConfFilePath);
         }
-        catch (error:any) {
+        catch (error) {
             // file does not exist, is not readable, etc.
-            log.info(error.message);
+            if (error instanceof Error) {
+                log.info(error.message);
+            }
             return;
         }
 
