@@ -1,5 +1,6 @@
 'use strict';
 
+import { AxiosProxyConfig } from 'axios';
 //import log = require('loglevel');
 import { ConfigSettings } from './configSettings';
 
@@ -18,6 +19,28 @@ export class ProxySettings {
         return("Server: " + this.m_host + ":" + this.m_port + ", login: " + 
                 (this.m_username !== '' ? this.m_username : '<unset>') + ":" + 
                 (this.m_password !== '' ? this.m_password : '<unset>') );
+    }
+
+    public getAxiosProxy() {
+        let axiosProxy: AxiosProxyConfig; 
+        // split the proxy ip addr after the dbl-slash
+        let n = this.proxyHost.indexOf('://');
+        let preamble = this.proxyHost.substring(0, n+3);
+        let postamble = this.proxyHost.substring(n+3);
+        axiosProxy = {
+            host: postamble,
+            port: parseInt(this.proxyPort),
+            protocol: preamble
+        };
+        // if an Auth is required
+        if(this.proxyUserName !== '') {
+            axiosProxy.auth = {
+                username: this.proxyUserName,
+                password: this.proxyPassword
+            }
+        }
+
+        return axiosProxy
     }
 }
 

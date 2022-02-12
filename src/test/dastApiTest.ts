@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
-import { listSpecifications } from '../apiWrappers/apiSpecificationAPIWrapper';
+import { readFileSync } from 'fs';
+import { listSpecifications, submitSpecifications } from '../apiWrappers/apiSpecificationAPIWrapper';
 
 import { CredsHandler } from "../util/credsHandler";
 
@@ -10,12 +11,21 @@ const credProfile = process.env.CREDENTIALS_PROFILE || 'default';
 
 const credHandler = new CredsHandler(credFileLocation,credProfile);
 
-// const testSubmitNewApiSpec = async () => {
-//     await credHandler.loadCredsFromFile();
-//     const apps = await submitNewApiSpec(credHandler,null);
-//     console.log("printing from Test");
-//     console.log(apps);
-// }
+const testSubmitNewApiSpec = async () => {
+    // Set the spec file
+    const testDataFilePath = 'test-data/petstore-swagger.json';
+
+    // set the spec name
+    const testSpecName = 'Test Specification 02';
+    
+    // load credentials
+    await credHandler.loadCredsFromFile();
+
+    // submit for specifications create/update
+    const submission = await submitSpecifications(credHandler,null,testSpecName,testDataFilePath);
+    console.log("printing from Test");
+    console.log(submission);
+}
 
 const testListApiSpecifications = async () => {
     await credHandler.loadCredsFromFile();
@@ -24,6 +34,7 @@ const testListApiSpecifications = async () => {
 }
 
 const testSet = async () => {
+    await testSubmitNewApiSpec();
     await testListApiSpecifications();
 }
 
