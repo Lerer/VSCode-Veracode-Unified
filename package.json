@@ -2,10 +2,10 @@
     "name": "veracode",
     "displayName": "Veracode Unified Plugin - Unofficial Version",
     "description": "A plugin to incorporate Static and SCA findings from Veracode Application Profiles",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "publisher": "yaakovlerer",
     "engines": {
-        "vscode": "^1.58.0"
+        "vscode": "^1.64.0"
     },
     "repository": {
         "type": "git",
@@ -183,6 +183,12 @@
                 "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
                 "title": "Veracode Pipeline Scan results to text",
                 "category": "Veracode"
+            },
+            {
+                "command": "veracodeAPISecurity.submitSpecification",
+                "title": "Submit API Specification file (Swagger/HAR) to veracode platform",
+                "category": "Veracode",
+                "shortTitle": "Upload API Specification"
             }
         ],
         "menus": {
@@ -274,7 +280,8 @@
     "scripts": {
         "vscode:prepublish": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "test": "npm run compile && node ./out/test/runTest.js"
+        "test": "npm run compile && node ./out/test/runTest.js",
+        "test-dast-api": "tsc && node ./out/test/dastApiTest.js"
     },
     "devDependencies": {
         "@types/node": "^14.6.0",
@@ -286,6 +293,7 @@
         "@types/html-to-text": "^8.0.1",
         "@types/vscode": "^1.60.0",
         "axios": "^0.25.0",
+        "dotenv": "^14.3.2",
         "form-data": "^4.0.0",
         "glob": "^7.1.6",
         "html-to-text": "^8.0.0",

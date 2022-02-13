@@ -134,7 +134,26 @@ The file name is default to: `veracode-pipeline-scan-results.json`
 <p align=center>
 <img src="media/pipeline_scan_result_as_text.png" width="75%">
 </p>
-          
+   
+## Dynamic API Scanning / API Security
+If your project producing API and/or OpenAPI specification file, the plugin also has the ability to submit the specification file to the veracode platform.
+
+To enable Dynamic API functionalities, please the following section to you veracode project configuration file (veracode-plugin.conf)
+
+```
+[api.security]
+specName=Petstore API Specification
+specPath=swagger/petstore-swagger.json
+baseURL=http://www.example.com/api
+```
+
+### Submit API Specification
+Use the VSCode command palette to upload the API Specificaiton file
+
+```
+> Veracode: Submit API Specification file (Swagger/HAR) to veracode platform
+```
+         
 ## Found a problem? Want to request a feature?
 Please log an issue.  
 

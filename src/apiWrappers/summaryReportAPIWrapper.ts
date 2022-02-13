@@ -3,6 +3,7 @@ import { CredsHandler } from '../util/credsHandler';
 import { ProxySettings } from '../util/proxyHandler';
 
 import log from 'loglevel';
+import axios from 'axios';
 
 const API_HOST:string = 'api.veracode.com';
 const API_BASE_PATH:string = '/appsec/v1/applications'
@@ -30,8 +31,10 @@ export const summaryReportRequest = async (credentialHandler:CredsHandler, proxy
         );
         log.debug("Finished API request");
         
-    } catch (error:any) {
-        log.error(error.response);
+    } catch (error) {
+        if (axios.isAxiosError(error))  {
+            log.error(error.response);
+        }
         return {};
     }
     log.debug('SUMMARY Repost request - END');

@@ -6,6 +6,7 @@ import { ProjectConfigHandler } from '../util/projectConfigHandler';
 import {getNested} from '../util/jsonUtil';
 
 import log from 'loglevel';
+import axios from 'axios';
 
 const API_HOST:string = 'api.veracode.com';
 const API_BASE_PATH:string = '/appsec/v1/applications'
@@ -34,8 +35,10 @@ const applicationRequest = async (credentialHandler:CredsHandler, proxySettings:
         );
         console.log("Finished applicationRequest API request");
         
-    } catch (error: any) {
-        console.log(error.response);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            log.error(error.response);
+        }
         return {};
     }
     console.log('end getApplication request');
@@ -61,8 +64,10 @@ const sandboxRequest = async (credentialHandler:CredsHandler, proxySettings: Pro
         );
         console.log("Finished API request");
         
-    } catch (error:any) {
-        console.log(error.response);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            log.error(error.response);
+        }
         return {};
     }
     console.log('end getSandboxes request');
@@ -112,8 +117,10 @@ export const getAppList = async (credentialHandler:CredsHandler, proxySettings: 
         await credentialHandler.loadCredsFromFile();
         await projectConfig.loadProjectConfigFromFile();
     }
-    catch (error:any) {
-        log.error(error.message);
+    catch (error) {
+        if (error instanceof Error) {
+            log.error(error.message);
+        } 
         return Promise.resolve([]);
     }
 

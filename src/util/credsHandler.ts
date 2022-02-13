@@ -23,9 +23,11 @@ export class CredsHandler {
             this.credHolder = new ConfigParser();
             await this.credHolder.readAsync(this.credFile);
         }
-        catch (error:any) {
+        catch (error) {
             // file does not exist, is not readable, etc.
-            log.info(error.message);
+            if (error instanceof Error) {
+                log.error(error.message);
+            }
             throw error;
         }
 
