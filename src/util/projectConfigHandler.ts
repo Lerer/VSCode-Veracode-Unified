@@ -17,6 +17,7 @@ export class ProjectConfigHandler {
     application: string | undefined;
     sandbox: string | undefined;
     importMitigations: boolean = true;
+    apiSecuritySection = 'api.security';
 
     // @constructor
     constructor() {
@@ -66,6 +67,18 @@ export class ProjectConfigHandler {
             return true;
         }
         return conf=='true';
+    }
+
+    getAPISpecName(): string|undefined {
+        return this.configHolder.get(this.apiSecuritySection,"specName");
+    } 
+    
+    getAPISpecPath(): string|undefined {
+        return this.configHolder.get(this.apiSecuritySection,"specPath");
+    } 
+    
+    getAPIBaseURL(): string|undefined {
+        return this.configHolder.get(this.apiSecuritySection,"baseURL");
     }
 
 }

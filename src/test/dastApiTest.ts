@@ -22,7 +22,7 @@ const testSubmitNewApiSpec = async () => {
     await credHandler.loadCredsFromFile();
 
     // submit for specifications create/update
-    const submission = await submitSpecifications(credHandler,null,testSpecName,testDataFilePath);
+    const submission = await submitSpecifications(credHandler,null,testSpecName,testDataFilePath,undefined);
     console.log("printing from Test");
     console.log(submission);
 }

@@ -183,6 +183,12 @@
                 "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
                 "title": "Veracode Pipeline Scan results to text",
                 "category": "Veracode"
+            },
+            {
+                "command": "veracodeAPISecurity.submitSpecification",
+                "title": "Submit API Specification file (Swagger/HAR) to veracode platform",
+                "category": "Veracode",
+                "shortTitle": "Upload API Specification"
             }
         ],
         "menus": {

@@ -46,7 +46,14 @@ export const getSpecificationByName = async (credentialHandler:CredsHandler, pro
     return specifications.data;
 }
 
-export const submitSpecifications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:string,specFilePath: string) => { 
+export const submitSpecifications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:string,specFilePath: string,baseURL:string|null|undefined) => { 
+
+    const specExists = existsSync(specFilePath);
+    if (!specExists) {
+        throw new Error(`Cannot access the spec file in path: ${specFilePath}`);
+        
+    } 
+
     const searchRequest = await getSpecificationByName(credentialHandler, proxySettings,specName);
     const exisitngSpecs =  getNested(searchRequest,'_embedded','api_specs');
     console.log(exisitngSpecs);
@@ -60,14 +67,14 @@ export const submitSpecifications = async (credentialHandler:CredsHandler, proxy
     const specId = (found.length>0 ? found[0].spec_id : null);
     
     if (!specId) {
-        return createUpdateSpecification('post',credentialHandler,proxySettings,'',specName,specFilePath);
+        return createUpdateSpecification('post',credentialHandler,proxySettings,'',specName,specFilePath,baseURL);
     } else {
-        return createUpdateSpecification('put',credentialHandler,proxySettings,`/${specId}`,specName,specFilePath);
+        return createUpdateSpecification('put',credentialHandler,proxySettings,`/${specId}`,specName,specFilePath,baseURL);
     }
 
 }
 
-const createUpdateSpecification = async (method:'post'|'put',credentialHandler:CredsHandler, proxySettings: ProxySettings|null,idPath:string,specName:string,specFilePath: string) => {
+const createUpdateSpecification = async (method:'post'|'put',credentialHandler:CredsHandler, proxySettings: ProxySettings|null,idPath:string,specName:string,specFilePath: string,baseURL:string|undefined|null) => {
     const data = new FormData();
     const specExists = existsSync(specFilePath);
     if (!specExists) {
@@ -76,6 +83,9 @@ const createUpdateSpecification = async (method:'post'|'put',credentialHandler:C
     } 
     data.append('file', createReadStream(specFilePath));
     data.append('spec_name',specName);
+    if (baseURL && baseURL.trim().length>0) {
+        data.append('custom_base_url',baseURL.trim());
+    }
 
     const params = {};
   

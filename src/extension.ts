@@ -18,6 +18,7 @@ import { postAnnotation } from './apiWrappers/mitigationAPIWrapper';
 import { CredsHandler } from './util/credsHandler';
 import { VeracodePipelineScanHandler } from './pipeline/pipelineScanHandler';
 import { jsonToVisualOutput } from './reports/pipelineScanJsonHandler';
+import { submitSpecification } from './dast/dastHandler';
 
 let veracodeModel: VeracodeExtensionModel;
 let statusBarInfo: vscode.StatusBarItem;
@@ -65,6 +66,8 @@ export function activate(context: vscode.ExtensionContext) {
     disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawIncNoneEffectPolicy', () => setFlawFilterImpactPolicy(FilterByPolicyImpact.AllFlaws));
     context.subscriptions.push(disposable);
     disposable = vscode.commands.registerCommand('veracodeUnifiedExplorer.filterFlawOnlyEffectPolicy', () => setFlawFilterImpactPolicy(FilterByPolicyImpact.OnlyEffectingPolicy));
+    context.subscriptions.push(disposable);
+    disposable = vscode.commands.registerCommand('veracodeAPISecurity.submitSpecification',() => submitSpecification(veracodeModel,configSettings));
     context.subscriptions.push(disposable);
                                                                         
     statusBarInfo = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);	
