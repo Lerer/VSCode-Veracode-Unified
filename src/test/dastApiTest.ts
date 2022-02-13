@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import { readFileSync } from 'fs';
 import { listSpecifications, submitSpecifications } from '../apiWrappers/apiSpecificationAPIWrapper';
 
 import { CredsHandler } from "../util/credsHandler";

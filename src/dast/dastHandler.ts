@@ -4,7 +4,7 @@ import {submitSpecifications} from '../apiWrappers/apiSpecificationAPIWrapper';
 import { VeracodeExtensionModel } from "../veracodeExplorer";
 import { ConfigSettings } from "../util/configSettings";
 import { existsSync } from "fs";
-import { getLogger, info, log } from "loglevel";
+import { getLogger } from "loglevel";
 import { sep } from "path";
 
 const dastLogger = getLogger('Veracode DAST');

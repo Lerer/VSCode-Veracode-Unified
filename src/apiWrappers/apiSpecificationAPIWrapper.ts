@@ -13,13 +13,15 @@ const BASE_PATH = '/was/configservice/v1';
 const API_BASE_PATH:string = `${BASE_PATH}/api_specifications`
 export const POLICY_CONTAINER_NAME = 'POLICY';
 
+type stringORnothing = string|null|undefined;
+
 
 export const listSpecifications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null) => {
     return getSpecificationByName(credentialHandler, proxySettings,null);
 }
 
-export const getSpecificationByName = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:string|null|undefined) => {
-    let specifications:any = {data:""};
+export const getSpecificationByName = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:stringORnothing) => {
+    let specifications:any;
     const params: any = {};
     if (specName && specName.length>0) {
         params['spec_name'] = specName;
@@ -46,7 +48,7 @@ export const getSpecificationByName = async (credentialHandler:CredsHandler, pro
     return specifications.data;
 }
 
-export const submitSpecifications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:string,specFilePath: string,baseURL:string|null|undefined) => { 
+export const submitSpecifications = async (credentialHandler:CredsHandler, proxySettings: ProxySettings|null,specName:string,specFilePath: string,baseURL:stringORnothing) => { 
 
     const specExists = existsSync(specFilePath);
     if (!specExists) {
@@ -74,7 +76,7 @@ export const submitSpecifications = async (credentialHandler:CredsHandler, proxy
 
 }
 
-const createUpdateSpecification = async (method:'post'|'put',credentialHandler:CredsHandler, proxySettings: ProxySettings|null,idPath:string,specName:string,specFilePath: string,baseURL:string|undefined|null) => {
+const createUpdateSpecification = async (method:'post'|'put',credentialHandler:CredsHandler, proxySettings: ProxySettings|null,idPath:string,specName:string,specFilePath: string,baseURL:stringORnothing) => {
     const data = new FormData();
     const specExists = existsSync(specFilePath);
     if (!specExists) {
@@ -90,7 +92,7 @@ const createUpdateSpecification = async (method:'post'|'put',credentialHandler:C
     const params = {};
   
     
-    let specifications:any = {data:""};
+    let specifications:any;
     
     try {
 
@@ -117,11 +119,10 @@ const createUpdateSpecification = async (method:'post'|'put',credentialHandler:C
           });
 
         console.log("Finished submit new spec via API request");
-        //log.debug(specifications);
+
     } catch (error) {
         if (error instanceof Error) {
             log.error(error.message);
-            //console.log(error);
             console.log(Object.keys(error));
             console.log('==========================');
             console.log(Object.values(error)[1]);

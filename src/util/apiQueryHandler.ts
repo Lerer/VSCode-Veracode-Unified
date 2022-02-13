@@ -2,7 +2,6 @@ import {ProxySettings} from '../util/proxyHandler';
 import {generateHeader} from  './veracode-hmac';
 import {CredsHandler} from '../util/credsHandler';
 import Axios, { AxiosProxyConfig } from 'axios';
-import * as FormData from 'form-data';
 
 export class APIHandler {
 
