@@ -1,6 +1,9 @@
 # Change Log
 All notable changes to the "veracode" extension will be documented in this file.
 
+## [0.3.0]
+- Added the ability to submit API specification to the platfrom
+
 ## [0.2.1]
 - Code optimization
 - Update vulnerable component version
