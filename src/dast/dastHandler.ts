@@ -38,6 +38,10 @@ export const submitSpecification = async (veracodeModel: VeracodeExtensionModel,
         } 
     }
 
+    await submitAfterVerifications(veracodeModel,configSettings,projectConfig,apiSpecFilePath);
+}
+
+const submitAfterVerifications = async (veracodeModel: VeracodeExtensionModel,configSettings: ConfigSettings,projectConfig:ProjectConfigHandler,apiSpecFilePath:string) => {
     if (projectConfig.getAPISpecName() && projectConfig.getAPISpecPath()) {
         const proxySettings = configSettings.getProxySettings();
         try {
