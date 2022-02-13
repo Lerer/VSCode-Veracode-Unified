@@ -11,6 +11,7 @@ const dastLogger = getLogger('Veracode DAST');
 
 export const submitSpecification = async (veracodeModel: VeracodeExtensionModel,configSettings: ConfigSettings) => {
 
+    window.showInformationMessage('Submitting API Specification...');
     const projectConfig = new ProjectConfigHandler();
     await projectConfig.loadProjectConfigFromFile();
 
