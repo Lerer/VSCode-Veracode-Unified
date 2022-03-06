@@ -39,8 +39,8 @@ export class APIHandler {
     }
 
     // generic API caller
-    static request(host:string,path: string, params: any,reqMethod:'get'|'post'|undefined,body:any|undefined,credHandler:CredsHandler ,proxySettings: ProxySettings|null): Thenable<string> {
-        let method : 'get'|'post' = reqMethod || this.DEFAULT_METHOD; 
+    static request(host:string,path: string, params: any,reqMethod:'get'|'post'|'put'|undefined,body:any|undefined,credHandler:CredsHandler ,proxySettings: ProxySettings|null): Thenable<string> {
+        let method : 'get'|'post'|'put' = reqMethod || this.DEFAULT_METHOD; 
         // funky for the Veracode HMAC generation
         let queryString = this.generateQueryString(params);
         

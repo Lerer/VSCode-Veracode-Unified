@@ -1,7 +1,11 @@
 import * as dotenv from 'dotenv';
 import { listSpecifications, submitSpecifications } from '../apiWrappers/apiSpecificationAPIWrapper';
+import { getAPIScanByName, listAPIScans, submitScan } from '../apiWrappers/wasAnalysesWrapper';
 
 import { CredsHandler } from "../util/credsHandler";
+import { getNested } from '../util/jsonUtil';
+
+const API_SCAN_NAME = 'Petstore APIs';
 
 dotenv.config();
 
@@ -32,9 +36,23 @@ const testListApiSpecifications = async () => {
     console.log(specs._embedded);
 }
 
-const testSet = async () => {
-    await testSubmitNewApiSpec();
-    await testListApiSpecifications();
+const testSubmitAPIScan = async (scanName:string) => {
+    await credHandler.loadCredsFromFile();
+    const apiScan = await submitScan(credHandler,null,scanName,null);
+    console.log(apiScan);
 }
 
-testSet();
+
+const testSet = async (tests:Array<boolean>) => {
+    if (tests[0]) {
+        await testSubmitNewApiSpec();
+    }
+    if (tests[1]) {
+        await testListApiSpecifications();
+    }
+    if (tests[2]) {
+        await testSubmitAPIScan(API_SCAN_NAME);
+    }
+}
+
+testSet([false,false,true]);
