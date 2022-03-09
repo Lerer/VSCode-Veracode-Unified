@@ -9,7 +9,7 @@ import { ScanUpdateScanStatusEnum, ScanResourceScanStatusEnum, SegmentsApi, Find
 import { ConfigSettings } from '../util/configSettings';
 import { CredsHandler } from '../util/credsHandler';
 import { AxiosResponse } from 'axios';
-import { jsonToVisualOutput } from '../reports/pipelineScanJsonHandler';
+import { jsonToVisualOutput, pipeline_output_display_style } from '../reports/pipelineScanJsonHandler';
 import { getNested } from '../util/jsonUtil';
 
 
@@ -55,8 +55,9 @@ export class VeracodePipelineScanHandler {
             let fileUrl = pathToFileURL(target.fsPath);
             if (vscode.workspace.workspaceFolders && pipelineScanResultsFilename) {
                 let outputFile = pathToFileURL(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, pipelineScanResultsFilename));
+                const outputStyle = configSettings.getPipelineResultOutputStyle();
                 this.logMessage(`Beginning scanning of '${filename}'`)
-                await runPipelineScan(credsHandler,fileUrl, outputFile, (messgae:string) => {this.outputChannel.appendLine(`${getTimeStamp()} - ${messgae}`)});
+                await runPipelineScan(credsHandler,fileUrl, outputFile,outputStyle, (messgae:string) => {this.outputChannel.appendLine(`${getTimeStamp()} - ${messgae}`)});
                 this.logMessage(`Analysis Complete.`); 
                 this.pipelineStatusBarItem.text = `Scan complete ${filename}`;
                 setTimeout(() => {
@@ -69,7 +70,7 @@ export class VeracodePipelineScanHandler {
     }
 }
 
-export async function runPipelineScan(credsHandler:CredsHandler, target: URL, outputFile: URL, messageFunction: (message: string) => void = ((m:string) => log.debug(m))) {
+export async function runPipelineScan(credsHandler:CredsHandler, target: URL, outputFile: URL,outputStyle: pipeline_output_display_style, messageFunction: (message: string) => void = ((m:string) => log.debug(m))) {
     log.debug('runPipelineScan - START');
 	
     const findingsApi = new FindingsApi();
@@ -105,7 +106,7 @@ export async function runPipelineScan(credsHandler:CredsHandler, target: URL, ou
                 messageFunction(`Number of findings is ${scansScanIdFindingsGetResponse.data.findings.length}`);
                 processScanFindingsResource(scansScanIdFindingsGetResponse.data, outputFile);
                 // Add display for the pipeline findings
-                await jsonToVisualOutput(outputFile);
+                await jsonToVisualOutput(outputFile,outputStyle);
             }
         }
     } catch(error) {
