@@ -134,6 +134,8 @@ The file name is default to: `veracode-pipeline-scan-results.json`
 <p align=center>
 <img src="media/pipeline_scan_result_as_text.png" width="75%">
 </p>
+
+__Note:__ The extension options enables 4 different output style. Check the `Pipeline Scan Results Display Style` settings.
    
 ## Dynamic API Scanning / API Security
 If your project producing API and/or OpenAPI specification file, the plugin also has the ability to submit the specification file to the veracode platform.

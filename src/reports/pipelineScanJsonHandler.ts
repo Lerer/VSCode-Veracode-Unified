@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { accessSync, constants, existsSync, readFileSync } from 'fs';
 import log = require('loglevel');
 import { URL } from 'url';
 import * as vscode from 'vscode';
@@ -7,6 +7,15 @@ import { SeverityColors, SeverityNames } from '../models/dataTypes';
 export type pipeline_output_display_style = 'simple'|'simple in style'|'detailed'|'detailed in style';
 
 export async function jsonToVisualOutput(pipelineJSONResult: URL,outputStyle: pipeline_output_display_style) {
+
+    try {
+        accessSync(pipelineJSONResult, constants.R_OK );
+      } catch (err) {
+        console.error('no access!');
+        vscode.window.showErrorMessage(`Error accessing ${pipelineJSONResult.toString()}.\nThe result file may not exist and you need to initiate a Pipeline Scan`);
+        return;
+      }
+
     let content = readFileSync(pipelineJSONResult,{encoding:"utf-8"});
 
     if (!content) {
