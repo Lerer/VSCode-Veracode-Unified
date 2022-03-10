@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import log = require('loglevel');
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import { SeverityNames } from '../models/dataTypes';
+import { SeverityColors, SeverityNames } from '../models/dataTypes';
 
 export type pipeline_output_display_style = 'simple'|'simple in style'|'detailed'|'detailed in style';
 
@@ -40,12 +40,6 @@ body {
     color: black;
 }
 
-.violatesPolicy {
-    background-color: #ff0000;
-    text-transform: uppercase;
-    font-weight: bold;
-}
-
 .upper {
     text-transform: uppercase;
 }
@@ -58,15 +52,42 @@ body {
     font-weight: bold;
 }
 
+#PL {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  body {
+      background-color: #eeeeee;
+  }
+  
+  #PL td,th {
+    border: 1px solid #333;
+    padding: 8px;
+    color: #000000
+  }
+  
+  #PL tr:nth-child(even){background-color: #e2e2e2;}
+  
+  #PL tr:hover {background-color: #ddd;}
+  
+  #PL th {
+      background-color: #00b4e6;
+      padding-top: 12px;
+      padding-bottom: 12px;
+      text-align: left;
+  }
+    
+ 
+
 </style>
 </head>
   <body>
     <h1>Pipeline Results:</h1>
     <br/>
-    <p>
-        ${getFindingsAsText(data,outputStyle)}
-    </p>
-      <br/>
+    ${getFindingsAsText(data,outputStyle)}
+    <br/>
   </body>
   </html>`;
   }
@@ -82,7 +103,10 @@ const getFindingsAsText = (findings: Array<any>,outputStyle:pipeline_output_disp
     let content='';
     log.debug(outputStyle);
     if (outputStyle==='simple' || outputStyle==='detailed') {
-        content = contentAsText(statuses,findings.length,outputStyle);
+        content = `<p>${contentAsText(statuses,findings.length,outputStyle)}</p>`;
+    } 
+    if (outputStyle==='simple in style' || outputStyle==='detailed in style') {
+        content = styledContent(statuses,findings.length,outputStyle);
     }
 
     return content;
@@ -100,7 +124,7 @@ const contentAsText = (statuses: Array<any>,total:number,outputStyle:pipeline_ou
             const simple = `CWE-${flaw.cwe_id}: ${flaw.issue_type}: ${sourceFile.file}:${sourceFile.line}\n</br>`;
             let details = '';
             if (outputStyle==='detailed') {
-                details = convertFlawDisplayToHTML(flaw.display_text);
+                details = `${convertFlawDisplayToHTML(flaw.display_text)}</br>`;
             }
             return `${simple}${details}`;
         }).join('');
@@ -113,6 +137,29 @@ const contentAsText = (statuses: Array<any>,total:number,outputStyle:pipeline_ou
 const convertFlawDisplayToHTML = (display:string) => {
     const removeSpans = display.replaceAll('</span>','</br>').replace('<span>','');
     const removeAnchors = removeSpans.replaceAll('<a ','</br> - <a ');
-    return `<details><summary>Issue details</summary>${removeAnchors}</details></br>`;
+    return `<details><summary>Issue details</summary>${removeAnchors}</details>`;
+}
+
+const styledContent = (statuses: Array<any>,total:number,outputStyle:pipeline_output_display_style) : string => {
+    const start = '<table id="PL"><thead><tr><th>CWE</th><th>CWE Name</th><th>Severity</th><th>Location</th></tr></thead><tbody>\n';
+    const end = `<tr><td colspan=4>Analyzed ${total} issues.</td></tr></tbody></table>`;
+
+    const body = statuses.map((status,index) => {
+        //const statusHeader = `<tr><td colspan=4></td></tr>`
+        const sevInt = 5-index;
+        const sevColor = SeverityColors[sevInt];
+        const sevName = SeverityNames[sevInt];
+        return status.map((flaw:any) => {                
+            const sourceFile = flaw.files.source_file;
+            const simple = `<tr><td>CWE-${flaw.cwe_id}</td><td>${flaw.issue_type}</td><td class="severity" bgcolor='#${sevColor}'>${sevName}</td><td>${sourceFile.file}:${sourceFile.line}</td>\n`;
+            let details = '';
+            if (outputStyle==='detailed in style') {
+                details = `<tr><td colspan=4>${convertFlawDisplayToHTML(flaw.display_text)}</td></tr>`;
+            }
+            return `${simple}${details}`;
+        }).join('');
+    }).join('');
+
+    return `${start}${body}${end}`;
 }
 
