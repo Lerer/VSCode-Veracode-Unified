@@ -107,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     vscode.commands.registerCommand("veracodeUnifiedExplorer.visualizePipelineScanFromJson", async (uri:vscode.Uri) => {
-        jsonToVisualOutput(pathToFileURL(uri.fsPath));
+        jsonToVisualOutput(pathToFileURL(uri.fsPath),configSettings.getPipelineResultOutputStyle());
     })
 
     log.info(`adding file [${configSettings.getPipelineResultFilename()}] to menu context`);

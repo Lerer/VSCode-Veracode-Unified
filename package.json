@@ -5,7 +5,7 @@
     "version": "0.3.0",
     "publisher": "yaakovlerer",
     "engines": {
-        "vscode": "^1.64.0"
+        "vscode": "^1.65.0"
     },
     "repository": {
         "type": "git",
@@ -103,6 +103,17 @@
                     "type": "string",
                     "default": "veracode-pipeline-scan-results.json",
                     "description": "Veracode Pipeline Scan results file name"
+                },
+                "veracode.pipelineScanResultsDisplayStyle": {
+                    "enum": [
+                        "simple",
+                        "simple in style",
+                        "detailed",
+                        "detailed in style"
+                    ],
+                    "type": "string",
+                    "default": "simple in style",
+                    "description": "Veracode Pipeline Scan output format"
                 }
             }
         },
@@ -181,7 +192,7 @@
             },
             {
                 "command": "veracodeUnifiedExplorer.visualizePipelineScanFromJson",
-                "title": "Veracode Pipeline Scan results to text",
+                "title": "Display Veracode Pipeline Scan results",
                 "category": "Veracode"
             },
             {

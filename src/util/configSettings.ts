@@ -6,8 +6,11 @@ import * as path from "path";
 import log = require('loglevel');
 
 import { ProxySettings } from './proxyHandler';
+import { pipeline_output_display_style } from "../reports/pipelineScanJsonHandler";
 
 const PIPELINE_SCAN_RESULTS_FILENAME = 'pipelineScanResultsFilename';
+const PIPELINE_SCAN_RESULTS_OUTPUT_STYLE = 'pipelineScanResultsDisplayStyle';
+const PIPELINE_SCAN_RESULTS_DEFAULT_OUTPUT_STYLE = 'simple';
 
 
 export class ConfigSettings {
@@ -142,5 +145,9 @@ export class ConfigSettings {
 
     getPipelineResultFilename(): string|undefined {
         return this.getNewConfigParam(PIPELINE_SCAN_RESULTS_FILENAME);
+    }  
+    
+    getPipelineResultOutputStyle(): pipeline_output_display_style {
+        return this.getNewConfigParam(PIPELINE_SCAN_RESULTS_OUTPUT_STYLE) as pipeline_output_display_style || PIPELINE_SCAN_RESULTS_DEFAULT_OUTPUT_STYLE;
     }
 }
