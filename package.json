@@ -112,7 +112,7 @@
                         "detailed in style"
                     ],
                     "type": "string",
-                    "default": "simple",
+                    "default": "simple in style",
                     "description": "Veracode Pipeline Scan output format"
                 }
             }
