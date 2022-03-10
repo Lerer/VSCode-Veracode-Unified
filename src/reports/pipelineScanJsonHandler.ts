@@ -1,4 +1,4 @@
-import { accessSync, constants, existsSync, readFileSync } from 'fs';
+import { accessSync, constants, readFileSync } from 'fs';
 import log = require('loglevel');
 import { URL } from 'url';
 import * as vscode from 'vscode';
@@ -154,7 +154,6 @@ const styledContent = (statuses: Array<any>,total:number,outputStyle:pipeline_ou
     const end = `<tr><td colspan=4>Analyzed ${total} issues.</td></tr></tbody></table>`;
 
     const body = statuses.map((status,index) => {
-        //const statusHeader = `<tr><td colspan=4></td></tr>`
         const sevInt = 5-index;
         const sevColor = SeverityColors[sevInt];
         const sevName = SeverityNames[sevInt];
